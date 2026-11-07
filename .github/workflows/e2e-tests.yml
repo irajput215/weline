@@ -2,16 +2,16 @@ name: E2E Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev, production] # Weline
   pull_request:
-    branches: [main]
+    branches: [main, dev, production] # Weline
 
 permissions:
   contents: read
 
 jobs:
   e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Weline: Playwright 1.57 can't install Chromium on ubuntu-latest (26.04)
     timeout-minutes: 30
 
     services:
