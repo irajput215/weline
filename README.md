@@ -1,6 +1,6 @@
 <a href="https://zerodha.tech"><img src="https://zerodha.tech/static/images/github-badge.svg" align="right" alt="Zerodha Tech Badge" /></a>
 
-# Whatomate
+# Weline
 
 Modern, open-source WhatsApp Business Platform. Single binary app.
 
