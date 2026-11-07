@@ -3,6 +3,7 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "remoteUser": "vscode",
   "shutdownAction": "stopCompose",
   "features": {
     "ghcr.io/devcontainers/features/go:1": {
