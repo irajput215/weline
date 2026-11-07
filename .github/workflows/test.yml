@@ -16,7 +16,25 @@ permissions:
   contents: read
 
 jobs:
+  # Weline: skip Go jobs when no Go code changed (see .github/scripts/weline-changed.sh).
+  # Skipped jobs count as passing for required status checks.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.go.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: go
+        run: .github/scripts/weline-changed.sh '^(cmd|internal|pkg|test)/|^go\.(mod|sum)$|^\.golangci|^\.github/(workflows/test\.yml|scripts/)'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+
   test:
+    needs: changes # Weline
+    if: needs.changes.outputs.go == 'true' # Weline
     runs-on: ubuntu-latest
 
     services:
@@ -91,6 +109,8 @@ jobs:
           retention-days: 7
 
   lint:
+    needs: changes # Weline
+    if: needs.changes.outputs.go == 'true' # Weline
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -108,6 +128,8 @@ jobs:
           version: v2.11.4
 
   build:
+    needs: changes # Weline
+    if: needs.changes.outputs.go == 'true' # Weline
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
