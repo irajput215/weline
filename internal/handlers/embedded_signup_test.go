@@ -447,10 +447,15 @@ func TestApp_RegisterPhoneNumber_Success_WithPIN(t *testing.T) {
 	assert.Equal(t, "654321", updated.Pin)
 
 	// Verify audit log exists
-	time.Sleep(50 * time.Millisecond)
-	var auditCount int64
-	require.NoError(t, app.DB.Model(&models.AuditLog{}).Where("organization_id = ? AND resource_type = ? AND action = ?", org.ID, "account", models.AuditActionUpdated).Count(&auditCount).Error)
-	assert.Greater(t, auditCount, int64(0))
+	// Weline: the audit log is written by a background goroutine; poll for it
+	// instead of sleeping a fixed 50ms, which is too short on a busy CI runner.
+	assert.Eventually(t, func() bool {
+		var auditCount int64
+		if err := app.DB.Model(&models.AuditLog{}).Where("organization_id = ? AND resource_type = ? AND action = ?", org.ID, "account", models.AuditActionUpdated).Count(&auditCount).Error; err != nil {
+			return false
+		}
+		return auditCount > 0
+	}, 5*time.Second, 10*time.Millisecond)
 }
 
 func TestApp_RegisterPhoneNumber_Success_GeneratedPIN(t *testing.T) {
@@ -520,10 +525,15 @@ func TestApp_RegisterPhoneNumber_Success_GeneratedPIN(t *testing.T) {
 	assert.Len(t, updated.Pin, 6)
 
 	// Verify audit log exists
-	time.Sleep(50 * time.Millisecond)
-	var auditCount int64
-	require.NoError(t, app.DB.Model(&models.AuditLog{}).Where("organization_id = ? AND resource_type = ? AND action = ?", org.ID, "account", models.AuditActionUpdated).Count(&auditCount).Error)
-	assert.Greater(t, auditCount, int64(0))
+	// Weline: the audit log is written by a background goroutine; poll for it
+	// instead of sleeping a fixed 50ms, which is too short on a busy CI runner.
+	assert.Eventually(t, func() bool {
+		var auditCount int64
+		if err := app.DB.Model(&models.AuditLog{}).Where("organization_id = ? AND resource_type = ? AND action = ?", org.ID, "account", models.AuditActionUpdated).Count(&auditCount).Error; err != nil {
+			return false
+		}
+		return auditCount > 0
+	}, 5*time.Second, 10*time.Millisecond)
 }
 
 func TestApp_RegisterPhoneNumber_RegistrationFailed(t *testing.T) {
