@@ -1,30 +1,40 @@
 {
   "name": "Weline",
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "shutdownAction": "stopCompose",
   "features": {
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
     "ghcr.io/devcontainers/features/go:1": {
-      "version": "1.23"
+      "version": "1.26"
     },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "22"
     }
   },
-  "forwardPorts": [8080],
+  "containerEnv": {
+    // Vite rejects requests from unknown hostnames; allow Codespaces' forwarded URLs.
+    "__VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS": ".app.github.dev"
+  },
+  "forwardPorts": [3000, 8080],
   "portsAttributes": {
-    "8080": {
-      "label": "Weline App",
+    "3000": {
+      "label": "Weline (dev, hot reload)",
       "onAutoForward": "openBrowser"
+    },
+    "8080": {
+      "label": "Weline API",
+      "onAutoForward": "silent"
     }
   },
-  "postCreateCommand": "test -f docker/.env || cp docker/.env.example docker/.env && test -f docker/config.toml || cp config.example.toml docker/config.toml && mkdir -p docker/uploads",
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postAttachCommand": "cat .devcontainer/welcome.txt",
   "customizations": {
     "vscode": {
       "extensions": [
         "golang.go",
-        "ms-azuretools.vscode-docker"
+        "Vue.volar"
       ]
     }
   }
 }
-
