@@ -2,9 +2,9 @@ name: E2E Tests
 
 on:
   push:
-    branches: [main, dev, production] # Weline
+    branches: [main]
   pull_request:
-    branches: [main, dev, production] # Weline
+    branches: [main, production] # Weline: e2e gates releases only, not every dev PR
 
 permissions:
   contents: read
