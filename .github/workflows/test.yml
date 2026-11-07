@@ -82,6 +82,9 @@ jobs:
         env:
           TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/whatomate_test?sslmode=disable
           TEST_REDIS_URL: redis://localhost:6379
+          # Weline: the race detector makes the suite several times slower, so
+          # it runs only for release (production) and upstream (main) checks.
+          RACE: ${{ (github.base_ref == 'production' || github.base_ref == 'main' || github.ref == 'refs/heads/production' || github.ref == 'refs/heads/main') && '-race' || '' }}
         run: |
           # gotestsum gives live "Running N/M tests" output, names failed
           # tests prominently at the end, and re-prints failure logs in a
@@ -93,10 +96,11 @@ jobs:
           # printed test is the one before the hang.
           # -timeout 10m caps the whole run so a hung test fails the job
           # in a reasonable window instead of waiting for go's default.
+          echo "Race detector: ${RACE:-off (dev)}" # Weline
           gotestsum \
             --format testname \
             --hide-summary=skipped \
-            -- -race -p 1 -timeout 10m -coverprofile=coverage.out $(go list ./... | grep -v /test/)
+            -- $RACE -p 1 -timeout 10m -coverprofile=coverage.out $(go list ./... | grep -v /test/)
 
       - name: Display coverage
         run: go tool cover -func=coverage.out | grep "total:"

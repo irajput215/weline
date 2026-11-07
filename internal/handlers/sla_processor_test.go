@@ -196,7 +196,10 @@ func TestUpdateContactChatbotMessage_SetsTimestampAndResetsReminder(t *testing.T
 	// Set reminder_sent to true using raw SQL to avoid GORM caching
 	require.NoError(t, app.DB.Exec("UPDATE contacts SET chatbot_reminder_sent = true WHERE id = ?", contact.ID).Error)
 
-	before := time.Now().UTC()
+	// Weline: Postgres stores microseconds, so compare at that precision.
+	// Without it, before and the stored time often share a microsecond and the
+	// rounded-down stored value looks earlier than before.
+	before := time.Now().UTC().Truncate(time.Microsecond)
 	app.UpdateContactChatbotMessage(contact.ID)
 
 	// Reload the contact from DB
