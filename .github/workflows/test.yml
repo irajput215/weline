@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - main
+      - dev # Weline
+      - production # Weline
   pull_request:
     branches:
       - main
+      - dev # Weline
+      - production # Weline
 
 permissions:
   contents: read
