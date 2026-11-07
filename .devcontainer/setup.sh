@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# One-time setup when the Codespace / dev container is created.
+# Dev container setup. Runs twice:
+#   - updateContentCommand: during a Codespaces prebuild (or first create), does the slow work
+#   - postCreateCommand:    when a Codespace is created, catches up if go.mod or
+#                           package-lock.json changed since the prebuild; otherwise a quick no-op
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -9,10 +12,19 @@ if [ ! -f config.toml ]; then
 fi
 mkdir -p uploads
 
+# Go modules: fast when already cached.
 echo "Downloading Go modules..."
 go mod download
 
-echo "Installing frontend dependencies..."
-(cd frontend && npm ci --no-audit --no-fund)
+# Frontend packages: reinstall only when package-lock.json changed.
+stamp=frontend/node_modules/.weline-lock-hash
+want="$(sha256sum frontend/package-lock.json | cut -d' ' -f1)"
+if [ -f "$stamp" ] && [ "$(cat "$stamp")" = "$want" ]; then
+  echo "Frontend dependencies up to date."
+else
+  echo "Installing frontend dependencies..."
+  (cd frontend && npm ci --no-audit --no-fund)
+  echo "$want" > "$stamp"
+fi
 
 echo "Setup complete. Run 'make dev' to start Weline."

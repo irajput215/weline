@@ -27,6 +27,9 @@
       "onAutoForward": "silent"
     }
   },
+  // updateContentCommand runs during Codespaces prebuilds, so the slow installs are cached;
+  // postCreateCommand re-runs the same script, which skips work that is already done.
+  "updateContentCommand": "bash .devcontainer/setup.sh",
   "postCreateCommand": "bash .devcontainer/setup.sh",
   "postAttachCommand": "cat .devcontainer/welcome.txt",
   "customizations": {
