@@ -1,0 +1,11 @@
+
+  Weline dev environment
+  ----------------------
+  Start the app:   make dev
+  Open:            port 3000 (Ports tab), hot reload for the frontend
+  Log in:          admin@admin.com / admin
+  Stop:            Ctrl+C, then: pkill -f "server -config config.toml"
+
+  Postgres (host "db") and Redis (host "redis") are already running.
+  Go changes need a restart of `make dev`; frontend changes reload instantly.
+
