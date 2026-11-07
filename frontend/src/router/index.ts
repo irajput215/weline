@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { bookingRoutes } from './booking' // Weline hook
 
 // Permission-based route meta type
 declare module 'vue-router' {
@@ -39,6 +40,7 @@ const router = createRouter({
       component: () => import('@/components/layout/AppLayout.vue'),
       meta: { requiresAuth: true },
       children: [
+        ...bookingRoutes, // Weline hook
         {
           path: '',
           name: 'dashboard',

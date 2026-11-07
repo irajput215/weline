@@ -12,6 +12,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/shridarpatil/whatomate/internal/assignment"
+	"github.com/shridarpatil/whatomate/internal/booking" // Weline hook
 	"github.com/shridarpatil/whatomate/internal/calling"
 	"github.com/shridarpatil/whatomate/internal/config"
 	"github.com/shridarpatil/whatomate/internal/database"
@@ -157,6 +158,7 @@ func runServer(args []string) {
 		if err := database.RunMigrationWithProgress(db, &cfg.DefaultAdmin); err != nil {
 			lo.Fatal("Migration failed", "error", err)
 		}
+		booking.MustMigrate(db, lo) // Weline hook
 		// Backfill v2 graph for any legacy chatbot flow still on Steps[].
 		// Idempotent — re-running is a no-op once every row is converted.
 		if err := handlers.BackfillChatbotFlowGraph(db, lo); err != nil {
@@ -864,6 +866,8 @@ func setupRoutes(g *fastglue.Fastglue, app *handlers.App, lo logf.Logger, basePa
 	g.GET("/api/products/{id}", app.GetCatalogProduct)
 	g.PUT("/api/products/{id}", app.UpdateCatalogProduct)
 	g.DELETE("/api/products/{id}", app.DeleteCatalogProduct)
+
+	booking.RegisterRoutes(g, &booking.Handler{DB: app.DB, Log: lo, OrgID: app.OrgIDFromRequest}) // Weline hook
 
 	// Serve embedded frontend (SPA)
 	if frontend.IsEmbedded() {
