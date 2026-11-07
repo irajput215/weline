@@ -10,7 +10,25 @@ permissions:
   contents: read
 
 jobs:
+  # Weline: skip e2e when only docs/meta files changed (see .github/scripts/weline-changed.sh).
+  # Skipped jobs count as passing for required status checks.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.app.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: app
+        run: .github/scripts/weline-changed.sh '^docs/|\.mdx?$|^LICENSE$|^crowdin\.yml$|^\.devcontainer/|^\.github/workflows/(deploy-docs|develop-image|release|test)\.yml$' --except
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+
   e2e:
+    needs: changes # Weline
+    if: needs.changes.outputs.app == 'true' # Weline
     runs-on: ubuntu-24.04 # Weline: Playwright 1.57 can't install Chromium on ubuntu-latest (26.04)
     timeout-minutes: 30
 
