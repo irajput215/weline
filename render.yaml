@@ -32,6 +32,10 @@ services:
         value: production
       - key: WHATOMATE_APP__DEBUG
         value: "false"
+      # Required in production: CORS origins allowed to call the API.
+      # Update if you add a custom domain (comma-separated).
+      - key: WHATOMATE_SERVER__ALLOWED_ORIGINS
+        value: https://weline-dev.onrender.com
       - key: WHATOMATE_APP__ENCRYPTION_KEY
         generateValue: true
       - key: WHATOMATE_JWT__SECRET
