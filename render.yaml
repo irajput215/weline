@@ -1,0 +1,106 @@
+# Render Blueprint for deploying the `dev` branch of Weline.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Creates three resources:
+#   - weline-dev        Docker web service built from docker/Dockerfile
+#   - weline-dev-db     Render Postgres
+#   - weline-dev-redis  Render Key Value (Redis-compatible)
+#
+# All app settings are supplied as WHATOMATE_<SECTION>__<KEY> env vars, which
+# override the bundled config.toml (see internal/config/config.go).
+
+services:
+  - type: web
+    name: weline-dev
+    runtime: docker
+    plan: free
+    branch: dev
+    autoDeploy: true
+    dockerfilePath: ./docker/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      # Render routes traffic to $PORT; keep it in sync with the app's port.
+      - key: PORT
+        value: "8080"
+      - key: WHATOMATE_SERVER__PORT
+        value: "8080"
+      - key: TZ
+        value: UTC
+
+      - key: WHATOMATE_APP__ENVIRONMENT
+        value: production
+      - key: WHATOMATE_APP__DEBUG
+        value: "false"
+      - key: WHATOMATE_APP__ENCRYPTION_KEY
+        generateValue: true
+      - key: WHATOMATE_JWT__SECRET
+        generateValue: true
+      - key: WHATOMATE_WHATSAPP__WEBHOOK_VERIFY_TOKEN
+        generateValue: true
+
+      # Render terminates TLS in front of the app.
+      - key: WHATOMATE_RATE_LIMIT__ENABLED
+        value: "true"
+      - key: WHATOMATE_RATE_LIMIT__TRUST_PROXY
+        value: "true"
+
+      # Postgres
+      - key: WHATOMATE_DATABASE__HOST
+        fromDatabase:
+          name: weline-dev-db
+          property: host
+      - key: WHATOMATE_DATABASE__PORT
+        fromDatabase:
+          name: weline-dev-db
+          property: port
+      - key: WHATOMATE_DATABASE__USER
+        fromDatabase:
+          name: weline-dev-db
+          property: user
+      - key: WHATOMATE_DATABASE__PASSWORD
+        fromDatabase:
+          name: weline-dev-db
+          property: password
+      - key: WHATOMATE_DATABASE__NAME
+        fromDatabase:
+          name: weline-dev-db
+          property: database
+      - key: WHATOMATE_DATABASE__SSL_MODE
+        value: disable # internal network connection
+
+      # Redis (Render Key Value)
+      - key: WHATOMATE_REDIS__HOST
+        fromService:
+          type: keyvalue
+          name: weline-dev-redis
+          property: host
+      - key: WHATOMATE_REDIS__PORT
+        fromService:
+          type: keyvalue
+          name: weline-dev-redis
+          property: port
+
+      # First admin account (created only when no users exist).
+      # Set these in the Render dashboard when the Blueprint is applied.
+      - key: WHATOMATE_DEFAULT_ADMIN__EMAIL
+        sync: false
+      - key: WHATOMATE_DEFAULT_ADMIN__PASSWORD
+        sync: false
+
+      # Optional — fill in from the dashboard when you need them:
+      # WHATOMATE_WHATSAPP__APP_ID, WHATOMATE_WHATSAPP__APP_SECRET,
+      # WHATOMATE_WHATSAPP__CONFIG_ID, WHATOMATE_STORAGE__TYPE=s3 and
+      # WHATOMATE_STORAGE__S3_* (local uploads are lost on every redeploy).
+
+  - type: keyvalue
+    name: weline-dev-redis
+    plan: free
+    maxmemoryPolicy: noeviction
+    ipAllowList: [] # internal connections only
+
+databases:
+  - name: weline-dev-db
+    plan: free
+    databaseName: whatomate
+    user: whatomate
