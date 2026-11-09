@@ -67,9 +67,11 @@ Request: `{ status, reason? }` (`reason` required for `CANCELLED`)
 Response 200: `{ appointment }`
 Errors: 400 missing reason · 404 · 409 "can't change BOOKED to COMPLETED; allowed: CONFIRMED, ARRIVED, CANCELLED, NO_SHOW"
 
-### GET /api/x/booking/patients?q=
+### POST /api/x/booking/patients/search
 Permission: wl_booking_appointments:create
-Search the org's contacts by name or number (at least 3 characters). Response 200: `{ patients: [ { id, name, phone } ] }` (max 20)
+Request: `{ q }` (name or number, at least 3 characters). A POST, so names and numbers never appear in URLs, which
+proxies and hosts log.
+Response 200: `{ patients: [ { id, name, phone } ] }` (max 20)
 
 ### POST /api/x/booking/patients
 Permission: wl_booking_appointments:create
