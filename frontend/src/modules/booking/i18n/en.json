@@ -1,0 +1,152 @@
+{
+  "section": "Bookings",
+  "nav": {
+    "appointments": "Appointments",
+    "availability": "Availability",
+    "online": "Online booking"
+  },
+  "title": "Bookings",
+  "subtitle": "Appointments, practitioner availability and online booking",
+  "tabs": {
+    "appointments": "Appointments",
+    "availability": "Availability",
+    "online": "Online booking"
+  },
+  "forbiddenTitle": "No access",
+  "forbiddenDescription": "You don't have permission to view this part of bookings.",
+  "needsPractice": "Set up the clinic first (Clinic → Practice profile, locations, practitioners and services).",
+  "saved": "Saved",
+  "save": "Save",
+  "cancel": "Cancel",
+  "remove": "Remove",
+  "readOnly": "You can view these but not change them.",
+  "saveForbidden": "You don't have permission to do that.",
+  "saveFailed": "Couldn't save. Check your connection and try again.",
+  "minutes": "{n} min",
+  "anyone": "Anyone available",
+  "allPractitioners": "All practitioners",
+  "noName": "(no name)",
+  "today": "Today",
+  "previousDay": "Previous day",
+  "nextDay": "Next day",
+  "outsideHoursShort": "outside hours",
+  "cancelTitle": "Cancel appointment {ref}",
+  "moveTitle": "Move appointment {ref}",
+  "fields": {
+    "service": "Service",
+    "location": "Location",
+    "practitioner": "Practitioner",
+    "day": "Day",
+    "time": "Time",
+    "patient": "Patient",
+    "note": "Note",
+    "status": "Status",
+    "reason": "Reason"
+  },
+  "statuses": {
+    "BOOKED": "Booked",
+    "CONFIRMED": "Confirmed",
+    "ARRIVED": "Arrived",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled",
+    "NO_SHOW": "No-show"
+  },
+  "actions": {
+    "CONFIRMED": "Confirm",
+    "ARRIVED": "Arrived",
+    "COMPLETED": "Completed",
+    "NO_SHOW": "No-show",
+    "CANCELLED": "Cancel",
+    "move": "Move"
+  },
+  "sources": {
+    "staff": "Staff",
+    "web": "Online",
+    "whatsapp": "WhatsApp",
+    "cliniko": "Cliniko"
+  },
+  "appointments": {
+    "emptyTitle": "No appointments",
+    "emptyDescription": "Nothing booked for this day."
+  },
+  "new": {
+    "title": "New appointment",
+    "loadingTimes": "Finding free times…",
+    "noTimes": "No free times that day.",
+    "outsideHours": "Book outside hours (squeeze-in)",
+    "outsideHoursNeedsPractitioner": "Pick a practitioner to book outside hours.",
+    "searchPatient": "Search by name or mobile (3+ characters)",
+    "newPatient": "New patient",
+    "patientName": "Full name",
+    "addPatient": "Add patient",
+    "existingPatient": "Already a patient: {name}",
+    "change": "Change",
+    "notePlaceholder": "e.g. first visit, bring referral",
+    "noteHint": "Administrative only — no clinical details.",
+    "allowOverlap": "Book anyway (patient already has an appointment then)",
+    "book": "Book",
+    "booked": "Booked. Reference {ref}"
+  },
+  "history": {
+    "title": "History",
+    "created": "Booked ({source})",
+    "status": "{from} → {to}",
+    "changed": "Changed {what}",
+    "fields": {
+      "starts_at": "time",
+      "practitioner_id": "practitioner",
+      "location_id": "location",
+      "note": "note",
+      "outside_hours": "outside hours"
+    }
+  },
+  "availability": {
+    "title": "Weekly hours",
+    "description": "When this practitioner works, in {tz} time. Only times inside the location's opening hours are offered.",
+    "none": "No hours set: this practitioner can't be booked.",
+    "addBlock": "Add hours",
+    "overlap": "Some hours overlap. Fix them before saving.",
+    "noPractitioners": "Add practitioners first.",
+    "addPractitioners": "Clinic → Practitioners",
+    "blocksTitle": "Time off",
+    "blocksDescription": "Leave, meetings and training. Existing appointments in that time are not cancelled.",
+    "noBlocks": "No time off coming up.",
+    "blockPlaceholder": "Annual leave",
+    "from": "From",
+    "to": "To",
+    "addTimeOff": "Add time off",
+    "blockClashes": "{n} appointment(s) fall in this time off; move them on the Appointments page."
+  },
+  "settings": {
+    "title": "Online booking rules",
+    "description": "For patients booking online or on WhatsApp. Staff can book any time.",
+    "notice": "Minimum notice (hours)",
+    "window": "Book up to (days ahead)"
+  },
+  "online": {
+    "title": "Online booking",
+    "description": "Patients book at this link without an account. Share it on your website and social media.",
+    "link": "Booking link",
+    "copy": "Copy link",
+    "open": "Open booking page",
+    "copied": "Link copied",
+    "copyFailed": "Couldn't copy; select the link and copy it.",
+    "ready": "Online booking is on.",
+    "notReady": "Online booking isn't taking bookings yet. Still to do:",
+    "steps": {
+      "profile": "Clinic profile",
+      "services": "At least one active service",
+      "availability": "Hours for at least one practitioner",
+      "captcha": "Robot check keys (set by your Weline administrator)"
+    }
+  },
+  "weekdays": {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "7": "Sunday"
+  }
+}
