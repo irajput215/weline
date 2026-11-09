@@ -63,6 +63,16 @@ Frontend (`cd frontend`):
 - Lint: `npm run lint` (note: runs eslint with `--fix`, so it edits files)
 - Type check: `npm run typecheck`
 
+CI for modules (`.github/workflows/weline-ci.yml`, runs on PRs into `dev`/`production`; Go lint and tests
+stay in upstream's `test.yml`). Each job is a script you can run locally from the repo root:
+- Seam guard: `.github/scripts/weline-seam-guard.sh` (needs the `upstream` remote fetched). Fails if any
+  upstream file differs from upstream outside the module folders, `wl-docs/`, `CLAUDE.md`, the five seams
+  (only added lines marked `Weline hook`), `.github/weline/upstream-allowlist.txt` and
+  `.github/weline/seam-exceptions.txt`. Don't grow those two lists to make CI pass; move the code instead.
+- Frontend: `.github/scripts/weline-frontend-check.sh` (after `npm ci`): eslint on Weline files, vue-tsc
+  failing only on Weline files (upstream has its own errors), all Vitest tests.
+- Migrations: `.github/scripts/weline-migrate-smoke.sh` (needs an empty database; see the script's env vars).
+
 ## Review checklist (run before every PR)
 
 - No upstream file changed beyond the five seams

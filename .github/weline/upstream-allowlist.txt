@@ -1,0 +1,44 @@
+# Files outside the module folders that may differ from upstream whatomate.
+#
+# Read by .github/scripts/weline-seam-guard.sh. Every other upstream file must
+# be identical to the upstream commit we are based on, except the five seam
+# files, which may only gain lines marked "// Weline hook".
+#
+# One path per line. A trailing "/" allows everything under a directory.
+# Adding a line here is a deliberate decision: say why in the PR, and prefer
+# moving code into internal/modules/ or frontend/src/modules/ instead.
+
+# --- Weline CI, tooling and deployment (new files, no upstream counterpart) ---
+.github/weline/
+.github/scripts/weline-changed.sh
+.github/scripts/weline-seam-guard.sh
+.github/scripts/weline-frontend-check.sh
+.github/scripts/weline-migrate-smoke.sh
+.github/workflows/weline-ci.yml
+.devcontainer/
+render.yaml
+
+# --- Weline accessor file next to upstream handlers (new file, Weline-only) ---
+internal/handlers/weline_hooks.go
+
+# --- Legacy booking prototype from before the module SDLC. ---
+# Phase 1.2 rebuilds booking as internal/modules/booking and removes these,
+# together with their "// Weline hook" lines in main.go and router/index.ts.
+internal/booking/
+frontend/src/router/booking.ts
+frontend/src/services/weline/
+frontend/src/views/booking/
+
+# --- Upstream files Weline has modified (debt: each one can conflict on sync) ---
+# CI tuning: dev/production triggers, path filters, no -race on dev, e2e only for releases.
+.github/workflows/test.yml
+.github/workflows/e2e-tests.yml
+frontend/e2e/framework/auth.ts
+# Rebrand to Weline (title, product name, sample config).
+README.md
+config.example.toml
+frontend/index.html
+frontend/src/i18n/locales/
+# Flaky-test fixes (async audit log, Postgres timestamp precision); candidates to send upstream.
+internal/handlers/embedded_signup_test.go
+internal/handlers/sla_processor_test.go
