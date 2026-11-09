@@ -1,0 +1,114 @@
+{
+  "section": "Clinic",
+  "nav": {
+    "profile": "Practice profile",
+    "locations": "Locations",
+    "practitioners": "Practitioners",
+    "services": "Services",
+    "hours": "Opening hours"
+  },
+  "title": "Clinic setup",
+  "subtitle": "Your practice details, locations, practitioners, services and opening hours",
+  "tabs": {
+    "profile": "Profile",
+    "locations": "Locations",
+    "practitioners": "Practitioners",
+    "services": "Services",
+    "hours": "Hours"
+  },
+  "forbiddenTitle": "No access",
+  "forbiddenDescription": "You don't have permission to view this part of the clinic setup.",
+  "saved": "Saved",
+  "save": "Save",
+  "edit": "Edit",
+  "active": "Active",
+  "inactive": "Inactive",
+  "readOnly": "You can view these settings but not change them.",
+  "saveForbidden": "You don't have permission to change this.",
+  "needsProfile": "Save the practice profile first.",
+  "minutes": "{n} min",
+  "setup": {
+    "title": "Finish setting up your clinic",
+    "description": "Patients can book once each of these is done.",
+    "profile": "Practice profile",
+    "locations": "At least one location",
+    "hours": "Opening hours for a location",
+    "practitioners": "At least one practitioner",
+    "services": "At least one service"
+  },
+  "profile": {
+    "title": "Practice profile",
+    "intro": "Tell us about your practice to get started.",
+    "name": "Practice name",
+    "timeZone": "Time zone",
+    "slot": "Appointment grid",
+    "slug": "Booking link name",
+    "slugHint": "Patients will book at {link}",
+    "abn": "ABN",
+    "phone": "Phone",
+    "email": "Email",
+    "website": "Website"
+  },
+  "fields": {
+    "name": "Name",
+    "address": "Address",
+    "phone": "Phone",
+    "active": "Active",
+    "role": "Role",
+    "locations": "Locations",
+    "login": "Weline login",
+    "ahpra": "AHPRA number",
+    "duration": "Duration",
+    "price": "Price",
+    "roles": "Who can do it"
+  },
+  "locations": {
+    "add": "Add location",
+    "edit": "Edit location",
+    "emptyTitle": "No locations yet",
+    "emptyDescription": "Add the places where your practice sees patients."
+  },
+  "practitioners": {
+    "add": "Add practitioner",
+    "edit": "Edit practitioner",
+    "emptyTitle": "No practitioners yet",
+    "emptyDescription": "Add the people patients can book with.",
+    "noLogin": "No login",
+    "rolePlaceholder": "GP, Nurse, Physio…",
+    "noLocations": "Add a location first."
+  },
+  "services": {
+    "add": "Add service",
+    "edit": "Edit service",
+    "emptyTitle": "No services yet",
+    "emptyDescription": "Add the appointment types patients can book.",
+    "badPrice": "Enter a price like 85 or 85.50, or leave it empty.",
+    "priceLabel": "Price in dollars (optional)",
+    "rolesHint": "Comma-separated practitioner roles, e.g. GP, Nurse."
+  },
+  "hours": {
+    "title": "Opening hours",
+    "description": "Weekly hours for each location, in {tz} time.",
+    "closed": "Closed",
+    "noLocations": "Add a location before setting opening hours.",
+    "closuresTitle": "Closures",
+    "closuresDescription": "Public holidays and other days the clinic is closed.",
+    "noClosures": "No upcoming closures.",
+    "remove": "Remove closure",
+    "reason": "Reason",
+    "from": "From",
+    "to": "To (optional)",
+    "where": "Where",
+    "allLocations": "All locations",
+    "addClosure": "Add closure"
+  },
+  "weekdays": {
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday",
+    "7": "Sunday"
+  }
+}
