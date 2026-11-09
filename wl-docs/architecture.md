@@ -38,7 +38,7 @@ flowchart LR
     spa -->|/api/x/...| mods
     meta -->|POST /api/webhook| core
     core -->|send| meta
-    core -->|outbound webhook, HMAC signed| hooks
+    core -->|outbound webhook, token + HMAC| hooks
     hooks -->|kit.Event| mods
     core -->|chatbot api_call| mods
     mods --> kit
@@ -73,10 +73,11 @@ Pre-SDLC exceptions (legacy booking prototype hooks, rebrand, CI tweaks) are lis
 Modules learn about traffic in three ways, and act through one:
 
 1. **Weline webhooks → modules.** Each organization has a managed outbound webhook ("Weline modules
-   (managed, do not edit)") created by `hooks.Setup` when `WELINE_PUBLIC_URL` is set. Weline signs each
-   delivery (`X-Webhook-Signature`, HMAC-SHA256 with that webhook's secret) and adds `X-Weline-Org`. The
-   receiver at `POST /x/hooks/weline` verifies the signature with that org's secret, rejects stale
-   deliveries, de-duplicates in Redis, and calls every module implementing `kit.EventHandler` for
+   (managed, do not edit)") created by `hooks.Setup` when `WELINE_PUBLIC_URL` is set. The webhook's
+   custom headers carry `X-Weline-Org` and a random per-org `X-Weline-Hook-Token`; Weline also signs the
+   body (`X-Webhook-Signature`, HMAC-SHA256) when it has the secret, which upstream loses on cached
+   deliveries (threat model, open risk 1). The receiver at `POST /x/hooks/weline` requires the org's token,
+   checks the signature whenever one is present, rejects stale deliveries, de-duplicates in Redis, and calls every module implementing `kit.EventHandler` for
    `message.incoming|outgoing`, `contact.created`, `transfer.*`. It is outside `/api` because upstream's
    auth middleware rejects every unauthenticated `/api` request. Weline's SSRF guard blocks private
    addresses, so the URL must be public (a tunnel in local development).
@@ -99,8 +100,8 @@ sequenceDiagram
     P->>M: "Confirm"
     M->>C: POST /api/webhook (message)
     C->>C: store message, inbox, chatbot
-    C->>H: POST /x/hooks/weline (signed, X-Weline-Org)
-    H->>H: verify HMAC · fresh? · seen before?
+    C->>H: POST /x/hooks/weline (X-Weline-Org, token, HMAC if signed)
+    H->>H: token · HMAC if present · fresh? · seen before?
     H->>R: HandleEvent(message.incoming)
     R->>C: kit.Sender.SendText("See you Tuesday")
     C->>M: send

@@ -73,13 +73,17 @@ func (s Setup) Ensure(ctx context.Context, orgID uuid.UUID, receiverURL string) 
 		if err != nil {
 			return nil, err
 		}
+		token, err := newSecret()
+		if err != nil {
+			return nil, err
+		}
 		wh = models.Webhook{
 			BaseModel:      models.BaseModel{ID: uuid.New()},
 			OrganizationID: orgID,
 			Name:           WebhookName,
 			URL:            receiverURL,
 			Events:         models.StringArray(Events),
-			Headers:        models.JSONB{OrgHeader: orgID.String()},
+			Headers:        models.JSONB{OrgHeader: orgID.String(), TokenHeader: token},
 			Secret:         secret,
 			IsActive:       true,
 		}
@@ -101,12 +105,27 @@ func (s Setup) Ensure(ctx context.Context, orgID uuid.UUID, receiverURL string) 
 	if !sameEvents(wh.Events, Events) {
 		changes["events"] = models.StringArray(Events)
 	}
-	if v, _ := wh.Headers[OrgHeader].(string); v != orgID.String() {
+	orgOK := false
+	if v, _ := wh.Headers[OrgHeader].(string); v == orgID.String() {
+		orgOK = true
+	}
+	tokenOK := false
+	if v, _ := wh.Headers[TokenHeader].(string); v != "" {
+		tokenOK = true
+	}
+	if !orgOK || !tokenOK {
 		headers := models.JSONB{}
 		for k, v := range wh.Headers {
 			headers[k] = v
 		}
 		headers[OrgHeader] = orgID.String()
+		if !tokenOK {
+			token, err := newSecret()
+			if err != nil {
+				return nil, err
+			}
+			headers[TokenHeader] = token
+		}
 		changes["headers"] = headers
 	}
 	if wh.Secret == "" {

@@ -72,6 +72,7 @@ type fixture struct {
 	rc     *Receiver
 	org    uuid.UUID
 	secret string
+	token  string
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -84,8 +85,9 @@ func newFixture(t *testing.T) *fixture {
 	require.NoError(t, err)
 
 	rec := &recorder{events: []string{kit.EventMessageIncoming, "transfer.*"}}
+	token, _ := wh.Headers[TokenHeader].(string)
 	return &fixture{
-		db: db, rdb: rdb, rec: rec, org: org.ID, secret: wh.Secret,
+		db: db, rdb: rdb, rec: rec, org: org.ID, secret: wh.Secret, token: token,
 		rc: NewReceiver(db, rdb, kit.NewDispatcher(rec), testutil.NopLogger()),
 	}
 }
@@ -103,7 +105,13 @@ func payload(t *testing.T, event string, ts time.Time, data any) []byte {
 	return b
 }
 
+// post delivers body with the fixture org's token, like Weline does.
 func (f *fixture) post(t *testing.T, body []byte, org, signature string) int {
+	t.Helper()
+	return f.postWithToken(t, body, org, signature, f.token)
+}
+
+func (f *fixture) postWithToken(t *testing.T, body []byte, org, signature, token string) int {
 	t.Helper()
 	req := testutil.NewRequest(t)
 	req.RequestCtx.Request.Header.SetMethod("POST")
@@ -113,6 +121,9 @@ func (f *fixture) post(t *testing.T, body []byte, org, signature string) int {
 	}
 	if signature != "" {
 		req.RequestCtx.Request.Header.Set("X-Webhook-Signature", signature)
+	}
+	if token != "" {
+		req.RequestCtx.Request.Header.Set(TokenHeader, token)
 	}
 	require.NoError(t, f.rc.Handle(req))
 	return req.RequestCtx.Response.StatusCode()
@@ -137,33 +148,45 @@ func TestReceiver_DispatchesVerifiedEvent(t *testing.T) {
 	assert.Equal(t, "hi", data.Content)
 }
 
-func TestReceiver_RejectsBadSignature(t *testing.T) {
+func TestReceiver_RejectsBadCredentials(t *testing.T) {
 	f := newFixture(t)
 	body := payload(t, kit.EventMessageIncoming, time.Now().UTC(), message(uuid.NewString()))
-	other := newFixture(t) // a second organization with its own secret
+	other := newFixture(t) // a second organization with its own secret and token
+	good := sign(body, f.secret)
 
 	cases := map[string]struct {
-		org, sig string
-		status   int
+		org, sig, token string
+		status          int
 	}{
-		"no signature":                 {f.org.String(), "", 401},
-		"wrong secret":                 {f.org.String(), sign(body, "not-the-secret"), 401},
-		"signature without prefix":     {f.org.String(), sign(body, f.secret)[len("sha256="):], 401},
-		"another org's valid secret":   {f.org.String(), sign(body, other.secret), 401},
-		"org header claims other org":  {other.org.String(), sign(body, f.secret), 401},
-		"org without a module webhook": {uuid.NewString(), sign(body, f.secret), 401},
-		"missing org header":           {"", sign(body, f.secret), 400},
+		"no token":                          {f.org.String(), good, "", 401},
+		"wrong token":                       {f.org.String(), good, "not-the-token", 401},
+		"another org's token":               {f.org.String(), good, other.token, 401},
+		"org header claims other org":       {other.org.String(), good, f.token, 401},
+		"org without a module webhook":      {uuid.NewString(), good, f.token, 401},
+		"missing org header":                {"", good, f.token, 400},
+		"good token, wrong secret":          {f.org.String(), sign(body, "not-the-secret"), f.token, 401},
+		"good token, signature w/o prefix":  {f.org.String(), good[len("sha256="):], f.token, 401},
+		"good token, other org's signature": {f.org.String(), sign(body, other.secret), f.token, 401},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			assert.Equal(t, tc.status, f.post(t, body, tc.org, tc.sig))
+			assert.Equal(t, tc.status, f.postWithToken(t, body, tc.org, tc.sig, tc.token))
 		})
 	}
 
 	tampered := append([]byte{}, body...)
 	tampered[len(tampered)-3] ^= 1
-	assert.Equal(t, 401, f.post(t, tampered, f.org.String(), sign(body, f.secret)), "body changed after signing")
+	assert.Equal(t, 401, f.post(t, tampered, f.org.String(), good), "body changed after signing")
 	assert.Zero(t, f.rec.count(), "nothing may reach modules")
+}
+
+// Upstream sends deliveries made from its webhook cache without a signature;
+// the token alone must then be enough.
+func TestReceiver_AcceptsUnsignedDeliveryWithValidToken(t *testing.T) {
+	f := newFixture(t)
+	body := payload(t, kit.EventMessageIncoming, time.Now().UTC(), message(uuid.NewString()))
+	assert.Equal(t, 200, f.post(t, body, f.org.String(), ""))
+	assert.Equal(t, 1, f.rec.count())
 }
 
 func TestReceiver_DuplicateDeliveryProcessedOnce(t *testing.T) {
@@ -240,12 +263,15 @@ func TestSetup_CreatesWebhookOnceAndKeepsItInPlace(t *testing.T) {
 	assert.Len(t, wh.Secret, 64)
 	assert.ElementsMatch(t, Events, []string(wh.Events))
 	assert.Equal(t, org.ID.String(), wh.Headers[OrgHeader])
+	token, _ := wh.Headers[TokenHeader].(string)
+	assert.Len(t, token, 64)
 	assert.Equal(t, 1, invalidated)
 
 	again, err := s.Ensure(ctx, org.ID, "https://a.example"+Path)
 	require.NoError(t, err)
 	assert.Equal(t, wh.ID, again.ID)
 	assert.Equal(t, wh.Secret, again.Secret, "secret is kept")
+	assert.Equal(t, token, again.Headers[TokenHeader], "token is kept")
 	assert.Equal(t, 1, invalidated, "no change, no cache flush")
 
 	moved, err := s.Ensure(ctx, org.ID, "https://b.example"+Path)
@@ -259,6 +285,32 @@ func TestSetup_CreatesWebhookOnceAndKeepsItInPlace(t *testing.T) {
 	var n int64
 	require.NoError(t, db.Model(&models.Webhook{}).Where("organization_id = ? AND name = ?", org.ID, WebhookName).Count(&n).Error)
 	assert.Equal(t, int64(1), n)
+}
+
+// Webhooks created before the token existed (the first 0.9 deploy) get one
+// on the next Ensure, keeping their secret.
+func TestSetup_AddsTokenToExistingWebhook(t *testing.T) {
+	db := testutil.SetupTestDB(t)
+	org := testutil.CreateTestOrganization(t, db)
+	invalidated := 0
+	s := Setup{DB: db, Invalidate: func(uuid.UUID) { invalidated++ }}
+	ctx := context.Background()
+
+	wh, err := s.Ensure(ctx, org.ID, "https://a.example"+Path)
+	require.NoError(t, err)
+	require.NoError(t, db.Model(&models.Webhook{}).Where("id = ?", wh.ID).
+		Update("headers", models.JSONB{OrgHeader: org.ID.String(), "X-Custom": "kept"}).Error)
+
+	_, err = s.Ensure(ctx, org.ID, "https://a.example"+Path)
+	require.NoError(t, err)
+
+	var stored models.Webhook
+	require.NoError(t, db.First(&stored, "id = ?", wh.ID).Error)
+	token, _ := stored.Headers[TokenHeader].(string)
+	assert.Len(t, token, 64, "token added")
+	assert.Equal(t, "kept", stored.Headers["X-Custom"], "other headers kept")
+	assert.Equal(t, wh.Secret, stored.Secret, "secret kept")
+	assert.Equal(t, 2, invalidated, "Weline's cache is flushed so the new header is used")
 }
 
 func TestSetup_RespectsAdminChoices(t *testing.T) {
@@ -345,5 +397,42 @@ func TestEndToEnd_UpstreamDispatchReachesModule(t *testing.T) {
 		assert.Equal(t, msgID, data.MessageID)
 	case <-time.After(10 * time.Second):
 		t.Fatal("module did not receive the event dispatched by upstream")
+	}
+}
+
+// TestEndToEnd_SecondDispatchFromWelineCache reproduces the production failure
+// of 2026-11-09: upstream caches an org's webhooks in Redis as JSON, and
+// models.Webhook.Secret is tagged json:"-", so every delivery made from the
+// cache is sent unsigned. Only the first dispatch after a cache miss is signed.
+func TestEndToEnd_SecondDispatchFromWelineCache(t *testing.T) {
+	db := testutil.SetupTestDB(t)
+	rdb := setupRedis(t)
+	org := testutil.CreateTestOrganization(t, db)
+
+	rec := &recorder{events: []string{kit.EventMessageIncoming}, notify: make(chan kit.Event, 2)}
+	rc := NewReceiver(db, rdb, kit.NewDispatcher(rec), testutil.NopLogger())
+	g := fastglue.NewGlue()
+	g.POST(Path, rc.Handle)
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	srv := &fasthttp.Server{Handler: g.Handler()}
+	go func() { _ = srv.Serve(ln) }()
+	t.Cleanup(func() { _ = srv.Shutdown() })
+
+	app := &handlers.App{DB: db, Redis: rdb, Log: testutil.NopLogger(), HTTPClient: &http.Client{Timeout: 5 * time.Second}}
+	_, err = Setup{DB: db, Invalidate: app.InvalidateWebhooksCache}.Ensure(context.Background(), org.ID, "http://"+ln.Addr().String()+Path)
+	require.NoError(t, err)
+	t.Cleanup(func() { app.InvalidateWebhooksCache(org.ID) })
+
+	for i, id := range []string{uuid.NewString(), uuid.NewString()} {
+		app.DispatchWebhook(org.ID, models.WebhookEventMessageIncoming, handlers.MessageEventData{MessageID: id, MessageType: models.MessageTypeText})
+		select {
+		case ev := <-rec.notify:
+			var data handlers.MessageEventData
+			require.NoError(t, ev.Decode(&data))
+			assert.Equal(t, id, data.MessageID)
+		case <-time.After(15 * time.Second):
+			t.Fatalf("dispatch %d (cache %s) did not reach the module", i+1, map[int]string{0: "miss", 1: "hit"}[i])
+		}
 	}
 }

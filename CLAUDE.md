@@ -33,8 +33,9 @@ Step-by-step build guide, session rules and progress tracker: `wl-docs/build-gui
 - Weline events reach modules through `internal/modules/hooks`: a module that implements `kit.EventHandler`
   (`Events()` + `HandleEvent`) gets verified, de-duplicated `message.*`, `contact.created` and `transfer.*`
   events; decode `e.Data` into upstream's `handlers.MessageEventData` etc. The receiver is
-  `POST /x/hooks/weline` (outside `/api`: upstream's auth middleware covers all of `/api`; the HMAC
-  signature authenticates). It needs `WELINE_PUBLIC_URL` (public HTTPS base URL; Weline's SSRF guard
+  `POST /x/hooks/weline` (outside `/api`: upstream's auth middleware covers all of `/api`). It
+  authenticates with a per-org token header set on the managed webhook, plus the HMAC signature when
+  Weline sends one (upstream drops it on deliveries made from its webhook cache). It needs `WELINE_PUBLIC_URL` (public HTTPS base URL; Weline's SSRF guard
   blocks localhost, so local dev needs a tunnel). Handlers must be idempotent and quick.
 - Send WhatsApp messages only through `kit.Sender` (wraps Weline's existing client). Never copy sending code.
 - Never log phone numbers, names or message text.
