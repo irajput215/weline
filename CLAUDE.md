@@ -79,6 +79,8 @@ stay in upstream's `test.yml`). Each job is a script you can run locally from th
 - Frontend: `.github/scripts/weline-frontend-check.sh` (after `npm ci`): eslint on Weline files, vue-tsc
   failing only on Weline files (upstream has its own errors), all Vitest tests.
 - Migrations: `.github/scripts/weline-migrate-smoke.sh` (needs an empty database; see the script's env vars).
+- Module journeys: `.github/scripts/weline-module-e2e.sh` (Postgres, Redis, `npm ci` and a Chromium): production
+  build with `-migrate`, then every `frontend/src/modules/*/e2e/*.e2e.ts` through `src/modules/playwright.config.ts`.
 
 ## Review checklist (run before every PR)
 

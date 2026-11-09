@@ -183,6 +183,25 @@ func TestPractitioners(t *testing.T) {
 	assert.Empty(t, active)
 }
 
+func TestPractitioners_NameHiddenOnceUserLeaves(t *testing.T) {
+	f := newFx(t)
+	loc := f.location(t, "A")
+	member := testutil.CreateTestUser(t, f.db, f.org, testutil.WithFullName("Dr Jane Lee"))
+	p, err := f.svc.CreatePractitioner(ctx, f.org, PractitionerInput{DisplayName: "Dr Jane Lee", Role: "GP", UserID: &member.ID, LocationIDs: []uuid.UUID{loc.ID}})
+	require.NoError(t, err)
+	assert.Equal(t, "Dr Jane Lee", p.UserName)
+
+	// The user moves to another organization: the link stays, their name no longer shows here.
+	other := newFx(t)
+	require.NoError(t, f.db.Exec("UPDATE users SET organization_id = ? WHERE id = ?", other.org, member.ID).Error)
+	require.NoError(t, f.db.Exec("DELETE FROM user_organizations WHERE user_id = ? AND organization_id = ?", member.ID, f.org).Error)
+	list, err := f.svc.ListPractitioners(ctx, f.org, true)
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+	assert.Equal(t, &member.ID, list[0].UserID)
+	assert.Empty(t, list[0].UserName)
+}
+
 func TestPractitioners_CrossOrgRefused(t *testing.T) {
 	f := newFx(t)
 	other := newFx(t)

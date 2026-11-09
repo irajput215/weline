@@ -84,7 +84,8 @@
     "emptyDescription": "Add the appointment types patients can book.",
     "badPrice": "Enter a price like 85 or 85.50, or leave it empty.",
     "priceLabel": "Price in dollars (optional)",
-    "rolesHint": "Comma-separated practitioner roles, e.g. GP, Nurse."
+    "rolesHint": "Comma-separated practitioner roles, e.g. GP, Nurse.",
+    "rolesPlaceholder": "GP, Nurse"
   },
   "hours": {
     "title": "Opening hours",
@@ -92,15 +93,17 @@
     "closed": "Closed",
     "noLocations": "Add a location before setting opening hours.",
     "closuresTitle": "Closures",
-    "closuresDescription": "Public holidays and other days the clinic is closed.",
-    "noClosures": "No upcoming closures.",
+    "closuresDescription": "Public holidays and other days the clinic is closed. Closures from the last 12 months stay listed for reference.",
+    "noClosures": "No closures in the last 12 months or ahead.",
     "remove": "Remove closure",
     "reason": "Reason",
     "from": "From",
     "to": "To (optional)",
     "where": "Where",
     "allLocations": "All locations",
-    "addClosure": "Add closure"
+    "addClosure": "Add closure",
+    "reasonPlaceholder": "Good Friday",
+    "past": "past"
   },
   "weekdays": {
     "1": "Monday",
@@ -110,5 +113,6 @@
     "5": "Friday",
     "6": "Saturday",
     "7": "Sunday"
-  }
+  },
+  "saveFailed": "Couldn't save. Check your connection and try again."
 }

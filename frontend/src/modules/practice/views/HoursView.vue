@@ -12,7 +12,8 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import PracticeShell from '../components/PracticeShell.vue'
-import { timeOptions, usePracticeStore, type LoadState } from '../stores/practice'
+import SaveError from '../components/SaveError.vue'
+import { isoDate, timeOptions, usePracticeStore, type LoadState } from '../stores/practice'
 import type { Hours } from '../api'
 
 const ALL = 'all'
@@ -27,6 +28,8 @@ const week = reactive(
   [1, 2, 3, 4, 5, 6, 7].map(weekday => ({ weekday, open: false, opens_at: '09:00', closes_at: '17:00' }))
 )
 const closure = reactive({ location_id: ALL, starts_on: '', ends_on: '', reason: '' })
+/** Which card shows the last save error: the week or the closures. */
+const lastSave = ref<'week' | 'closure'>('week')
 
 // The page is usable once the locations and profile have loaded.
 const pageState = computed<LoadState>(() => {
@@ -51,11 +54,13 @@ watch(locationId, id => {
 })
 
 async function saveWeek() {
+  lastSave.value = 'week'
   const hours: Hours[] = week.filter(d => d.open).map(d => ({ weekday: d.weekday, opens_at: d.opens_at, closes_at: d.closes_at }))
   if (await store.saveHours(locationId.value, hours)) toast.success(t('wl.practice.saved'))
 }
 
 async function addClosure() {
+  lastSave.value = 'closure'
   const ok = await store.addClosure({
     location_id: closure.location_id === ALL ? null : closure.location_id,
     starts_on: closure.starts_on,
@@ -64,6 +69,13 @@ async function addClosure() {
   })
   if (ok) Object.assign(closure, { starts_on: '', ends_on: '', reason: '' })
 }
+
+function removeClosure(id: string) {
+  lastSave.value = 'closure'
+  return store.removeClosure(id)
+}
+
+const today = isoDate()
 
 const closureLocation = (id: string | null) =>
   id === null ? t('wl.practice.hours.allLocations') : (store.locations.find(l => l.id === id)?.name ?? '—')
@@ -119,7 +131,7 @@ onMounted(load)
               </template>
               <span v-else class="text-sm text-muted-foreground">{{ t('wl.practice.hours.closed') }}</span>
             </div>
-            <p v-if="store.saveError" class="text-sm text-destructive" role="alert">{{ store.saveError === 'forbidden' ? t('wl.practice.saveForbidden') : store.saveError }}</p>
+            <SaveError v-if="lastSave === 'week'" />
             <Button v-if="canEdit" :disabled="store.saving || !locationId" data-testid="hours-save" @click="saveWeek">{{ t('wl.practice.save') }}</Button>
             <p v-else class="text-sm text-muted-foreground" data-testid="practice-readonly">{{ t('wl.practice.readOnly') }}</p>
           </div>
@@ -134,18 +146,26 @@ onMounted(load)
         <CardContent class="space-y-4">
           <p v-if="store.closures.length === 0" class="text-sm text-muted-foreground">{{ t('wl.practice.hours.noClosures') }}</p>
           <ul v-else class="divide-y divide-border" data-testid="closures-list">
-            <li v-for="c in store.closures" :key="c.id" class="flex items-center justify-between py-2 text-sm">
+            <li
+              v-for="c in store.closures"
+              :key="c.id"
+              class="flex items-center justify-between py-2 text-sm"
+              :class="{ 'text-muted-foreground': c.ends_on < today }"
+              :data-past="c.ends_on < today || undefined"
+            >
               <span>
                 <span class="font-medium">{{ c.reason }}</span>
                 · {{ c.starts_on === c.ends_on ? c.starts_on : `${c.starts_on} – ${c.ends_on}` }} · {{ closureLocation(c.location_id) }}
+                <span v-if="c.ends_on < today"> · {{ t('wl.practice.hours.past') }}</span>
               </span>
-              <Button v-if="canEdit" variant="ghost" size="sm" :aria-label="t('wl.practice.hours.remove')" @click="store.removeClosure(c.id)"><Trash2 class="h-4 w-4" /></Button>
+              <Button v-if="canEdit" variant="ghost" size="sm" :aria-label="t('wl.practice.hours.remove')" @click="removeClosure(c.id)"><Trash2 class="h-4 w-4" /></Button>
             </li>
           </ul>
+          <SaveError v-if="lastSave === 'closure'" />
           <form v-if="canEdit" class="grid gap-3 md:grid-cols-5 items-end" @submit.prevent="addClosure">
             <div class="grid gap-1.5 md:col-span-2">
               <Label for="c-reason">{{ t('wl.practice.hours.reason') }}</Label>
-              <Input id="c-reason" v-model="closure.reason" maxlength="120" placeholder="Good Friday" data-testid="closure-reason" />
+              <Input id="c-reason" v-model="closure.reason" maxlength="120" :placeholder="t('wl.practice.hours.reasonPlaceholder')" data-testid="closure-reason" />
             </div>
             <div class="grid gap-1.5">
               <Label for="c-from">{{ t('wl.practice.hours.from') }}</Label>

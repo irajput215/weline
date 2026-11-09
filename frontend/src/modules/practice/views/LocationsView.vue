@@ -13,6 +13,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import PracticeShell from '../components/PracticeShell.vue'
+import SaveError from '../components/SaveError.vue'
 import { usePracticeStore } from '../stores/practice'
 import type { Location } from '../api'
 
@@ -102,7 +103,7 @@ onMounted(store.loadLocations)
             <Label for="l-phone">{{ t('wl.practice.fields.phone') }}</Label>
             <Input id="l-phone" v-model="form.phone" maxlength="40" />
           </div>
-          <p v-if="store.saveError" class="text-sm text-destructive" role="alert">{{ store.saveError === 'forbidden' ? t('wl.practice.saveForbidden') : store.saveError }}</p>
+          <SaveError />
           <DialogFooter>
             <Button type="submit" :disabled="store.saving" data-testid="location-save">{{ t('wl.practice.save') }}</Button>
           </DialogFooter>

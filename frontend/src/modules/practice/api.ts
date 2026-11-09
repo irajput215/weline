@@ -97,7 +97,7 @@ export const practiceApi = {
 
   getHours: (locationId: string) => data<{ hours: Hours[] }>(api.get(`${base}/locations/${locationId}/hours`)),
   setHours: (locationId: string, hours: Hours[]) => data<{ hours: Hours[] }>(api.put(`${base}/locations/${locationId}/hours`, { hours })),
-  listClosures: () => data<{ closures: Closure[] }>(api.get(`${base}/closures`)),
+  listClosures: (from?: string) => data<{ closures: Closure[] }>(api.get(`${base}/closures`, from ? { params: { from } } : undefined)),
   createClosure: (body: Omit<Closure, 'id'>) => data<{ closure: Closure }>(api.post(`${base}/closures`, body)),
   deleteClosure: (id: string) => data<{ deleted: boolean }>(api.delete(`${base}/closures/${id}`))
 }

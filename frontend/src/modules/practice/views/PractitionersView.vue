@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import PracticeShell from '../components/PracticeShell.vue'
+import SaveError from '../components/SaveError.vue'
 import { usePracticeStore } from '../stores/practice'
 import type { Practitioner } from '../api'
 
@@ -142,7 +143,7 @@ onMounted(load)
               {{ l.name }}
             </label>
           </fieldset>
-          <p v-if="store.saveError" class="text-sm text-destructive" role="alert">{{ store.saveError === 'forbidden' ? t('wl.practice.saveForbidden') : store.saveError }}</p>
+          <SaveError />
           <DialogFooter>
             <Button type="submit" :disabled="store.saving" data-testid="practitioner-save">{{ t('wl.practice.save') }}</Button>
           </DialogFooter>
