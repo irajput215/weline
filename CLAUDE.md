@@ -22,8 +22,12 @@ Step-by-step build guide, session rules and progress tracker: `wl-docs/build-gui
 - Every table has `organization_id`; every query filters by it. Services take `orgID` as the first argument.
 - Handlers are thin; rules live in services. Use Weline's `{status, data}` envelope
   (`r.SendEnvelope` / `r.SendErrorEnvelope`).
-- Module migrations are versioned (gormigrate), recorded in `wl.schema_migrations`, additive only.
-  Never AutoMigrate module tables.
+- Module migrations are versioned `kit.Migration`s run by `kit.RunMigrations`, recorded in
+  `wl.schema_migrations`, additive only. Never AutoMigrate module tables. (Not gormigrate: it breaks
+  on the gorm version upstream pins, and upstream's dependencies aren't ours to upgrade.)
+- Shared module helpers live in `internal/modules/kit`: `kit.Guard` for permission-checked routes
+  (checks the active org, so use it instead of `middleware.RequirePermission`), `kit.OrgID`,
+  typed errors (`kit.Invalid/NotFound/Conflict` + `kit.SendError`), `kit.SeedPermissions`, `kit.Sender`.
 - Send WhatsApp messages only through `kit.Sender` (wraps Weline's existing client). Never copy sending code.
 - Never log phone numbers, names or message text.
 - Times stored in UTC; each practice has an IANA time zone (default `Australia/Sydney`).
@@ -40,7 +44,10 @@ Backend (repo root):
 - Tests: `make test`
   - Database and Redis tests **skip silently** unless `TEST_DATABASE_URL` and `TEST_REDIS_URL` are set
     (see `test/testutil/db.go`). Set both before claiming tests pass, and report any skips.
-- Lint: `make lint` (runs `golangci-lint run ./...`)
+  - With a database set, `make test` runs packages in parallel against one shared database and fails
+    randomly. Run the suite the way CI does instead:
+    `go test -count=1 -p 1 -timeout 10m $(go list ./... | grep -v /test/)`
+- Lint: `make lint` (runs `golangci-lint run ./...`; needs a golangci-lint built with Go 1.26+)
 - Run with migrations: `make run-migrate` (reads `config.toml`)
 - Production build: `make build-prod && ./whatomate server -migrate`
 
