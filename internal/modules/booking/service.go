@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/shridarpatil/whatomate/internal/models"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/shridarpatil/whatomate/internal/modules/practice"
@@ -23,13 +24,23 @@ import (
 type Service struct {
 	db       *gorm.DB
 	practice *practice.Service
+	offers   offerStore
 	now      func() time.Time
 }
 
 // NewService returns the booking service. It reads the clinic through the
 // practice module's service.
 func NewService(db *gorm.DB) *Service {
-	return &Service{db: db, practice: practice.NewService(db), now: time.Now}
+	return &Service{db: db, practice: practice.NewService(db), offers: &memoryOffers{}, now: time.Now}
+}
+
+// WithRedis keeps chatbot offers in Redis, so they survive restarts and are
+// shared between server instances.
+func (s *Service) WithRedis(rdb *redis.Client) *Service {
+	if rdb != nil {
+		s.offers = redisOffers{rdb: rdb}
+	}
+	return s
 }
 
 // Limits.

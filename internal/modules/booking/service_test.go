@@ -23,7 +23,9 @@ func ptr[T any](v T) *T { return &v }
 var sydney, _ = time.LoadLocation("Australia/Sydney")
 
 // syd is a Sydney wall-clock time.
-func syd(y int, m time.Month, d, h, min int) time.Time { return time.Date(y, m, d, h, min, 0, 0, sydney) }
+func syd(y int, m time.Month, d, h, min int) time.Time {
+	return time.Date(y, m, d, h, min, 0, 0, sydney)
+}
 
 func date(s string) practice.Date {
 	d, err := practice.ParseDate(s)

@@ -15,12 +15,14 @@ var (
 	ErrForbidden = errors.New("insufficient permissions") // 403
 	ErrNotFound  = errors.New("not found")                // 404
 	ErrConflict  = errors.New("conflict")                 // 409
+	ErrTooMany   = errors.New("too many requests")        // 429
+	ErrNotReady  = errors.New("not available")            // 503
 )
 
 // Error is a service error with a message that is safe to show the user.
 // Never put phone numbers, names or message text in Message.
 type Error struct {
-	Kind    error // one of ErrInvalid, ErrForbidden, ErrNotFound, ErrConflict
+	Kind    error // one of ErrInvalid, ErrForbidden, ErrNotFound, ErrConflict, ErrTooMany, ErrNotReady
 	Message string
 }
 
@@ -40,6 +42,13 @@ func NotFound(format string, args ...any) error { return newErr(ErrNotFound, for
 // Conflict("slot taken by appointment %s", id).
 func Conflict(format string, args ...any) error { return newErr(ErrConflict, format, args) }
 
+// TooMany returns a 429 error, e.g. TooMany("too many bookings today").
+func TooMany(format string, args ...any) error { return newErr(ErrTooMany, format, args) }
+
+// NotReady returns a 503 error for a feature that isn't configured yet, e.g.
+// NotReady("online booking isn't set up").
+func NotReady(format string, args ...any) error { return newErr(ErrNotReady, format, args) }
+
 func newErr(kind error, format string, args []any) error {
 	return &Error{Kind: kind, Message: fmt.Sprintf(format, args...)}
 }
@@ -57,6 +66,10 @@ func StatusOf(err error) int {
 		return fasthttp.StatusNotFound
 	case errors.Is(err, ErrConflict):
 		return fasthttp.StatusConflict
+	case errors.Is(err, ErrTooMany):
+		return fasthttp.StatusTooManyRequests
+	case errors.Is(err, ErrNotReady):
+		return fasthttp.StatusServiceUnavailable
 	default:
 		return fasthttp.StatusInternalServerError
 	}

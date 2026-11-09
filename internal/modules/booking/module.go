@@ -1,6 +1,8 @@
 package booking
 
 import (
+	"strings"
+
 	"github.com/shridarpatil/whatomate/internal/config"
 	"github.com/shridarpatil/whatomate/internal/handlers"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
@@ -43,5 +45,35 @@ func (m *Module) Permissions() []kit.Permission {
 	}
 }
 
-// Register implements kit.Module. Filled in with the routes in stage 3.
-func (m *Module) Register(_ *fastglue.Fastglue) {}
+// Register implements kit.Module: the staff API under /api/x/booking, and the
+// public page and API outside /api (no login).
+func (m *Module) Register(g *fastglue.Fastglue) {
+	svc := NewService(m.app.DB).WithRedis(m.app.Redis)
+	captcha := TurnstileFromEnv()
+	var lim limiter = &memoryLimiter{}
+	if m.app.Redis != nil {
+		lim = redisLimiter{rdb: m.app.Redis}
+	}
+	trustProxy, basePath := false, ""
+	if m.cfg != nil {
+		trustProxy, basePath = m.cfg.RateLimit.TrustProxy, strings.TrimSuffix(m.cfg.Server.BasePath, "/")
+	}
+	if captcha.SiteKey() == "" {
+		m.app.Log.Warn("booking: " + TurnstileSiteKeyEnv + " / " + TurnstileSecretEnv + " not set; the public booking page takes no bookings")
+	}
+	pub := &public{svc: svc, captcha: captcha, limit: lim, trustProxy: trustProxy}
+	all := append(routesWithCaptcha(m.app, svc, captcha), publicRoutes(pub)...)
+	all = append(all, route{"GET", pagePath, pub.page(basePath)})
+	for _, rt := range all {
+		switch rt.method {
+		case "GET":
+			g.GET(rt.path, rt.handler)
+		case "POST":
+			g.POST(rt.path, rt.handler)
+		case "PUT":
+			g.PUT(rt.path, rt.handler)
+		case "DELETE":
+			g.DELETE(rt.path, rt.handler)
+		}
+	}
+}
