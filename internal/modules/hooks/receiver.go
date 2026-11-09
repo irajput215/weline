@@ -32,13 +32,21 @@ import (
 
 // Path is where Weline delivers events. It is outside /api on purpose:
 // upstream's auth middleware rejects every unauthenticated /api request, and
-// Weline's outbound webhooks carry no login. The HMAC signature is the
-// authentication here.
+// Weline's outbound webhooks carry no login. The per-org token (and the HMAC
+// signature, when Weline sends one) is the authentication here.
 const Path = "/x/hooks/weline"
 
 // OrgHeader names the organization a delivery belongs to. Setup puts it in the
-// webhook's custom headers; the signature check proves it.
+// webhook's custom headers; the token proves it.
 const OrgHeader = "X-Weline-Org"
+
+// TokenHeader carries a random per-org token that setup stores in the
+// webhook's custom headers. It is required on every delivery because upstream
+// does not always sign: getWebhooksCached caches webhooks as JSON and
+// models.Webhook.Secret is tagged json:"-", so deliveries made from Weline's
+// Redis cache arrive without X-Webhook-Signature. Custom headers survive the
+// cache. When a signature is present it must still be valid.
+const TokenHeader = "X-Weline-Hook-Token"
 
 const (
 	// dedupeTTL is how long a delivery is remembered (Weline retries within seconds).
@@ -85,12 +93,16 @@ func (rc *Receiver) Handle(r *fastglue.Request) error {
 	ctx, cancel := kit.Context()
 	defer cancel()
 
-	secret, err := rc.secretFor(ctx, orgID)
+	secret, token, err := rc.credentialsFor(ctx, orgID)
 	if err != nil {
-		rc.log.Error("hooks: load webhook secret", "error", err, "org_id", orgID)
+		rc.log.Error("hooks: load webhook credentials", "error", err, "org_id", orgID)
 		return reply(r, fasthttp.StatusInternalServerError, "internal error")
 	}
-	if secret == "" || !validSignature(body, secret, string(r.RequestCtx.Request.Header.Peek("X-Webhook-Signature"))) {
+	if token == "" || !hmac.Equal([]byte(token), r.RequestCtx.Request.Header.Peek(TokenHeader)) {
+		rc.log.Warn("hooks: rejected delivery with bad token", "org_id", orgID)
+		return reply(r, fasthttp.StatusUnauthorized, "invalid token")
+	}
+	if sig := string(r.RequestCtx.Request.Header.Peek("X-Webhook-Signature")); sig != "" && !validSignature(body, secret, sig) {
 		rc.log.Warn("hooks: rejected delivery with bad signature", "org_id", orgID)
 		return reply(r, fasthttp.StatusUnauthorized, "invalid signature")
 	}
@@ -130,16 +142,18 @@ func (rc *Receiver) Handle(r *fastglue.Request) error {
 	return reply(r, fasthttp.StatusOK, "ok")
 }
 
-// secretFor returns the signing secret of the organization's module webhook.
-func (rc *Receiver) secretFor(ctx context.Context, orgID uuid.UUID) (string, error) {
+// credentialsFor returns the signing secret and the token of the
+// organization's active module webhook (empty when there is none).
+func (rc *Receiver) credentialsFor(ctx context.Context, orgID uuid.UUID) (secret, token string, err error) {
 	var found []models.Webhook
-	err := rc.db.WithContext(ctx).
+	err = rc.db.WithContext(ctx).
 		Where("organization_id = ? AND name = ? AND is_active = ?", orgID, WebhookName, true).
 		Limit(1).Find(&found).Error
 	if err != nil || len(found) == 0 {
-		return "", err
+		return "", "", err
 	}
-	return found[0].Secret, nil
+	token, _ = found[0].Headers[TokenHeader].(string)
+	return found[0].Secret, token, nil
 }
 
 // validSignature checks "sha256=<hex HMAC-SHA256(body, secret)>" in constant time.
