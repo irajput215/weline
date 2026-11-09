@@ -13,6 +13,9 @@ import (
 
 func TestRedisOffersAndLimiter(t *testing.T) {
 	rdb := testutil.SetupTestRedis(t)
+	if rdb == nil {
+		t.Skip("TEST_REDIS_URL not set")
+	}
 	store := redisOffers{rdb: rdb}
 	org, other := uuid.New(), uuid.New()
 	at := time.Date(2027, 3, 8, 9, 0, 0, 0, time.UTC)
