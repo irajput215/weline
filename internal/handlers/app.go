@@ -281,3 +281,4 @@ func (a *App) decodeRequest(r *fastglue.Request, v any) error {
 	}
 	return nil
 }
+// seam guard probe: this PR must fail CI and will be closed
