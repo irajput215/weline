@@ -33,9 +33,9 @@ Request: `{ name, address?, phone? }`
 Response 200: `{ location }`
 Errors: 400 name missing or too long · 409 "a location named '…' already exists"
 
-### PATCH /api/x/practice/locations/{id}
+### PUT /api/x/practice/locations/{id}
 Permission: wl_practice_locations:update
-Request: any of `{ name, address, phone, is_active }`
+Request (partial: only the fields sent change): any of `{ name, address, phone, is_active }`
 Response 200: `{ location }`
 Errors: 404 location not found (also for another org's id) · 409 duplicate name
 
@@ -51,9 +51,9 @@ Request: `{ display_name, role, ahpra_number?, user_id?, location_ids: [uuid, �
 Response 200: `{ practitioner }`
 Errors: 400 missing fields / AHPRA format / no locations · 404 a location or user not found in this organization · 409 "that user is already linked to practitioner '…'"
 
-### PATCH /api/x/practice/practitioners/{id}
+### PUT /api/x/practice/practitioners/{id}
 Permission: wl_practice_practitioners:update
-Request: any of `{ display_name, role, ahpra_number, user_id (null to unlink), location_ids, is_active }`
+Request (partial: only the fields sent change): any of `{ display_name, role, ahpra_number, user_id (null to unlink), location_ids, is_active }`
 Response 200: `{ practitioner }`
 Errors: as POST · 404 practitioner not found
 
@@ -69,9 +69,9 @@ Request: `{ name, duration_minutes, price_cents?, allowed_roles: [string, …] }
 Response 200: `{ service, warnings: ["no practitioner has role '…'"] }`
 Errors: 400 duration not on the slot grid or out of range / negative price / no roles · 409 duplicate name · 409 clinic profile not set up (no slot grid yet)
 
-### PATCH /api/x/practice/services/{id}
+### PUT /api/x/practice/services/{id}
 Permission: wl_practice_services:update
-Request: any of `{ name, duration_minutes, price_cents (null to clear), allowed_roles, is_active }`
+Request (partial: only the fields sent change): any of `{ name, duration_minutes, price_cents (null to clear), allowed_roles, is_active }`
 Response 200: `{ service, warnings }`
 Errors: as POST · 404 service not found
 
