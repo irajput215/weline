@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import PracticeShell from '../components/PracticeShell.vue'
+import SaveError from '../components/SaveError.vue'
 import { usePracticeStore } from '../stores/practice'
 
 const { t } = useI18n()
@@ -115,9 +116,7 @@ onMounted(store.loadProfile)
             <Label for="p-web">{{ t('wl.practice.profile.website') }}</Label>
             <Input id="p-web" v-model="form.website" :disabled="!canEdit" maxlength="255" />
           </div>
-          <p v-if="store.saveError" class="text-sm text-destructive md:col-span-2" role="alert" data-testid="practice-save-error">
-            {{ store.saveError === 'forbidden' ? t('wl.practice.saveForbidden') : store.saveError }}
-          </p>
+          <SaveError class="md:col-span-2" />
           <div v-if="canEdit" class="md:col-span-2">
             <Button type="submit" :disabled="store.saving" data-testid="profile-save">{{ t('wl.practice.save') }}</Button>
           </div>

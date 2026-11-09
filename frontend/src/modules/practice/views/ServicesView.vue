@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import PracticeShell from '../components/PracticeShell.vue'
+import SaveError from '../components/SaveError.vue'
 import { centsToDollars, dollarsToCents, durationOptions, usePracticeStore } from '../stores/practice'
 import type { Service } from '../api'
 
@@ -148,12 +149,10 @@ onMounted(load)
           </div>
           <div class="grid gap-1.5">
             <Label for="s-roles">{{ t('wl.practice.fields.roles') }}</Label>
-            <Input id="s-roles" v-model="form.roles" :placeholder="knownRoles.join(', ') || 'GP, Nurse'" data-testid="service-roles" />
+            <Input id="s-roles" v-model="form.roles" :placeholder="knownRoles.join(', ') || t('wl.practice.services.rolesPlaceholder')" data-testid="service-roles" />
             <p class="text-xs text-muted-foreground">{{ t('wl.practice.services.rolesHint') }}</p>
           </div>
-          <p v-if="formError || store.saveError" class="text-sm text-destructive" role="alert">
-            {{ formError || (store.saveError === 'forbidden' ? t('wl.practice.saveForbidden') : store.saveError) }}
-          </p>
+          <SaveError :message="formError" />
           <DialogFooter>
             <Button type="submit" :disabled="store.saving" data-testid="service-save">{{ t('wl.practice.save') }}</Button>
           </DialogFooter>

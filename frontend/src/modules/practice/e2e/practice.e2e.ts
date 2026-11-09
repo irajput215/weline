@@ -56,6 +56,15 @@ test.describe.serial('practice setup', () => {
     await page.getByTestId('closure-add').click()
     await expect(page.getByTestId('closures-list')).toContainText(`Good Friday ${run}`)
 
+    // A closure that has already ended stays listed for reference, marked as past (R15).
+    const lastMonth = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10)
+    await page.getByTestId('closure-reason').fill(`Staff training ${run}`)
+    await page.getByTestId('closure-from').fill(lastMonth)
+    await page.getByTestId('closure-add').click()
+    const past = page.getByTestId('closures-list').getByRole('listitem').filter({ hasText: `Staff training ${run}` })
+    await expect(past).toHaveAttribute('data-past', 'true')
+    await expect(past).toContainText('past')
+
     // The week comes back as saved.
     await page.reload()
     await choose(page, 'hours-location', location)
@@ -149,6 +158,7 @@ test.describe.serial('practice setup', () => {
     await expect(page.getByTestId('hours-save')).toHaveCount(0)
     await expect(page.getByTestId('practice-readonly')).toBeVisible()
     await expect(page.getByTestId('closures-list')).toContainText(`Good Friday ${run}`)
+    await expect(page.getByTestId('closures-list')).toContainText(`Staff training ${run}`)
     await expect(page.getByTestId('closure-add')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Remove closure' })).toHaveCount(0)
   })

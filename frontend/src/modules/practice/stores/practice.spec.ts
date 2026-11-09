@@ -15,7 +15,7 @@ const api = vi.hoisted(() => ({
 }))
 vi.mock('../api', () => ({ practiceApi: api }))
 
-import { centsToDollars, dollarsToCents, durationOptions, timeOptions, usePracticeStore } from './practice'
+import { centsToDollars, dollarsToCents, durationOptions, isoDate, timeOptions, usePracticeStore } from './practice'
 
 const httpError = (status: number, message?: string) => ({ response: { status, data: { message } } })
 const loc = (id: string, name: string) => ({ id, name, address: '', phone: '', is_active: true })
@@ -125,6 +125,7 @@ describe('practice store', () => {
     api.createClosure.mockResolvedValue({ closure: { id: 'c1', location_id: null, starts_on: '2027-03-26', ends_on: '2027-03-26', reason: 'Good Friday' } })
     api.deleteClosure.mockResolvedValue({ deleted: true })
     await store.loadClosures()
+    expect(api.listClosures).toHaveBeenCalledWith(isoDate(-365))
     await store.addClosure({ location_id: null, starts_on: '2027-03-26', ends_on: '2027-03-26', reason: 'Good Friday' })
     expect(store.closures.map(c => c.id)).toEqual(['c1', 'c2'])
     await store.removeClosure('c2')
@@ -144,6 +145,12 @@ describe('practice helpers', () => {
   it('builds durations in whole slots up to 8 hours', () => {
     expect(durationOptions(60)).toEqual([60, 120, 180, 240, 300, 360, 420, 480])
     expect(durationOptions(15)[0]).toBe(15)
+  })
+
+  it('formats local dates', () => {
+    const now = new Date(2027, 0, 1, 9)
+    expect(isoDate(0, now)).toBe('2027-01-01')
+    expect(isoDate(-365, now)).toBe('2026-01-01')
   })
 
   it('converts dollars and cents', () => {

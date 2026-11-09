@@ -147,7 +147,7 @@ export const usePracticeStore = defineStore('wl-practice', () => {
   }
   const loadClosures = () =>
     load('closures', async () => {
-      closures.value = (await practiceApi.listClosures()).closures
+      closures.value = (await practiceApi.listClosures(isoDate(-365))).closures
     })
   async function addClosure(body: Omit<Closure, 'id'>) {
     const r = await save(() => practiceApi.createClosure(body))
@@ -167,6 +167,12 @@ export const usePracticeStore = defineStore('wl-practice', () => {
     loadServices, saveService, loadHours, saveHours, loadClosures, addClosure, removeClosure
   }
 })
+
+/** The local date `days` from today as YYYY-MM-DD. */
+export function isoDate(days = 0, now = new Date()): string {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + days)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 /** "HH:MM" options on a slot grid, from 00:00 to 24:00. */
 export function timeOptions(slot: number): string[] {

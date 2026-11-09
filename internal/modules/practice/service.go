@@ -151,7 +151,7 @@ func (s *Service) SaveProfile(ctx context.Context, orgID uuid.UUID, in ProfileIn
 		if err := tx.Model(&p).Updates(fields).Error; err != nil {
 			return err
 		}
-		return tx.First(&p, "id = ?", p.ID).Error
+		return tx.First(&p, "organization_id = ? AND id = ?", orgID, p.ID).Error
 	})
 	if isUniqueViolation(err) {
 		return nil, kit.Conflict("booking slug %q is taken", in.BookingSlug)
@@ -300,7 +300,7 @@ func (s *Service) UpdateLocation(ctx context.Context, orgID, id uuid.UUID, in Lo
 		fields["is_active"] = *in.IsActive
 	}
 	if len(fields) > 0 {
-		if err := s.db.WithContext(ctx).Model(l).Updates(fields).Error; err != nil {
+		if err := s.db.WithContext(ctx).Model(l).Where("organization_id = ?", orgID).Updates(fields).Error; err != nil {
 			if isUniqueViolation(err) {
 				return nil, kit.Conflict("a location named %q already exists", fields["name"])
 			}
@@ -380,8 +380,10 @@ func (s *Service) fillPractitioners(ctx context.Context, orgID uuid.UUID, ps []P
 	}
 	names := map[uuid.UUID]string{}
 	if len(userIDs) > 0 {
-		var users []models.User
-		if err := s.db.WithContext(ctx).Select("id", "full_name").Where("id IN ?", userIDs).Find(&users).Error; err != nil {
+		var users []Member
+		// Only users still in this organization: someone who left keeps the link but shows no name.
+		if err := s.db.WithContext(ctx).Raw(`SELECT u.id, u.full_name FROM users u
+			WHERE u.id IN ? AND u.deleted_at IS NULL AND `+memberOf, userIDs, orgID, orgID).Scan(&users).Error; err != nil {
 			return fmt.Errorf("load linked users: %w", err)
 		}
 		for _, u := range users {
@@ -498,10 +500,14 @@ func (s *Service) ahpra(n string) (string, error) {
 
 // checkUserLink allows linking only a user of this organization who isn't
 // already linked to another practitioner here (R9).
+// memberOf is true when user u belongs to the organization in its two parameters,
+// as their home organization or through user_organizations.
+const memberOf = `(u.organization_id = ? OR EXISTS (SELECT 1 FROM user_organizations uo
+	WHERE uo.user_id = u.id AND uo.organization_id = ? AND uo.deleted_at IS NULL))`
+
 func (s *Service) checkUserLink(tx *gorm.DB, orgID, userID, self uuid.UUID) error {
 	var n int64
-	err := tx.Raw(`SELECT count(*) FROM users u WHERE u.id = ? AND u.deleted_at IS NULL AND (u.organization_id = ?
-		OR EXISTS (SELECT 1 FROM user_organizations uo WHERE uo.user_id = u.id AND uo.organization_id = ? AND uo.deleted_at IS NULL))`,
+	err := tx.Raw(`SELECT count(*) FROM users u WHERE u.id = ? AND u.deleted_at IS NULL AND `+memberOf,
 		userID, orgID, orgID).Scan(&n).Error
 	if err != nil {
 		return err
@@ -576,9 +582,7 @@ func (s *Service) practitioner(ctx context.Context, orgID, id uuid.UUID) (*Pract
 func (s *Service) ListMembers(ctx context.Context, orgID uuid.UUID) ([]Member, error) {
 	out := []Member{}
 	err := s.db.WithContext(ctx).Raw(`SELECT u.id, u.full_name, u.email FROM users u
-		WHERE u.deleted_at IS NULL AND u.is_active AND (u.organization_id = ?
-		OR EXISTS (SELECT 1 FROM user_organizations uo WHERE uo.user_id = u.id AND uo.organization_id = ? AND uo.deleted_at IS NULL))
-		ORDER BY u.full_name`, orgID, orgID).Scan(&out).Error
+		WHERE u.deleted_at IS NULL AND u.is_active AND `+memberOf+` ORDER BY u.full_name`, orgID, orgID).Scan(&out).Error
 	if err != nil {
 		return nil, fmt.Errorf("list members: %w", err)
 	}
@@ -687,7 +691,7 @@ func (s *Service) UpdateService(ctx context.Context, orgID, id uuid.UUID, in Ser
 		fields["is_active"] = *in.IsActive
 	}
 	if len(fields) > 0 {
-		if err := s.db.WithContext(ctx).Model(sv).Updates(fields).Error; err != nil {
+		if err := s.db.WithContext(ctx).Model(sv).Where("organization_id = ?", orgID).Updates(fields).Error; err != nil {
 			if isUniqueViolation(err) {
 				return nil, nil, kit.Conflict("a service named %q already exists", fields["name"])
 			}
