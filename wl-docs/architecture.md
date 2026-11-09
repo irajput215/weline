@@ -10,9 +10,10 @@ and [`../CLAUDE.md`](../CLAUDE.md). Data: [`data-model.md`](data-model.md). Secu
 | Component | What it is | Where |
 | --- | --- | --- |
 | **Weline core** | Upstream whatomate: auth, organizations, roles, contacts, inbox, templates, campaigns, chatbot flows, outbound webhooks, WhatsApp client. Kept as close to upstream as possible. | `cmd/`, `internal/` (except `internal/modules/`), `frontend/src/` (except `frontend/src/modules/`) |
-| **Modules** | Clinic features (practice, booking, calendar, reminders, AI, connectors, CRM), each a Go package + a Vue folder. Today: `example` (template). | `internal/modules/<module>/`, `frontend/src/modules/<module>/` |
+| **Modules** | Clinic features (practice, booking, calendar, reminders, AI, connectors, CRM), each a Go package + a Vue folder. Today: `example` (template), `practice`, `booking`. | `internal/modules/<module>/`, `frontend/src/modules/<module>/` |
 | **Module kit** | Shared module plumbing: module contract, migration runner, permission seeder, `kit.Guard`, typed errors, `kit.Sender`, events. | `internal/modules/kit/` |
 | **Registry** | Lists module factories; mounts routes, runs migrations, wires event handlers. | `internal/modules/registry.go`, `frontend/src/modules/index.ts` |
+| **Public routes** | Unauthenticated module pages and APIs live outside `/api` (upstream's auth covers all of `/api`): the hooks receiver and Booking's `/book/<slug>` page with `/x/booking/public/...`. | `internal/modules/hooks/`, `internal/modules/booking/page.go` |
 | **Hooks receiver** | Receives Weline's own outbound webhooks and dispatches events to modules. | `internal/modules/hooks/` |
 | **Postgres, `public` schema** | Upstream tables (organizations, users, contacts, messages, whatsapp_accounts, webhooks, permissions…). Modules read them and link to them by id, never alter them. | upstream migrations (`internal/database`) |
 | **Postgres, `wl` schema** | Every module table (`wl.<module>_<thing>`) and `wl.schema_migrations`. | module `migrations.go` |
@@ -65,7 +66,7 @@ Modules touch upstream code only at these lines, each marked `// Weline hook`; C
 | 4 | `frontend/src/components/layout/AppLayout.vue` | `.concat(moduleNav)` | Module sidebar sections |
 | 5 | `frontend/src/i18n/index.ts` | `mergeModuleMessages(i18n)` | Module strings as `wl.<module>.*` |
 
-Pre-SDLC exceptions (legacy booking prototype hooks, rebrand, CI tweaks) are listed with reasons in
+Pre-SDLC exceptions (rebrand, CI tweaks) are listed with reasons in
 `.github/weline/upstream-allowlist.txt` and `seam-exceptions.txt`.
 
 ## Event flow

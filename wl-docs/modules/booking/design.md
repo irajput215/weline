@@ -77,6 +77,21 @@ erDiagram
         uuid changed_by_id }
 ```
 
+### Changes made while building (step 1.2 B)
+
+- Successful writes return `200`, not `201`: Weline's envelope always replies 200, as in Practice.
+- An expired chatbot offer is `409` with a message the flow can show, not `410`.
+- `kit` gained two error kinds for the public API: `TooMany` (429) and `NotReady` (503).
+- The public page's own rate limiter (Redis, fixed window, per hashed IP and hashed mobile) is used instead of
+  upstream's `middleware.RateLimit`, so the per-mobile limit and the tests share one mechanism. It honours
+  `rate_limit.trust_proxy` like upstream's and fails open if Redis is down.
+- Practice gained a read API for other modules: `GetLocation`, `GetPractitioner`, `GetService`, `ProfileBySlug`,
+  `OpeningMinutes`, `ClosedDays`.
+- Patient search matches names or numbers (a query that is mostly digits searches numbers, local `04…` form
+  converted to `614…`).
+- Staff bookings skip the minimum notice and booking window (only the past is refused); patients get both.
+- The public page and the store ignore stale free-time answers (dates fire two events; found by a probe).
+
 ## Slot search (R4–R6)
 
 For a service S at location L over local dates D1..Dn (clipped to now + minimum notice and to the booking window):

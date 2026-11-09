@@ -4,7 +4,7 @@ Staff routes are under `/api/x/booking`, need a Weline login (cookie session or 
 permission in the **active** organization (`kit.Guard`). Public routes are under `/x/booking/public/{slug}` and
 `/book/{slug}`, outside `/api`, with no login. Responses use Weline's envelope:
 `{ "status": "success", "data": … }` or `{ "status": "error", "message": … }`. Errors common to every staff route:
-`401` not logged in · `403` no permission. Validation errors (`400`) name the field; conflicts (`409`) name the clash.
+`401` not logged in · `403` no permission. Validation errors (`400`) name the field; conflicts (`409`) name the clash. Successful writes return `200` (Weline's envelope).
 
 Instants are RFC 3339 in UTC (`starts_at`); responses also carry `local` (`"2026-11-11T10:15"`, clinic time) and a
 display `label`. Dates are `"YYYY-MM-DD"` in the clinic's time zone; times of day `"HH:MM"`. Prices are integer
@@ -29,7 +29,7 @@ from `from` (default today).
 Response 200 (flat, for response mapping): `{ offer_id, slot_count, slot_1_label, …, slot_10_label, message }`
 (missing slots are empty strings; `message` is "Here are the next available times" or "No times available in the
 next N days").
-Errors: as above · 410 offer expired
+Errors: as above · 409 "those options have expired; please choose again"
 
 ### GET /api/x/booking/catalog?view=chatbot
 Permission: wl_booking_appointments:read
@@ -52,8 +52,8 @@ Errors: 404
 Permission: wl_booking_appointments:create
 Staff request: `{ contact_id, service_id, location_id, practitioner_id, starts_at, note?, outside_hours?, allow_patient_overlap? }`
 Chatbot request: `{ offer_id, choice, phone }` (`choice` = the tapped slot label, `phone` = `{{phone_number}}`); source `whatsapp`
-Response 201: `{ appointment, confirmation }` (`confirmation` = one line for the chat, e.g. "Booked: Standard consult with Dr Lee, Tue 11 Nov 10:15 at Bondi. Ref K7Q2MX")
-Errors: 400 not on the grid, outside hours or availability (staff: unless `outside_hours`), in the past, beyond the window, unknown choice · 404 contact not found (chatbot) · 409 clash (names the existing appointment's time and practitioner) · 409 patient already booked then (staff: unless `allow_patient_overlap`) · 410 offer expired
+Response 200: `{ appointment, confirmation }` (`confirmation` = one line for the chat, e.g. "Booked: Standard consult with Dr Lee, Tue 11 Nov 10:15 at Bondi. Ref K7Q2MX")
+Errors: 400 not on the grid, outside hours or availability (staff: unless `outside_hours`), in the past, beyond the window, unknown choice · 404 contact not found (chatbot) · 409 clash (names the existing appointment's time and practitioner) · 409 patient already booked then (staff: unless `allow_patient_overlap`) · 409 offer expired
 
 ### PUT /api/x/booking/appointments/{id}
 Permission: wl_booking_appointments:update
@@ -96,7 +96,7 @@ Response 200: `{ blocks: [ { id, practitioner_id, starts_at, ends_at, reason } ]
 ### POST /api/x/booking/blocks
 Permission: wl_booking_availability:update
 Request: `{ practitioner_id, starts_at, ends_at, reason }`
-Response 201: `{ block, clashes: [Appointment] }` (existing appointments inside the block are listed, not cancelled)
+Response 200: `{ block, clashes: [Appointment] }` (existing appointments inside the block are listed, not cancelled)
 Errors: 400 end before start, reason missing · 404 practitioner
 
 ### DELETE /api/x/booking/blocks/{id}
@@ -105,7 +105,7 @@ Response 200: `{ deleted: true }` · Errors: 404
 
 ### GET /api/x/booking/settings · PUT /api/x/booking/settings
 Permission: wl_booking_availability:read / :update
-Body: `{ min_notice_minutes, window_days }` · Response 200: `{ settings, booking_link, ready: { ok, missing: [...] } }`
+Body: `{ min_notice_minutes, window_days }` · Response 200: `{ settings, ready: { ok, missing: [...], slug, path } }` (`path` = `/book/<slug>`)
 `missing` may list `profile`, `services`, `availability`, `captcha`.
 
 ## Public (no login)
@@ -116,7 +116,7 @@ Rate limited per IP; unknown slug → 404 `{ status: "error", message: "Booking 
 The booking page (HTML). 404 page for an unknown slug.
 
 ### GET /x/booking/public/{slug}
-Response 200: `{ clinic: { name, time_zone, website }, locations: [ { id, name, address } ], services: [ { id, name, duration_minutes, price_cents } ], practitioners: [ { id, display_name, role, location_ids } ], captcha_site_key, notice }`
+Response 200: `{ clinic: { name, time_zone, website }, locations: [ { id, name, address } ], services: [ { id, name, duration_minutes, price_cents } ], practitioners: [ { id, display_name, role, location_ids, service_ids } ], captcha_site_key, notice }`
 
 ### GET /x/booking/public/{slug}/slots?service_id=&location_id=&practitioner_id=&date=
 Response 200: `{ slots: [ { starts_at, local, label, practitioner_ids } ] }` (one local day)
@@ -125,5 +125,5 @@ Errors: 400 as staff slots · 429 rate limited
 ### POST /x/booking/public/{slug}/appointments
 Request: `{ service_id, location_id, practitioner_id?, starts_at, name, mobile, notice_accepted: true, captcha_token }`
 (no practitioner = the first one free at that time)
-Response 201: `{ reference, local, label, location: { name, address }, practitioner: { display_name }, service: { name } }`
+Response 200: `{ reference, local, label, service, practitioner, location, address }` (names only, no ids)
 Errors: 400 invalid mobile, name missing, notice not accepted, captcha failed · 409 "That time was just taken, please pick another" · 429 too many bookings · 503 online booking isn't set up (no captcha secret)
