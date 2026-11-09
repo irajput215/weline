@@ -1,7 +1,9 @@
 package kit
 
 import (
+	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shridarpatil/whatomate/internal/middleware"
@@ -51,6 +53,17 @@ func OrgID(r *fastglue.Request, orgs OrgResolver) (uuid.UUID, error) {
 		return uuid.Nil, ErrUnauthenticated
 	}
 	return id, nil
+}
+
+// RequestTimeout bounds the work a handler starts with Context.
+const RequestTimeout = 30 * time.Second
+
+// Context returns a context for a handler's service calls. Never pass
+// r.RequestCtx as a context.Context: fasthttp recycles it after the response
+// and it has no working Done() outside a running server (upstream uses
+// detached contexts for the same reason, see handlers/business_profile.go).
+func Context() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), RequestTimeout)
 }
 
 // Caller is the authenticated user and active organization of a request.

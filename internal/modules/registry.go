@@ -14,6 +14,7 @@ import (
 
 	"github.com/shridarpatil/whatomate/internal/config"
 	"github.com/shridarpatil/whatomate/internal/handlers"
+	"github.com/shridarpatil/whatomate/internal/modules/example"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/zerodha/fastglue"
 	"github.com/zerodha/logf"
@@ -28,8 +29,10 @@ import (
 type Factory func(app *handlers.App, cfg *config.Config) kit.Module
 
 // factories lists every module, in migration order (a module that reads
-// another module's tables comes after it). Empty until the first module.
-var factories = []Factory{}
+// another module's tables comes after it).
+var factories = []Factory{
+	example.New,
+}
 
 // Register mounts every module's routes. Called from setupRoutes, before the
 // frontend catch-all route.
