@@ -30,6 +30,12 @@ Step-by-step build guide, session rules and progress tracker: `wl-docs/build-gui
   typed errors (`kit.Invalid/NotFound/Conflict` + `kit.SendError`), `kit.SeedPermissions`, `kit.Sender`.
   Handlers get a context from `kit.Context()`; never pass `r.RequestCtx` as a `context.Context`.
   Copy `internal/modules/example` + `frontend/src/modules/example` to start a new module.
+- Weline events reach modules through `internal/modules/hooks`: a module that implements `kit.EventHandler`
+  (`Events()` + `HandleEvent`) gets verified, de-duplicated `message.*`, `contact.created` and `transfer.*`
+  events; decode `e.Data` into upstream's `handlers.MessageEventData` etc. The receiver is
+  `POST /x/hooks/weline` (outside `/api`: upstream's auth middleware covers all of `/api`; the HMAC
+  signature authenticates). It needs `WELINE_PUBLIC_URL` (public HTTPS base URL; Weline's SSRF guard
+  blocks localhost, so local dev needs a tunnel). Handlers must be idempotent and quick.
 - Send WhatsApp messages only through `kit.Sender` (wraps Weline's existing client). Never copy sending code.
 - Never log phone numbers, names or message text.
 - Times stored in UTC; each practice has an IANA time zone (default `Australia/Sydney`).

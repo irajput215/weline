@@ -126,6 +126,6 @@ func TestRegister_CallsEveryModule(t *testing.T) {
 		factory(stubModule{name: "a", registered: &calls}),
 		factory(stubModule{name: "b", registered: &calls}),
 	}
-	Register(fastglue.NewGlue(), nil, nil)
+	Register(fastglue.NewGlue(), &handlers.App{Log: testutil.NopLogger()}, nil)
 	assert.Equal(t, 2, calls)
 }

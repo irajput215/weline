@@ -36,6 +36,10 @@ services:
       # Update if you add a custom domain (comma-separated).
       - key: WHATOMATE_SERVER__ALLOWED_ORIGINS
         value: https://weline-dev.onrender.com
+      # Public base URL Weline's own webhooks call back to (module event receiver
+      # at /x/hooks/weline). Must be publicly reachable over HTTPS.
+      - key: WELINE_PUBLIC_URL
+        value: https://weline-dev.onrender.com
       - key: WHATOMATE_APP__ENCRYPTION_KEY
         generateValue: true
       - key: WHATOMATE_JWT__SECRET

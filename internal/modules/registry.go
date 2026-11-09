@@ -15,6 +15,7 @@ import (
 	"github.com/shridarpatil/whatomate/internal/config"
 	"github.com/shridarpatil/whatomate/internal/handlers"
 	"github.com/shridarpatil/whatomate/internal/modules/example"
+	"github.com/shridarpatil/whatomate/internal/modules/hooks"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/zerodha/fastglue"
 	"github.com/zerodha/logf"
@@ -34,12 +35,19 @@ var factories = []Factory{
 	example.New,
 }
 
-// Register mounts every module's routes. Called from setupRoutes, before the
-// frontend catch-all route.
+// Register mounts every module's routes, then the Weline webhook receiver
+// with every module that implements kit.EventHandler. Called from
+// setupRoutes, before the frontend catch-all route.
 func Register(g *fastglue.Fastglue, app *handlers.App, cfg *config.Config) {
+	var eventHandlers []kit.EventHandler
 	for _, f := range factories {
-		f(app, cfg).Register(g)
+		m := f(app, cfg)
+		m.Register(g)
+		if h, ok := m.(kit.EventHandler); ok {
+			eventHandlers = append(eventHandlers, h)
+		}
 	}
+	hooks.Mount(g, app, eventHandlers)
 }
 
 // Migrate creates the wl schema and wl.schema_migrations, runs every module's
