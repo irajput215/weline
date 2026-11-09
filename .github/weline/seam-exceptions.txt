@@ -1,0 +1,10 @@
+# Exact lines the seam guard tolerates in the five seam files beyond
+# "// Weline hook" lines. Format: <path>|<line, leading/trailing spaces trimmed>
+# A listed line may be added or removed in that file. Keep this list short:
+# every entry is a line that can conflict when upstream changes it.
+
+# Rebrand of the sidebar product name (Whatomate -> Weline), from before the module SDLC.
+frontend/src/components/layout/AppLayout.vue|<span class="font-semibold text-sm text-white light:text-gray-900">Whatomate</span>
+frontend/src/components/layout/AppLayout.vue|<span class="font-semibold text-sm text-white light:text-gray-900">Weline</span>
+frontend/src/components/layout/AppLayout.vue|Whatomate
+frontend/src/components/layout/AppLayout.vue|Weline

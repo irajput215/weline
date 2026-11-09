@@ -1,0 +1,83 @@
+# Weline CI for module work. A Weline-only file: upstream's workflows stay as
+# they are. Go lint and the Go test suite (with Postgres and Redis) already run
+# for these PRs in test.yml, so this workflow adds what that one lacks.
+name: Weline CI
+
+on:
+  pull_request:
+    branches: [dev, production]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weline-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Fails if a PR changes upstream whatomate files outside the five seams and
+  # the reviewed allowlist (.github/weline/upstream-allowlist.txt).
+  seam-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fetch upstream whatomate
+        run: |
+          git remote add upstream https://github.com/shridarpatil/whatomate.git
+          git fetch --no-tags upstream main
+      - name: Seam guard
+        run: .github/scripts/weline-seam-guard.sh upstream/main
+
+  # Lint and type check (failing only on Weline files; upstream's own errors
+  # are reported) and all frontend unit tests.
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+      - name: Lint, type check, unit tests
+        run: .github/scripts/weline-frontend-check.sh
+
+  # Starts the server with -migrate on an empty database, twice.
+  migrate-smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: weline_smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+      - name: Migrate an empty database twice
+        run: .github/scripts/weline-migrate-smoke.sh
