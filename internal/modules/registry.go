@@ -17,6 +17,7 @@ import (
 	"github.com/shridarpatil/whatomate/internal/modules/example"
 	"github.com/shridarpatil/whatomate/internal/modules/hooks"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
+	"github.com/shridarpatil/whatomate/internal/modules/practice"
 	"github.com/zerodha/fastglue"
 	"github.com/zerodha/logf"
 	"gorm.io/gorm"
@@ -33,6 +34,7 @@ type Factory func(app *handlers.App, cfg *config.Config) kit.Module
 // another module's tables comes after it).
 var factories = []Factory{
 	example.New,
+	practice.New,
 }
 
 // Register mounts every module's routes, then the Weline webhook receiver

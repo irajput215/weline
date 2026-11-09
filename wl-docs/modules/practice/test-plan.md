@@ -47,3 +47,15 @@ every handler test also runs as a user of a **second organization** where releva
 3. Owner adds two practitioners, one linked to a Weline user, both at the location.
 4. Owner adds two services with roles and prices.
 5. Receptionist logs in, sees all five pages read-only, and gets no edit controls.
+
+The journeys live in `frontend/src/modules/practice/e2e/practice.e2e.ts` and run with the modules' own Playwright
+config (kept apart from upstream's suite). Against a running app with migrations applied:
+
+```bash
+cd frontend && npx playwright test -c src/modules/playwright.config.ts
+```
+
+They log in as the default superadmin (`admin@admin.com` / `admin`; override with `WL_E2E_ADMIN_EMAIL` and
+`WL_E2E_ADMIN_PASSWORD`), create an owner (admin role) and a receptionist (agent role) in the default organization,
+and suffix every name with a per-run id so they can run again on the same database. `BASE_URL` defaults to
+`http://localhost:8080`; `PW_CHROMIUM_PATH` points at a different Chromium if needed.

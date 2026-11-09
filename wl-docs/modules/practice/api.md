@@ -12,7 +12,7 @@ incl. GST).
 
 ### GET /api/x/practice/profile
 Permission: wl_practice_settings:read
-Response 200: `{ profile: { name, time_zone, booking_slug, slot_minutes, abn, phone, email, website, updated_at } }`, or `{ profile: null, setup: { missing: ["profile","locations","hours","practitioners","services"] } }` before the first save
+Response 200: `{ profile: { id, name, time_zone, booking_slug, slot_minutes, abn, phone, email, website, updated_at } | null, setup: { missing: [...] }, time_zones: [...], slot_lengths: [5,10,15,20,30,60] }`. `profile` is `null` before the first save; `setup.missing` lists the steps not done yet, in order: `profile`, `locations`, `hours`, `practitioners`, `services`.
 Errors: none beyond the common ones
 
 ### PUT /api/x/practice/profile
@@ -33,9 +33,9 @@ Request: `{ name, address?, phone? }`
 Response 200: `{ location }`
 Errors: 400 name missing or too long · 409 "a location named '…' already exists"
 
-### PATCH /api/x/practice/locations/{id}
+### PUT /api/x/practice/locations/{id}
 Permission: wl_practice_locations:update
-Request: any of `{ name, address, phone, is_active }`
+Request (partial: only the fields sent change): any of `{ name, address, phone, is_active }`
 Response 200: `{ location }`
 Errors: 404 location not found (also for another org's id) · 409 duplicate name
 
@@ -51,11 +51,15 @@ Request: `{ display_name, role, ahpra_number?, user_id?, location_ids: [uuid, �
 Response 200: `{ practitioner }`
 Errors: 400 missing fields / AHPRA format / no locations · 404 a location or user not found in this organization · 409 "that user is already linked to practitioner '…'"
 
-### PATCH /api/x/practice/practitioners/{id}
+### PUT /api/x/practice/practitioners/{id}
 Permission: wl_practice_practitioners:update
-Request: any of `{ display_name, role, ahpra_number, user_id (null to unlink), location_ids, is_active }`
+Request (partial: only the fields sent change): any of `{ display_name, role, ahpra_number, user_id (null to unlink), location_ids, is_active }`
 Response 200: `{ practitioner }`
 Errors: as POST · 404 practitioner not found
+
+### GET /api/x/practice/members
+Permission: wl_practice_practitioners:read
+Response 200: `{ members: [ { id, full_name, email } ] }`: the organization's active Weline users, for the "linked login" picker (staff need not hold Weline's `users` permission to pick one)
 
 ## Services
 
@@ -69,9 +73,9 @@ Request: `{ name, duration_minutes, price_cents?, allowed_roles: [string, …] }
 Response 200: `{ service, warnings: ["no practitioner has role '…'"] }`
 Errors: 400 duration not on the slot grid or out of range / negative price / no roles · 409 duplicate name · 409 clinic profile not set up (no slot grid yet)
 
-### PATCH /api/x/practice/services/{id}
+### PUT /api/x/practice/services/{id}
 Permission: wl_practice_services:update
-Request: any of `{ name, duration_minutes, price_cents (null to clear), allowed_roles, is_active }`
+Request (partial: only the fields sent change): any of `{ name, duration_minutes, price_cents (null to clear), allowed_roles, is_active }`
 Response 200: `{ service, warnings }`
 Errors: as POST · 404 service not found
 
