@@ -105,11 +105,68 @@ erDiagram
 
 ### practice
 
-_Not built yet (Phase 1.1)._
+Clinic setup, built in Phase 1.1 (migration `practice/0001_create_practice`). Full column list and constraints:
+[`modules/practice/design.md`](modules/practice/design.md#data-model).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.practice_profiles` | One row per organization: name, IANA time zone, booking slug, slot length, ABN and contact details | `UNIQUE (organization_id)`; `booking_slug` unique across all organizations |
+| `wl.practice_locations` | Sites, with name, address, phone and `is_active` | Name unique per org; never deleted, only deactivated |
+| `wl.practice_practitioners` | Display name, role, AHPRA number, optional `user_id` → `users.id`, `is_active` | One practitioner per user per org; the user must belong to the org (checked in the service) |
+| `wl.practice_practitioner_locations` | Which locations a practitioner works at | Composite FKs to both sides, `ON DELETE CASCADE` |
+| `wl.practice_services` | Appointment types: duration, price in cents (incl. GST), `allowed_roles jsonb` | Name unique per org; duration a whole number of slots, 5 to 480 minutes |
+| `wl.practice_hours` | One row per open weekday per location, in minutes after local midnight | No row = closed; `closes_minute > opens_minute`; times on the slot grid |
+| `wl.practice_closures` | Closed days for one location (`location_id`) or all (`NULL`), inclusive dates, reason | `ends_on >= starts_on`; hard-deleted when removed |
+
+Cross-organization links are refused by the database as well as the service: every child table carries
+`organization_id` and references its parent through a composite `(organization_id, id)` foreign key. The only links
+to Weline tables are `organization_id` and `practitioners.user_id`, by id with no FK. No patient data.
+
+Other modules read this through the Go service (`GetProfile`, `ActiveLocations`, `ActivePractitioners`,
+`ActiveServices`, `IsOpen`), never by querying the tables.
 
 ```mermaid
 erDiagram
-    organizations ||--o{ "wl.practice_profiles" : "organization_id"
+    organizations ||--o| "wl.practice_profiles" : "organization_id"
+    organizations ||--o{ "wl.practice_locations" : "organization_id"
+    organizations ||--o{ "wl.practice_practitioners" : "organization_id"
+    organizations ||--o{ "wl.practice_services" : "organization_id"
+    users ||--o| "wl.practice_practitioners" : "user_id (optional)"
+    "wl.practice_practitioners" ||--o{ "wl.practice_practitioner_locations" : "works at"
+    "wl.practice_locations" ||--o{ "wl.practice_practitioner_locations" : "staffed by"
+    "wl.practice_locations" ||--o{ "wl.practice_hours" : "weekday hours"
+    "wl.practice_locations" ||--o{ "wl.practice_closures" : "closed days (or all locations)"
+
+    "wl.practice_profiles" { uuid id PK
+        uuid organization_id
+        text name
+        text time_zone
+        text booking_slug
+        int slot_minutes }
+    "wl.practice_locations" { uuid id PK
+        uuid organization_id
+        text name
+        bool is_active }
+    "wl.practice_practitioners" { uuid id PK
+        uuid organization_id
+        text display_name
+        text role
+        uuid user_id
+        bool is_active }
+    "wl.practice_services" { uuid id PK
+        uuid organization_id
+        text name
+        int duration_minutes
+        int price_cents
+        jsonb allowed_roles }
+    "wl.practice_hours" { uuid location_id PK
+        int weekday PK
+        int opens_minute
+        int closes_minute }
+    "wl.practice_closures" { uuid id PK
+        uuid location_id
+        date starts_on
+        date ends_on }
 ```
 
 ### booking

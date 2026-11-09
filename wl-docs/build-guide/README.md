@@ -56,7 +56,7 @@ Tips that save a lot of pain:
 * [x] [0.9 Webhook receiver](phase-0-foundation.md#09-weline-webhook-receiver)
 * [x] [0.10 System docs: architecture, data model, threat model](phase-0-foundation.md#010-system-docs-architecture-data-model-threat-model)
 * [x] [Phase 0 gate](phase-0-foundation.md#phase-0-gate)
-* [ ] [1.1 Practice](phase-1-practice-booking-calendar.md#11-practice)
+* [x] [1.1 Practice](phase-1-practice-booking-calendar.md#11-practice)
 * [ ] [1.2 Booking + chatbot flow](phase-1-practice-booking-calendar.md#12-booking)
 * [ ] [1.3 Calendar](phase-1-practice-booking-calendar.md#13-calendar)
 * [ ] [WhatsApp templates submitted to Meta](phase-1-practice-booking-calendar.md#phase-1-gate)

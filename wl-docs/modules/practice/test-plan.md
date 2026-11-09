@@ -55,6 +55,7 @@ config (kept apart from upstream's suite). Against a running app with migrations
 cd frontend && npx playwright test -c src/modules/playwright.config.ts
 ```
 
+CI runs them on every PR into `dev`/`production` (job `module-e2e`, script `.github/scripts/weline-module-e2e.sh`).
 They log in as the default superadmin (`admin@admin.com` / `admin`; override with `WL_E2E_ADMIN_EMAIL` and
 `WL_E2E_ADMIN_PASSWORD`), create an owner (admin role) and a receptionist (agent role) in the default organization,
 and suffix every name with a per-run id so they can run again on the same database. `BASE_URL` defaults to

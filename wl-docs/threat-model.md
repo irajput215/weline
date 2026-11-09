@@ -3,7 +3,7 @@
 One page, updated by prompt C whenever a module adds a public endpoint, a new kind of data or an external
 integration. Architecture: [`architecture.md`](architecture.md). Data: [`data-model.md`](data-model.md).
 STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure, **D**enial of service,
-**E**levation of privilege. Last reviewed: 2026-11-09 (Phase 0, after the step 0.9 staging check).
+**E**levation of privilege. Last reviewed: 2026-11-09 (Phase 1.1, Practice module).
 
 ## Assets
 
@@ -14,6 +14,7 @@ STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure
 | WhatsApp access tokens, app secrets, PINs | `whatsapp_accounts` (encrypted) | Send as the clinic, read its traffic |
 | Webhook signing secrets | `webhooks.secret` (plain text, upstream design) | Forge events into modules |
 | API keys, JWT secret, encryption key | `api_keys`, env (`WHATOMATE_JWT__SECRET`, `WHATOMATE_APP__ENCRYPTION_KEY`) | Full API access; decrypt every secret |
+| Clinic setup (practice module) | `wl.practice_*` | Practitioner names, roles and AHPRA numbers (public-register data), clinic contact details, opening hours and the booking slug. Not patient data, but tampering breaks booking and could send patients to the wrong place or time |
 | Connector and AI keys (planned) | `wl.connector_accounts`, config | Access to the clinic's practice system and AI account |
 
 ## Entry points and threats
@@ -21,8 +22,8 @@ STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure
 | Entry point | S | T | R | I | D | E | Mitigation and where it lives |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | **Login** (`/api/auth/login`, SSO, cookies) | Stolen or guessed password | – | – | Account enumeration | Brute force | – | bcrypt hashes, httpOnly `whm_access` cookie + CSRF double-submit (`internal/middleware/csrf.go`), login rate limit (`cmd/whatomate/main.go`, `rate_limit.*`; enabled on Render), secure cookies in production. Upstream code. |
-| **`/api/x/*` module routes** | Request without a session | – | Who changed what | Another org's rows | Large queries | User without the permission; permission from a different org | `AuthWithDB` on all `/api` (`cmd/whatomate/main.go`); `kit.Guard` checks a `wl_` permission **in the active org** (`internal/modules/kit/request.go`); services filter every query by `orgID` (e.g. `internal/modules/example/service.go`); `kit.SendError` hides internal errors; list limits. |
-| **Public booking page** (planned, Phase 1.2) | Fake bookings | Tampered slot or price | – | Leaking other patients' slots or names | Booking spam | – | To build: no login, rate limit + captcha, server-side slot validation, return only a reference, APP 5 collection notice. |
+| **`/api/x/*` module routes** | Request without a session | – | Who changed what | Another org's rows | Large queries | User without the permission; permission from a different org | `AuthWithDB` on all `/api` (`cmd/whatomate/main.go`); `kit.Guard` checks a `wl_` permission **in the active org** (`internal/modules/kit/request.go`); services filter every query by `orgID` (e.g. `internal/modules/example/service.go`); `kit.SendError` hides internal errors; list limits. Practice (`/api/x/practice`) adds composite `(organization_id, id)` foreign keys so the database refuses cross-org links, separate read and write permissions (reception read-only by default), and per-endpoint request structs that ignore `organization_id`/`id` in bodies (`internal/modules/practice/handlers_test.go`). |
+| **Public booking page** (planned, Phase 1.2) | Fake bookings | Tampered slot or price | – | Leaking other patients' slots or names | Booking spam | – | To build: no login, rate limit + captcha, server-side slot validation, return only a reference, APP 5 collection notice. The page is found by the practice booking slug, which is already format-checked, reserved-word-checked and globally unique (`internal/modules/practice/validate.go`); it must return no internal ids. |
 | **`POST /x/hooks/weline`** (module event receiver) | Forged events | Payload altered in transit | – | – | Flooding | Event injected into another org | Per-org random token in `X-Weline-Hook-Token` (stored in the webhook's custom headers), constant-time compare, required on every delivery; plus HMAC-SHA256 of the raw body with the org's secret **whenever Weline sends a signature** (upstream omits it on cached deliveries, see open risk 1); `X-Weline-Org` is proven by the token; HTTPS only; stale (>1 h) or future deliveries rejected; Redis de-duplication; 401 before any work (`internal/modules/hooks/receiver.go`). Outside `/api`, so no session needed (by design). |
 | **Chatbot `api_call` nodes** → module endpoints | Calls made with someone's API key | Flow edited to call another URL | – | API key visible in flow config | – | API key with more rights than needed | Calls go through Weline's SSRF-safe client (`internal/handlers/webhooks.go` `SSRFSafeDialer`); module endpoints still need auth + `wl_` permission. **Open risk:** the key sits in the flow config. |
 | **Meta webhook** (`/api/webhook`, upstream) | Forged WhatsApp events | – | – | – | Flooding | – | Upstream verifies `X-Hub-Signature-256` **only when the account has an App Secret stored**. Set it for every account. |
@@ -54,11 +55,12 @@ STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure
    flows, and API keys carry the full rights of their user. Use a dedicated low-permission user per org.
 5. **Module permissions don't reach organizations created later.** System roles of new orgs come from the
    upstream seed, so admins must grant `wl_` permissions by hand (`kit.SeedPermissions` note). This fails
-   closed (no access), not open.
+   closed (no access), not open: in a new org even admins see no Clinic menu until granted.
 6. **Render free tier**: data is hosted in Oregon, not Australia, and free Postgres expires. Production
    needs an Australian region before real patient data (SDLC "Compliance").
 7. **No audit trail for module reads/writes yet.** Upstream's audit log isn't wired into modules; to do
-   before patient data arrives (SDLC privacy checklist).
+   before patient data arrives (SDLC privacy checklist). Since Phase 1.1 this includes clinic setup: who
+   changed hours, closures, services or the booking slug isn't recorded (only `updated_at`).
 8. **Module sends aren't attributed.** `kit.Sender` doesn't set `sent_by_user_id`, so a staff-triggered
    module message can't be traced to the person from the message row. Add an optional user to the sender
    when the first module sends on a user's behalf (Phase 1.2/2).
