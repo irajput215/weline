@@ -1,7 +1,7 @@
 package handlers
 
 // Weline-only file. It adds exported accessors that Weline feature packages
-// (e.g. internal/booking) need, without editing upstream handler files.
+// (internal/modules) need, without editing upstream handler files.
 // Being a new file, it never conflicts when merging upstream whatomate.
 
 import (
