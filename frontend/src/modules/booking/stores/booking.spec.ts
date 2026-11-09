@@ -95,6 +95,19 @@ describe('booking store', () => {
     expect(store.slotsLoading).toBe(false)
   })
 
+  it('keeps only the latest slot search when answers arrive out of order', async () => {
+    const store = useBookingStore()
+    let first!: (v: unknown) => void
+    b.slots.mockImplementationOnce(() => new Promise(r => (first = r)))
+    b.slots.mockResolvedValueOnce({ slots: [{ starts_at: 'new' }] })
+    const a = store.searchSlots({ service_id: 's', location_id: 'l', from: '2027-03-08' })
+    await store.searchSlots({ service_id: 's', location_id: 'l', from: '2027-03-09' })
+    first({ slots: [{ starts_at: 'stale' }] })
+    await a
+    expect(store.slots.map(s => s.starts_at)).toEqual(['new'])
+    expect(store.slotsLoading).toBe(false)
+  })
+
   it('returns availability warnings, and keeps blocks sorted', async () => {
     const store = useBookingStore()
     b.setAvailability.mockResolvedValueOnce({ blocks: [], warnings: ['Sat 09:00–12:00 at Bondi is outside opening hours'] })

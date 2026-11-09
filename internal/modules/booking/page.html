@@ -110,7 +110,9 @@
     });
   }
 
+  var seq = 0; // only the latest request may render: dates fire input and change events
   function loadTimes() {
+    var mine = ++seq;
     chosen = null; $("details").hidden = true;
     var box = $("times"); box.innerHTML = ""; $("no-times").hidden = true;
     if (!$("service").value || !$("location").value || !$("day").value) { return; }
@@ -118,6 +120,8 @@
       "&date=" + encodeURIComponent($("day").value);
     if ($("practitioner").value) { q += "&practitioner_id=" + encodeURIComponent($("practitioner").value); }
     get(q).then(function (d) {
+      if (mine !== seq) { return; }
+      box.innerHTML = "";
       $("no-times").hidden = d.slots.length > 0;
       d.slots.forEach(function (s) {
         var b = document.createElement("button");
@@ -128,7 +132,7 @@
         });
         box.appendChild(b);
       });
-    }).catch(function (e) { $("no-times").hidden = false; $("no-times").textContent = e.message; });
+    }).catch(function (e) { if (mine === seq) { $("no-times").hidden = false; $("no-times").textContent = e.message; } });
   }
 
   window.onTurnstile = function () {

@@ -1,4 +1,4 @@
-import { expect, request, type Page } from '@playwright/test'
+import { expect, request, type APIRequestContext, type Page } from '@playwright/test'
 
 // Test accounts for the practice journeys. They live in the default organization,
 // whose system roles got the wl_practice_* grants when the module migration ran.
@@ -13,7 +13,7 @@ export interface Account {
   full_name: string
 }
 
-function csrfFrom(headers: Array<{ name: string; value: string }>): string {
+export function csrfFrom(headers: Array<{ name: string; value: string }>): string {
   for (const h of headers) {
     const m = h.name.toLowerCase() === 'set-cookie' && h.value.match(/whm_csrf=([^;]+)/)
     if (m) return m[1]
@@ -57,4 +57,19 @@ export async function login(page: Page, acct: Account) {
 export async function choose(page: Page, triggerTestId: string, option: string | RegExp) {
   await page.getByTestId(triggerTestId).click()
   await page.getByRole('option', { name: option, exact: true }).click()
+}
+
+/** An API client logged in as acct, sending the CSRF header on writes. */
+export async function apiAs(baseURL: string, acct: Account) {
+  const ctx: APIRequestContext = await request.newContext({ baseURL })
+  const res = await ctx.post('/api/auth/login', { data: { email: acct.email, password: PASSWORD } })
+  expect(res.ok(), `login ${acct.email}`).toBeTruthy()
+  const headers = { 'X-CSRF-Token': csrfFrom(res.headersArray()) }
+  const call = async (method: 'GET' | 'POST' | 'PUT', path: string, data?: unknown) => {
+    const r = await ctx.fetch(path, { method, headers, data })
+    const body = await r.json()
+    expect(r.ok(), `${method} ${path}: ${body.message ?? ''}`).toBeTruthy()
+    return body.data
+  }
+  return { call, dispose: () => ctx.dispose() }
 }

@@ -106,16 +106,21 @@ export const useBookingStore = defineStore('wl-booking', () => {
     if (i >= 0) appointments.value.splice(i, 1, a)
   }
 
+  let slotsSeq = 0 // only the latest search may set the slots
   async function searchSlots(q: SlotQuery) {
+    const mine = ++slotsSeq
     slotsLoading.value = true
     slotsError.value = null
     try {
-      slots.value = (await bookingApi.slots(q)).slots
+      const found = (await bookingApi.slots(q)).slots
+      if (mine === slotsSeq) slots.value = found
     } catch (err) {
-      slots.value = []
-      slotsError.value = messageOf(err) || 'error'
+      if (mine === slotsSeq) {
+        slots.value = []
+        slotsError.value = messageOf(err) || 'error'
+      }
     } finally {
-      slotsLoading.value = false
+      if (mine === slotsSeq) slotsLoading.value = false
     }
   }
 
