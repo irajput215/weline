@@ -85,7 +85,7 @@ jobs:
   # Every module's Playwright journeys (frontend/src/modules/*/e2e) against a
   # production build started with -migrate on an empty database.
   module-e2e:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright 1.57 can't install Chromium on ubuntu-latest (26.04)
     services:
       postgres:
         image: postgres:16

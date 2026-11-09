@@ -14,6 +14,7 @@
 .github/scripts/weline-seam-guard.sh
 .github/scripts/weline-frontend-check.sh
 .github/scripts/weline-migrate-smoke.sh
+.github/scripts/weline-module-e2e.sh
 .github/workflows/weline-ci.yml
 .devcontainer/
 render.yaml
