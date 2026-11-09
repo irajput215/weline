@@ -85,7 +85,7 @@ export const usePracticeStore = defineStore('wl-practice', () => {
     load('profile', async () => {
       const r = await practiceApi.getProfile()
       profile.value = r.profile
-      setupMissing.value = r.setup.missing
+      setupMissing.value = r.setup?.missing ?? []
       timeZones.value = r.time_zones
       slotLengths.value = r.slot_lengths
     })

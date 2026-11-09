@@ -158,7 +158,7 @@ onMounted(load)
             <div class="grid gap-1.5">
               <Label>{{ t('wl.practice.hours.where') }}</Label>
               <Select v-model="closure.location_id">
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger data-testid="closure-where"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem :value="ALL">{{ t('wl.practice.hours.allLocations') }}</SelectItem>
                   <SelectItem v-for="l in store.locations" :key="l.id" :value="l.id">{{ l.name }}</SelectItem>

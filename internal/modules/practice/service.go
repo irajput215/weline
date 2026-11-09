@@ -197,7 +197,7 @@ func (s *Service) checkGrid(tx *gorm.DB, orgID uuid.UUID, slot int) error {
 // locations, hours, practitioners, services.
 func (s *Service) SetupMissing(ctx context.Context, orgID uuid.UUID) ([]string, error) {
 	db := s.db.WithContext(ctx)
-	var missing []string
+	missing := []string{} // never null in JSON: the page reads its length
 	count := func(sql string) (int64, error) {
 		var n int64
 		err := db.Raw(sql, orgID).Scan(&n).Error

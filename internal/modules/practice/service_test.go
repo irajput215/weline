@@ -389,4 +389,14 @@ func TestSetupMissing(t *testing.T) {
 	missing, err = f.svc.SetupMissing(ctx, f.org)
 	require.NoError(t, err)
 	assert.Equal(t, []string{"practitioners", "services"}, missing)
+
+	_, err = f.svc.CreatePractitioner(ctx, f.org, PractitionerInput{DisplayName: "Dr A", Role: "GP", LocationIDs: []uuid.UUID{loc.ID}})
+	require.NoError(t, err)
+	_, _, err = f.svc.CreateService(ctx, f.org, ServiceInput{Name: "Consult", DurationMinutes: 15, AllowedRoles: []string{"GP"}})
+	require.NoError(t, err)
+	missing, err = f.svc.SetupMissing(ctx, f.org)
+	require.NoError(t, err)
+	// An empty list, not nil: it goes to the page as [] rather than null.
+	assert.NotNil(t, missing)
+	assert.Empty(t, missing)
 }

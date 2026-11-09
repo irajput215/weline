@@ -44,6 +44,13 @@ describe('practice store', () => {
     expect(store.timeZones).toEqual(['Australia/Sydney'])
   })
 
+  it('treats a null setup list as nothing missing', async () => {
+    api.getProfile.mockResolvedValue({ profile, setup: { missing: null }, time_zones: [], slot_lengths: [] })
+    const store = usePracticeStore()
+    await store.loadProfile()
+    expect(store.setupMissing).toEqual([])
+  })
+
   it('shows forbidden on 403 and error otherwise', async () => {
     const store = usePracticeStore()
     api.listLocations.mockRejectedValueOnce(httpError(403))
