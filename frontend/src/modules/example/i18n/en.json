@@ -1,0 +1,17 @@
+{
+  "section": "Example",
+  "navItem": "Example",
+  "title": "Example notes",
+  "subtitle": "A sample module that proves the Weline module pattern",
+  "addTitle": "Add a note",
+  "placeholder": "Write a note for your team",
+  "add": "Add note",
+  "saving": "Saving…",
+  "listTitle": "Notes",
+  "emptyTitle": "No notes yet",
+  "emptyDescription": "Notes your team adds will show here.",
+  "createForbidden": "You can read notes but don't have permission to add them.",
+  "saveForbidden": "You don't have permission to add notes.",
+  "forbiddenTitle": "No access",
+  "forbiddenDescription": "You don't have permission to view notes in this organization."
+}

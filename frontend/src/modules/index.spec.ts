@@ -20,9 +20,9 @@ describe('module index', () => {
     expect(moduleConventionProblems).toEqual([])
   })
 
-  it('is empty while no module exists', () => {
-    expect(moduleRoutes).toEqual([])
-    expect(moduleNav).toEqual([])
+  it('picks up the example module from its folder', () => {
+    expect(moduleRoutes.map(r => r.name)).toContain('wl-example-notes')
+    expect(moduleNav.flatMap(s => s.items).map(i => i.path)).toContain('/x/example/notes')
   })
 
   it('collects routes and nav in module-name order', () => {

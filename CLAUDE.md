@@ -28,6 +28,8 @@ Step-by-step build guide, session rules and progress tracker: `wl-docs/build-gui
 - Shared module helpers live in `internal/modules/kit`: `kit.Guard` for permission-checked routes
   (checks the active org, so use it instead of `middleware.RequirePermission`), `kit.OrgID`,
   typed errors (`kit.Invalid/NotFound/Conflict` + `kit.SendError`), `kit.SeedPermissions`, `kit.Sender`.
+  Handlers get a context from `kit.Context()`; never pass `r.RequestCtx` as a `context.Context`.
+  Copy `internal/modules/example` + `frontend/src/modules/example` to start a new module.
 - Send WhatsApp messages only through `kit.Sender` (wraps Weline's existing client). Never copy sending code.
 - Never log phone numbers, names or message text.
 - Times stored in UTC; each practice has an IANA time zone (default `Australia/Sydney`).
