@@ -19,6 +19,7 @@ import UserMenu from './UserMenu.vue'
 import ActiveCallPanel from '@/components/calling/ActiveCallPanel.vue'
 import { ScrollToTop } from '@/components/shared'
 import { navigationSections, type NavSection } from './navigation'
+import { moduleNav } from '@/modules' // Weline hook
 
 useI18n() // Enable $t() in template
 
@@ -82,6 +83,7 @@ function filterItems(items: NavSection['items']) {
 // Filter navigation sections based on user permissions
 const navSections = computed(() => {
   return navigationSections
+    .concat(moduleNav) // Weline hook
     .map(section => ({
       ...section,
       items: filterItems(section.items)

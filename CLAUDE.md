@@ -33,7 +33,11 @@ Step-by-step build guide, session rules and progress tracker: `wl-docs/build-gui
 - Times stored in UTC; each practice has an IANA time zone (default `Australia/Sydney`).
 - Frontend: use Weline's existing `services/api.ts` client, Pinia stores, existing UI components.
   Every screen has loading, empty, error and forbidden states.
-  Strings under `wl.<module>.*` in the module's `i18n/en.json`.
+  `frontend/src/modules/index.ts` picks modules up from their folder (no registration):
+  `routes.ts` exports `routes` (each with `meta.permission: 'wl_<module>_...'`), `nav.ts` exports `nav`
+  (sidebar sections; items carry a `wl_<module>_` permission), and `i18n/<lang>.json` holds only the
+  module's own keys, which the index exposes as `wl.<module>.<key>`. A unit test fails on any route or
+  nav item without a `wl_<module>_` permission.
 - Our docs live in `wl-docs/` (never in `docs/`, which is whatomate's website). Before coding a module, its
   `wl-docs/modules/<module>/` files exist: `requirements.md`, `design.md`, `api.md`, `test-plan.md`, `dod.md`.
 - Licence: AGPL-3.0. Keep upstream `LICENSE` and copyright headers intact.

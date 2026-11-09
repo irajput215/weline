@@ -1,5 +1,6 @@
 import { createI18n } from 'vue-i18n'
 import en from './locales/en.json'
+import { mergeModuleMessages } from '@/modules' // Weline hook
 
 export type MessageSchema = typeof en
 
@@ -73,6 +74,7 @@ export const i18n = createI18n({
   fallbackLocale: 'en',
   messages,
 })
+mergeModuleMessages(i18n) // Weline hook
 
 // Helper to change locale
 export function setLocale(locale: string) {
