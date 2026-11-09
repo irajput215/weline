@@ -16,8 +16,8 @@ upstream tables).
 | `wl.practice_locations` | `id`, `organization_id`, `name`, `address`, `phone`, `is_active`, timestamps | `UNIQUE (organization_id, id)`; `UNIQUE (organization_id, name)` |
 | `wl.practice_practitioners` | `id`, `organization_id`, `display_name`, `role`, `ahpra_number`, `user_id` (nullable, → `users.id`), `is_active`, timestamps | `UNIQUE (organization_id, id)`; `UNIQUE (organization_id, user_id) WHERE user_id IS NOT NULL` |
 | `wl.practice_practitioner_locations` | `organization_id`, `practitioner_id`, `location_id` | `PRIMARY KEY (practitioner_id, location_id)`; FKs `(organization_id, practitioner_id)` and `(organization_id, location_id)`, `ON DELETE CASCADE` |
-| `wl.practice_services` | `id`, `organization_id`, `name`, `duration_minutes`, `price_cents` (nullable), `allowed_roles text[]`, `is_active`, timestamps | `UNIQUE (organization_id, id)`; `UNIQUE (organization_id, name)`; `CHECK duration_minutes BETWEEN 5 AND 480`; `CHECK price_cents >= 0`; `CHECK cardinality(allowed_roles) >= 1` |
-| `wl.practice_hours` | `organization_id`, `location_id`, `weekday` (1 = Monday … 7 = Sunday, ISO), `opens_at time`, `closes_at time` | `PRIMARY KEY (location_id, weekday)`; FK `(organization_id, location_id)`; `CHECK closes_at > opens_at`; no row = closed that day |
+| `wl.practice_services` | `id`, `organization_id`, `name`, `duration_minutes`, `price_cents` (nullable), `allowed_roles jsonb` (array of strings), `is_active`, timestamps | `UNIQUE (organization_id, id)`; `UNIQUE (organization_id, name)`; `CHECK duration_minutes BETWEEN 5 AND 480`; `CHECK price_cents >= 0`; `CHECK jsonb_array_length(allowed_roles) >= 1` |
+| `wl.practice_hours` | `organization_id`, `location_id`, `weekday` (1 = Monday … 7 = Sunday, ISO), `opens_minute int`, `closes_minute int` (minutes after local midnight, 0–1440) | `PRIMARY KEY (location_id, weekday)`; FK `(organization_id, location_id)`; `CHECK closes_minute > opens_minute`; no row = closed that day |
 | `wl.practice_closures` | `id`, `organization_id`, `location_id` (nullable = all locations), `starts_on date`, `ends_on date`, `reason`, timestamps | FK `(organization_id, location_id)`; `CHECK ends_on >= starts_on` |
 
 Index: `(organization_id, is_active)` on locations, practitioners and services; `(organization_id, starts_on)` on
@@ -62,26 +62,36 @@ erDiagram
         text name
         int duration_minutes
         int price_cents
-        text_array allowed_roles }
+        jsonb allowed_roles }
     "wl.practice_hours" { uuid location_id PK
         int weekday PK
-        time opens_at
-        time closes_at }
+        int opens_minute
+        int closes_minute }
     "wl.practice_closures" { uuid id PK
         uuid location_id
         date starts_on
         date ends_on }
 ```
 
+### Changes made while building (step 1.1 B)
+
+- `allowed_roles` is `jsonb`, not `text[]`: upstream's pinned GORM has no Postgres array type, and Weline already
+  maps `jsonb` string arrays (`models.StringArray`).
+- Opening hours are stored as minutes after local midnight instead of `time`: `24:00` (closing at midnight) fits,
+  and the slot-grid check is plain arithmetic. The API still speaks `"HH:MM"`.
+- Updates are `PUT` with partial bodies, not `PATCH`: Weline's router (fastglue) has no `PATCH`.
+- The Go model for a service is `ClinicService`, because `Service` is the module's logic type.
+- Added `GET /members` (org members for the practitioner login picker); see [`api.md`](api.md).
+
 ## Go service for other modules (R18)
 
 `internal/modules/practice` exports a read service other modules construct with the DB:
 
 ```go
-Profile(ctx, orgID) (*Profile, error)                 // ErrNotSetUp until saved
+GetProfile(ctx, orgID) (*Profile, error)              // ErrNotSetUp until saved (IsNotSetUp(err))
 ActiveLocations(ctx, orgID) ([]Location, error)
 ActivePractitioners(ctx, orgID) ([]Practitioner, error) // with LocationIDs
-ActiveServices(ctx, orgID) ([]Service, error)
+ActiveServices(ctx, orgID) ([]ClinicService, error)
 IsOpen(ctx, orgID, locationID, at time.Time) (bool, error) // clinic time zone, weekday hours, closures
 ```
 
@@ -102,8 +112,9 @@ A sidebar section **Clinic** (shown with any `wl_practice_*` read permission) wi
 
 ## Flows
 
-**First-time setup:** profile → at least one location → hours for it → practitioners → services. Each page links to
-the next while setup is incomplete. The profile page shows a checklist of what is still missing.
+**First-time setup:** profile → at least one location → hours for it → practitioners → services. The profile page
+shows a checklist of what is still missing, each item linking to its page; pages that need an earlier step say so
+(hours without a location links to Locations, services and hours without a profile ask for it first).
 
 **Changing the slot length:** if any service duration or opening time is off the new grid, the save is refused
 and the error lists them, so nothing is silently rounded.
