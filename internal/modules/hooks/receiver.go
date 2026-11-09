@@ -105,6 +105,7 @@ func (rc *Receiver) Handle(r *fastglue.Request) error {
 	}
 
 	if !rc.dispatch.Wants(d.Event) {
+		rc.log.Info("hooks: event received, no module subscribed", "org_id", orgID, "event", d.Event)
 		return reply(r, fasthttp.StatusOK, "ignored")
 	}
 
