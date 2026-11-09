@@ -49,7 +49,7 @@ Tips that save a lot of pain:
 * [x] [0.2 CLAUDE.md](phase-0-foundation.md#02-create-claudemd)
 * [x] [0.3 Remotes, branches, protection](phase-0-foundation.md#03-repo-and-branch-setup-you-run-these-not-claude)
 * [x] [0.4 Module kit](phase-0-foundation.md#04-module-kit)
-* [ ] [0.5 Registry + Go seams](phase-0-foundation.md#05-registry-and-the-two-go-seams)
+* [x] [0.5 Registry + Go seams](phase-0-foundation.md#05-registry-and-the-two-go-seams)
 * [ ] [0.6 Frontend index + Vue seams](phase-0-foundation.md#06-frontend-module-index-and-the-three-vue-seams)
 * [ ] [0.7 Example module](phase-0-foundation.md#07-example-module-end-to-end)
 * [ ] [0.8 CI with seam guard](phase-0-foundation.md#08-ci)
