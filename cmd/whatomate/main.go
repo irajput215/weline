@@ -19,6 +19,7 @@ import (
 	"github.com/shridarpatil/whatomate/internal/frontend"
 	"github.com/shridarpatil/whatomate/internal/handlers"
 	"github.com/shridarpatil/whatomate/internal/middleware"
+	"github.com/shridarpatil/whatomate/internal/modules" // Weline hook
 	"github.com/shridarpatil/whatomate/internal/queue"
 	"github.com/shridarpatil/whatomate/internal/storage"
 	"github.com/shridarpatil/whatomate/internal/tts"
@@ -158,6 +159,7 @@ func runServer(args []string) {
 		if err := database.RunMigrationWithProgress(db, &cfg.DefaultAdmin); err != nil {
 			lo.Fatal("Migration failed", "error", err)
 		}
+		modules.MustMigrate(db, lo) // Weline hook
 		booking.MustMigrate(db, lo) // Weline hook
 		// Backfill v2 graph for any legacy chatbot flow still on Steps[].
 		// Idempotent — re-running is a no-op once every row is converted.
@@ -868,6 +870,7 @@ func setupRoutes(g *fastglue.Fastglue, app *handlers.App, lo logf.Logger, basePa
 	g.DELETE("/api/products/{id}", app.DeleteCatalogProduct)
 
 	booking.RegisterRoutes(g, &booking.Handler{DB: app.DB, Log: lo, OrgID: app.OrgIDFromRequest}) // Weline hook
+	modules.Register(g, app, cfg)                                                                 // Weline hook
 
 	// Serve embedded frontend (SPA)
 	if frontend.IsEmbedded() {
