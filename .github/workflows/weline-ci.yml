@@ -127,3 +127,9 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Module journeys
         run: .github/scripts/weline-module-e2e.sh
+        env:
+          # Cloudflare Turnstile's documented always-pass test keys (public
+          # dummies, not secrets), so the public booking page journey runs.
+          WELINE_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+          WELINE_TURNSTILE_SECRET: 1x0000000000000000000000000000000AA
+          WL_E2E_CAPTCHA: "1"

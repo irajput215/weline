@@ -20,6 +20,8 @@ func TestStatusOf(t *testing.T) {
 		{kit.Forbidden("not yours"), 403},
 		{kit.NotFound("appointment not found"), 404},
 		{kit.Conflict("slot taken"), 409},
+		{kit.TooMany("too many bookings"), 429},
+		{kit.NotReady("online booking isn't set up"), 503},
 		{fmt.Errorf("create: %w", kit.Conflict("slot taken")), 409}, // wrapped still maps
 		{errors.New("pq: connection refused"), 500},
 	}

@@ -10,18 +10,15 @@
 set -euo pipefail
 cd frontend
 
-# Weline-owned frontend paths (module folders, legacy booking files, seam files).
+# Weline-owned frontend paths (module folders and seam files).
 WELINE_PATHS=(
   src/modules
-  src/router/booking.ts
-  src/views/booking
-  src/services/weline
   src/router/index.ts
   src/components/layout/AppLayout.vue
   src/i18n/index.ts
 )
 # Same list as a regex for vue-tsc output lines ("path(line,col): error ...").
-WELINE_RE='^(src/modules/|src/router/booking\.ts|src/views/booking/|src/services/weline/|src/router/index\.ts|src/components/layout/AppLayout\.vue|src/i18n/index\.ts)'
+WELINE_RE='^(src/modules/|src/router/index\.ts|src/components/layout/AppLayout\.vue|src/i18n/index\.ts)'
 
 existing=()
 for p in "${WELINE_PATHS[@]}"; do [[ -e "$p" ]] && existing+=("$p"); done
