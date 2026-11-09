@@ -47,7 +47,7 @@ Tips that save a lot of pain:
 
 * [x] [0.1 SDLC doc in repo](phase-0-foundation.md#01-put-the-sdlc-doc-in-the-repo)
 * [x] [0.2 CLAUDE.md](phase-0-foundation.md#02-create-claudemd)
-* [ ] [0.3 Remotes, branches, protection](phase-0-foundation.md#03-repo-and-branch-setup-you-run-these-not-claude)
+* [x] [0.3 Remotes, branches, protection](phase-0-foundation.md#03-repo-and-branch-setup-you-run-these-not-claude)
 * [ ] [0.4 Module kit](phase-0-foundation.md#04-module-kit)
 * [ ] [0.5 Registry + Go seams](phase-0-foundation.md#05-registry-and-the-two-go-seams)
 * [ ] [0.6 Frontend index + Vue seams](phase-0-foundation.md#06-frontend-module-index-and-the-three-vue-seams)
