@@ -63,8 +63,8 @@ type practitionerLocation struct {
 
 func (practitionerLocation) TableName() string { return "wl.practice_practitioner_locations" }
 
-// Service is something the clinic offers (wl.practice_services).
-type Service struct {
+// ClinicService is something the clinic offers (wl.practice_services).
+type ClinicService struct {
 	models.BaseModel
 	OrganizationID  uuid.UUID          `gorm:"type:uuid;not null" json:"organization_id"`
 	Name            string             `json:"name"`
@@ -74,7 +74,7 @@ type Service struct {
 	IsActive        bool               `json:"is_active"`
 }
 
-func (Service) TableName() string { return "wl.practice_services" }
+func (ClinicService) TableName() string { return "wl.practice_services" }
 
 // hourRow is one weekday's opening hours for a location (wl.practice_hours).
 type hourRow struct {
