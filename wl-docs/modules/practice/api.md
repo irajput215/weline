@@ -12,7 +12,7 @@ incl. GST).
 
 ### GET /api/x/practice/profile
 Permission: wl_practice_settings:read
-Response 200: `{ profile: { name, time_zone, booking_slug, slot_minutes, abn, phone, email, website, updated_at } }`, or `{ profile: null, setup: { missing: ["profile","locations","hours","practitioners","services"] } }` before the first save
+Response 200: `{ profile: { id, name, time_zone, booking_slug, slot_minutes, abn, phone, email, website, updated_at } | null, setup: { missing: [...] }, time_zones: [...], slot_lengths: [5,10,15,20,30,60] }`. `profile` is `null` before the first save; `setup.missing` lists the steps not done yet, in order: `profile`, `locations`, `hours`, `practitioners`, `services`.
 Errors: none beyond the common ones
 
 ### PUT /api/x/practice/profile
@@ -56,6 +56,10 @@ Permission: wl_practice_practitioners:update
 Request (partial: only the fields sent change): any of `{ display_name, role, ahpra_number, user_id (null to unlink), location_ids, is_active }`
 Response 200: `{ practitioner }`
 Errors: as POST · 404 practitioner not found
+
+### GET /api/x/practice/members
+Permission: wl_practice_practitioners:read
+Response 200: `{ members: [ { id, full_name, email } ] }`: the organization's active Weline users, for the "linked login" picker (staff need not hold Weline's `users` permission to pick one)
 
 ## Services
 
