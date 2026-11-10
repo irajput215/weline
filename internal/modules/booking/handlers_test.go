@@ -258,7 +258,7 @@ func TestAPI_SecondOrganizationIsIsolated(t *testing.T) {
 	assert.Equal(t, 404, r.code, "first org's service")
 	r = other.api(t, everything, req{method: "GET", path: base + "/practitioners/{id}/availability", vals: map[string]string{"id": f.ada.String()}})
 	assert.Equal(t, 404, r.code)
-	r = other.api(t, everything, req{method: "GET", path: base + "/patients", query: map[string]string{"q": "Test"}})
+	r = other.api(t, everything, req{method: "POST", path: base + "/patients/search", body: map[string]any{"q": "Test"}})
 	require.Equal(t, 200, r.code)
 	for _, p := range r.data["patients"].([]any) {
 		assert.NotEqual(t, f.patient.String(), p.(map[string]any)["id"])

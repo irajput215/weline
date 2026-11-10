@@ -877,8 +877,12 @@ func (s *Service) History(ctx context.Context, orgID, id uuid.UUID) ([]HistoryEn
 	}
 	names := map[uuid.UUID]string{}
 	if len(userIDs) > 0 {
+		// Only users still in this organization; someone who left shows no name.
 		var users []models.User
-		if err := s.db.WithContext(ctx).Select("id", "full_name").Where("id IN ?", userIDs).Find(&users).Error; err != nil {
+		if err := s.db.WithContext(ctx).Raw(`SELECT u.id, u.full_name FROM users u
+			WHERE u.id IN ? AND (u.organization_id = ? OR EXISTS (SELECT 1 FROM user_organizations uo
+				WHERE uo.user_id = u.id AND uo.organization_id = ? AND uo.deleted_at IS NULL))`,
+			userIDs, orgID, orgID).Scan(&users).Error; err != nil {
 			return nil, fmt.Errorf("load users: %w", err)
 		}
 		for _, u := range users {

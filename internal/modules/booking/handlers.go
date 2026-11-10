@@ -41,7 +41,8 @@ func routesWithCaptcha(auth kit.Auth, svc *Service, captcha Captcha) []route {
 		{"PUT", base + "/appointments/{id}", g(PermAppointments, kit.ActionUpdate, h.moveAppointment)},
 		{"POST", base + "/appointments/{id}/status", g(PermAppointments, kit.ActionUpdate, h.setStatus)},
 
-		{"GET", base + "/patients", g(PermAppointments, kit.ActionCreate, h.searchPatients)},
+		// POST, not GET: names and numbers stay out of URLs, which proxies and hosts log.
+		{"POST", base + "/patients/search", g(PermAppointments, kit.ActionCreate, h.searchPatients)},
 		{"POST", base + "/patients", g(PermAppointments, kit.ActionCreate, h.addPatient)},
 
 		{"GET", base + "/practitioners/{id}/availability", g(PermAvailability, kit.ActionRead, h.getAvailability)},
@@ -316,7 +317,13 @@ func (h *handler) setStatus(r *fastglue.Request, c kit.Caller) error {
 func (h *handler) searchPatients(r *fastglue.Request, c kit.Caller) error {
 	ctx, cancel := kit.Context()
 	defer cancel()
-	list, err := h.svc.SearchPatients(ctx, c.OrgID, query(r, "q"))
+	var in struct {
+		Q string `json:"q"`
+	}
+	if err := decode(r, &in); err != nil {
+		return kit.SendError(r, err)
+	}
+	list, err := h.svc.SearchPatients(ctx, c.OrgID, in.Q)
 	if err != nil {
 		return kit.SendError(r, err)
 	}

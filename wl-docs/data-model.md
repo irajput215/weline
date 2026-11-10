@@ -81,7 +81,9 @@ erDiagram
 | --- | --- | --- |
 | `wl.schema_migrations` | `id varchar(255) PK` (`<module>/<migration id>`), `applied_at timestamptz` | `kit.RunMigrations` |
 
-Redis keys: `wl:hooks:seen:<org>:<event>:<id>` (24 h, webhook de-duplication).
+Redis keys: `wl:hooks:seen:<org>:<event>:<id>` (24 h, webhook de-duplication); `wl:booking:offer:<org>:<id>`
+(30 min, chatbot time offers: labels, practitioner ids and times, no patient data); `wl:booking:rl:<bucket>:<hash>`
+(public page rate limits, keyed by a hash of the IP or mobile, never the raw value).
 
 ## Modules
 
@@ -171,11 +173,67 @@ erDiagram
 
 ### booking
 
-_Not built yet (Phase 1.2)._
+Appointments, built in Phase 1.2 (migration `booking/0001_create_booking`, which also creates the `btree_gist`
+extension). Full columns and constraints: [`modules/booking/design.md`](modules/booking/design.md#data-model).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.booking_settings` | Per-clinic online booking rules: minimum notice, booking window | One row per org; no row = defaults (2 hours, 60 days) |
+| `wl.booking_availability` | Practitioners' weekly working blocks per location, in local minutes | Composite FKs to practice practitioners and locations; blocks for one practitioner and weekday never overlap (exclusion constraint) |
+| `wl.booking_blocks` | One-off time off (leave, meetings) as UTC instants, with a reason | Composite FK to the practitioner |
+| `wl.booking_appointments` | Who (`contact_id`), with whom, what, where, when, status, source (`staff`, `web`, `whatsapp`), 6-character reference, short admin note | **Exclusion constraint on practitioner and time range (cancelled excluded): no double booking**; composite FKs to practice practitioner, service and location; reference unique per org |
+| `wl.booking_status_history` | Every status change and move, who made it, reason | Append-only; cascades with its appointment |
+
+**Patient data:** appointments link to upstream `contacts` by id; booking stores no name or phone of its own. Web
+bookings may **create** a contact (name and mobile) on the clinic's default WhatsApp account. The note field is
+administrative only. Retention: 7 years after the appointment, deletion job to build before real patient data.
+
+Other modules call the Go service (`SearchSlots`, `Create`, `Move`, `SetStatus`, `Get`, `List`), never the tables.
+The legacy prototype's `public.booking_appointments` is no longer used; drop it by hand.
 
 ```mermaid
 erDiagram
-    contacts ||--o{ "wl.booking_appointments" : "contact_id"
+    organizations ||--o| "wl.booking_settings" : "organization_id"
+    "wl.practice_practitioners" ||--o{ "wl.booking_availability" : "weekly blocks"
+    "wl.practice_locations" ||--o{ "wl.booking_availability" : "at location"
+    "wl.practice_practitioners" ||--o{ "wl.booking_blocks" : "leave, meetings"
+    "wl.practice_practitioners" ||--o{ "wl.booking_appointments" : "with"
+    "wl.practice_services" ||--o{ "wl.booking_appointments" : "for"
+    "wl.practice_locations" ||--o{ "wl.booking_appointments" : "at"
+    contacts ||--o{ "wl.booking_appointments" : "contact_id (no FK)"
+    users ||--o{ "wl.booking_appointments" : "created_by_id (no FK)"
+    "wl.booking_appointments" ||--o{ "wl.booking_status_history" : "every change"
+
+    "wl.booking_settings" { uuid organization_id PK
+        int min_notice_minutes
+        int window_days }
+    "wl.booking_availability" { uuid id PK
+        uuid practitioner_id
+        uuid location_id
+        int weekday
+        int starts_minute
+        int ends_minute }
+    "wl.booking_blocks" { uuid id PK
+        uuid practitioner_id
+        timestamptz starts_at
+        timestamptz ends_at
+        text reason }
+    "wl.booking_appointments" { uuid id PK
+        text reference
+        uuid contact_id
+        uuid practitioner_id
+        uuid service_id
+        uuid location_id
+        timestamptz starts_at
+        timestamptz ends_at
+        text status
+        text source }
+    "wl.booking_status_history" { uuid id PK
+        uuid appointment_id
+        text from_status
+        text to_status
+        jsonb changes
+        uuid changed_by_id }
 ```
 
 ### calendar

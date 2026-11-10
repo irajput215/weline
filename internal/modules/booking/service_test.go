@@ -286,6 +286,7 @@ func TestCreate_RulesAndHistory(t *testing.T) {
 	assert.Equal(t, StatusBooked, h[0].ToStatus)
 	require.NotNil(t, h[0].ChangedBy)
 	assert.Equal(t, *f.staff.UserID, h[0].ChangedBy.ID)
+	assert.NotEmpty(t, h[0].ChangedBy.Name, "a member of the org is named")
 }
 
 func TestCreate_PatientsCantOverrideAndNeedNotice(t *testing.T) {

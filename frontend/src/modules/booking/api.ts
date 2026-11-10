@@ -124,7 +124,8 @@ export const bookingApi = {
   setStatus: (id: string, status: Status, reason = '') =>
     data<{ appointment: Appointment }>(api.post(`${base}/appointments/${id}/status`, { status, reason })),
 
-  searchPatients: (q: string) => data<{ patients: Patient[] }>(api.get(`${base}/patients`, { params: { q } })),
+  // POST so names and numbers never appear in URLs (hosts log those).
+  searchPatients: (q: string) => data<{ patients: Patient[] }>(api.post(`${base}/patients/search`, { q })),
   addPatient: (name: string, mobile: string) => data<{ patient: Patient; existing: boolean }>(api.post(`${base}/patients`, { name, mobile })),
 
   getAvailability: (practitionerId: string) => data<{ blocks: Availability[] }>(api.get(`${base}/practitioners/${practitionerId}/availability`)),
