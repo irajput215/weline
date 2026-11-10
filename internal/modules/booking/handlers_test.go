@@ -287,6 +287,16 @@ func TestAPI_ChatbotFlow(t *testing.T) {
 	assert.LessOrEqual(t, len([]rune(label)), 24)
 	slots := r.data["offer_id"].(string)
 
+	// The POST form takes labels in the body: "Long consult" has a space, which a
+	// flow can't put safely in a URL (Weline doesn't encode variables).
+	r = f.api(t, everything, req{method: "POST", path: base + "/slots/chatbot", body: map[string]any{
+		"offer_id": catalog, "service_label": "Long consult", "from": monday}})
+	require.Equal(t, 200, r.code, r.msg)
+	assert.Equal(t, "Mon 8 Mar 09:00 Dr Ada", r.data["slot_1_label"], "a 30-minute service")
+	assert.Equal(t, float64(10), r.data["slot_count"])
+	r = f.api(t, everything, req{method: "POST", path: base + "/slots/chatbot", body: map[string]any{"offer_id": catalog, "service_label": "Massage"}})
+	assert.Equal(t, 400, r.code, "not one of the offered services")
+
 	r = f.api(t, everything, req{method: "POST", path: base + "/appointments", body: map[string]any{"offer_id": slots, "choice": "nope", "phone": "61412345678"}})
 	assert.Equal(t, 400, r.code)
 	r = f.api(t, everything, req{method: "POST", path: base + "/appointments", body: map[string]any{"offer_id": "expired", "choice": label, "phone": "61412345678"}})

@@ -179,6 +179,9 @@ list row title is at most 24 characters, and a tapped button stores its **title*
   the org.
 - The flow's buttons node has fixed ids `slot_1`…`slot_10` with titles `{{slot_1_label}}`…; fewer slots simply
   show fewer rows.
+- Flows use `POST /api/x/booking/slots/chatbot` with the labels in a JSON body: Weline substitutes variables into
+  URLs verbatim (no encoding), so a label with a space, `&` or `#` breaks a query string. Found while writing
+  [`chatbot-flow.md`](chatbot-flow.md).
 - `POST /api/x/booking/appointments` with `{ offer_id, choice: "{{choice}}", phone: "{{phone_number}}" }` books
   the chosen slot (re-checked), and returns `confirmation` text for the next message node. An expired offer or a
   slot taken meanwhile returns 409 with a message the flow can show before offering times again.

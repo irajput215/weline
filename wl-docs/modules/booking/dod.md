@@ -29,8 +29,9 @@ Status: built and reviewed (step 1.2 C, 2026-11-09). Items not done say why and 
 - [x] WhatsApp templates the module needs are approved by Meta: none in this slice (chatbot replies inside the
   24-hour window).
 - [ ] `chatbot-flow.md` written and the flow tried on staging with a test WhatsApp number.
-  **Not done:** the build guide asks for the guide as its own request after prompt B. The endpoints it uses are
-  built and tested (`TestAPI_ChatbotFlow`).
+  **Half done:** written, with every request replayed against a running Weline with a real API key (and
+  `TestAPI_ChatbotFlow`). Writing it found that tapped labels can't go in URLs, so a POST slots call was added.
+  **You:** build the flow on staging and try it with the test number.
 - [x] Legacy booking prototype removed (code, two `Weline hook` lines, allowlist entries); `DROP TABLE` for its table
   given in the release notes.
 - [x] No upstream file changed beyond the five seams (seam guard green; trial merge of `upstream/main` clean, no new

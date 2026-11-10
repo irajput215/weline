@@ -33,6 +33,10 @@ func routesWithCaptcha(auth kit.Auth, svc *Service, captcha Captcha) []route {
 	}
 	return []route{
 		{"GET", base + "/slots", g(PermAppointments, kit.ActionRead, h.slots)},
+		// POST form for chatbot flows: tapped labels go in a JSON body. Weline puts
+		// flow variables into URLs verbatim (no encoding), so a label with a space,
+		// "&" or "#" would break a query string.
+		{"POST", base + "/slots/chatbot", g(PermAppointments, kit.ActionRead, h.chatbotSlots)},
 		{"GET", base + "/catalog", g(PermAppointments, kit.ActionRead, h.catalog)},
 
 		{"GET", base + "/appointments", g(PermAppointments, kit.ActionRead, h.listAppointments)},
@@ -164,6 +168,36 @@ func (h *handler) slots(r *fastglue.Request, c kit.Caller) error {
 		return kit.SendError(r, err)
 	}
 	return ok(r, map[string]any{"slots": slots})
+}
+
+func (h *handler) chatbotSlots(r *fastglue.Request, c kit.Caller) error {
+	ctx, cancel := kit.Context()
+	defer cancel()
+	var in struct {
+		OfferID       string     `json:"offer_id"`
+		ServiceID     *uuid.UUID `json:"service_id"`
+		ServiceLabel  string     `json:"service_label"`
+		LocationID    *uuid.UUID `json:"location_id"`
+		LocationLabel string     `json:"location_label"`
+		From          string     `json:"from"`
+	}
+	if err := decode(r, &in); err != nil {
+		return kit.SendError(r, err)
+	}
+	var from practice.Date
+	if in.From != "" {
+		d, err := practice.ParseDate(in.From)
+		if err != nil {
+			return kit.SendError(r, kit.Invalid("from must be a date (YYYY-MM-DD)"))
+		}
+		from = d
+	}
+	menu, err := h.svc.ChatbotSlots(ctx, c.OrgID, ChatbotSlotQuery{OfferID: in.OfferID, ServiceID: in.ServiceID,
+		ServiceLabel: in.ServiceLabel, LocationID: in.LocationID, LocationLabel: in.LocationLabel, From: from})
+	if err != nil {
+		return kit.SendError(r, err)
+	}
+	return ok(r, menu)
 }
 
 func (h *handler) catalog(r *fastglue.Request, c kit.Caller) error {
