@@ -31,6 +31,13 @@ Response 200 (flat, for response mapping): `{ offer_id, slot_count, slot_1_label
 next N days").
 Errors: as above · 409 "those options have expired; please choose again"
 
+### POST /api/x/booking/slots/chatbot
+Permission: wl_booking_appointments:read
+The chatbot slots call with labels in a JSON body: Weline puts flow variables into URLs verbatim, so a tapped label
+with a space, `&` or `#` would break a query string. Use this form from flows.
+Request: `{ offer_id, service_id? | service_label?, location_id? | location_label?, from? }`
+Response 200: as the `view=chatbot` GET above. Errors: as above.
+
 ### GET /api/x/booking/catalog?view=chatbot
 Permission: wl_booking_appointments:read
 Response 200: `{ offer_id, service_count, service_1_label, …, service_10_label, location_count, location_1_label, … }`

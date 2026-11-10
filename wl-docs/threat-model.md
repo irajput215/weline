@@ -34,7 +34,8 @@ STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure
 ## Cross-cutting controls
 
 - Org isolation is tested with a second organization in every module's test suite.
-- No phone numbers, names or message text in logs (review checklist in `CLAUDE.md`).
+- No phone numbers, names or message text in logs (review checklist in `CLAUDE.md`). Keep `WHATOMATE_APP__DEBUG`
+  `false` wherever there is real data: debug mode logs every SQL query with its values, including phone numbers.
 - The seam guard keeps security-relevant upstream code unmodified, so upstream fixes merge cleanly.
 - Secrets are encrypted at rest with `encryption_key` (upstream `internal/crypto`), except webhook secrets.
 
