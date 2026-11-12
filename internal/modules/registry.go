@@ -14,6 +14,7 @@ import (
 
 	"github.com/shridarpatil/whatomate/internal/config"
 	"github.com/shridarpatil/whatomate/internal/handlers"
+	"github.com/shridarpatil/whatomate/internal/modules/audiences"
 	"github.com/shridarpatil/whatomate/internal/modules/booking"
 	"github.com/shridarpatil/whatomate/internal/modules/example"
 	"github.com/shridarpatil/whatomate/internal/modules/hooks"
@@ -37,6 +38,7 @@ var factories = []Factory{
 	example.New,
 	practice.New,
 	booking.New, // reads practice tables, so migrates after it
+	audiences.New,
 }
 
 // Register mounts every module's routes, then the Weline webhook receiver

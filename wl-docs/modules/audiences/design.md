@@ -99,11 +99,11 @@ segment.
 
 | Page | Content | States |
 | --- | --- | --- |
-| **Audiences** `/x/audiences` (sidebar: Messaging → Audiences) | Segment list (name, live count, last used); "New segment" | loading · empty · error · forbidden |
-| **Segment builder** | All/any toggle; condition rows (field, op, value pickers: tags from Weline's tags, contact fields seen in contacts, accounts, campaigns); live count, excluded count, masked sample; save | read-only for viewers |
+| **Audiences** `/x/audiences` (sidebar: its own Audiences section with Segments, Retarget and History; module nav can't add items to upstream's Messaging section without a new seam) | Segment list (name, live count, last used); "New segment" | loading · empty · error · forbidden |
+| **Segment builder** `/x/audiences/segments/new`, `/x/audiences/segments/{id}` | All/any toggle; condition rows (field, op, value pickers: tags from Weline's tags, contact fields seen in contacts, accounts, campaigns); live count, excluded count, masked sample; save | read-only for viewers |
 | **Create campaign** dialog | Name, account, approved template, variable mapping with preview, exclusions summary, confirm → link to the campaign | blocks on 0 recipients |
 | **Retarget** `/x/audiences/retarget` | Finished campaigns with sent / delivered / read / failed counts; pick a filter → counts → Create campaign dialog | — |
-| **History** tab | Sends with counts, exclusions, creator, link | — |
+| **History** `/x/audiences/history` | Sends with counts, exclusions, creator, link | — |
 
 ## WhatsApp templates
 

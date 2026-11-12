@@ -28,12 +28,17 @@ Permission: wl_audiences_segments:delete · Response 200: `{ deleted: true }` ·
 Permission: wl_audiences_segments:read
 Request: `{ rules }` or `{ retarget: { campaign_id, filter, days? } }`, plus optional `{ template_id }` to count
 marketing opt-outs for that template.
-Response 200: `{ count, excluded: { opted_out, no_number, duplicates }, sample: [ { name, phone_masked } ] }` (≤ 20)
+Response 200: `{ matched, recipients, excluded: { opted_out, no_number, duplicates, over_limit }, sample: [ { name, phone_masked } ] }`
+`matched` is how many contacts the rules match; `recipients` is what a campaign would get after the exclusions (the
+number `confirm_count` must equal). `opted_out` counts only when `template_id` is a MARKETING template. `sample` holds up
+to 20 recipients, most recently active first, with masked numbers.
+Errors: 400 bad rules or filter · 404 campaign or template not in this organization
 
 ### GET /api/x/audiences/fields
 Permission: wl_audiences_segments:read
-Response 200: `{ tags: [..], metadata_keys: [..], accounts: [ { name } ], campaigns: [ { id, name, status, completed_at } ] }`
-(the pickers for the builder; `metadata_keys` are the most used keys in the org's contacts)
+Response 200: `{ tags: [..], metadata_keys: [..], accounts: [..names], campaigns: [ { id, name, status, total, sent, delivered, read, failed, completed_at } ], templates: [ { id, name, language, category, whatsapp_account, header_type, header_content, body_content, body_vars, header_vars } ] }`
+(the pickers for the builder and the create dialog; `metadata_keys` are the 50 most used keys in the org's contacts,
+keeping only safe names; `campaigns` are the 50 latest non-draft campaigns; `templates` are the approved ones)
 
 ## Creating campaigns
 
@@ -51,7 +56,7 @@ Request:
 ```
 Either `segment_id` or `retarget: { campaign_id, filter: not_received | not_read | read_no_reply | replied, days? }`.
 Variable sources: `text` (with `value`), `name`, `phone`, `metadata` (with `key`).
-`confirm_count` must equal the count the manager saw; if the audience changed meanwhile the call is refused (409) so
+`confirm_count` must equal the `recipients` the manager saw (preview with the same template); if the audience changed meanwhile the call is refused (409) so
 the manager re-checks.
 Response 200: `{ campaign_id, recipients, excluded: { opted_out, no_number, duplicates, over_limit } }` (the campaign is
 a draft in Weline's Campaigns)
@@ -60,4 +65,5 @@ template or source campaign · 409 count changed · 403 missing `campaigns:write
 
 ### GET /api/x/audiences/sends?segment_id=&campaign_id=
 Permission: wl_audiences_segments:read
-Response 200: `{ sends: [ { id, kind, segment_id, source_campaign_id, retarget_filter, campaign_id, recipient_count, excluded, created_by: { id, name }, created_at } ] }`
+Response 200: `{ sends: [ { id, kind, segment_id, source_campaign_id, retarget_filter, campaign_id, campaign_name, recipient_count, excluded, created_by: { id, name }, created_at } ] }`
+(newest first, at most 200; `campaign_id` filters sends that created or retargeted that campaign) · Errors: 400 bad id
