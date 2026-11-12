@@ -6,6 +6,8 @@ Nov 7, 2026 · @ira
 
 Every new Weline capability ships as a self-contained module in its own Go package and Vue folder, joined to whatomate's code by one-line hooks, so upstream updates keep merging cleanly. This document is the process for planning, building, testing and releasing those modules.
 
+> **Direction changed on 2026-11-12 ([ADR-002](../adr/ADR-002-connect-dont-build-pms.md)):** Weline connects WhatsApp to the system each business already uses (Cliniko first, later calendars and other vertical systems) instead of building a practice management system. The process in this document still applies; the module list, catalogue entries and roadmap below are updated to match, and the build order lives in [`../build-guide/README.md`](../build-guide/README.md).
+
 **Vertical:** health clinics in Australia, for now. Every module is written vertical-neutral in its core (a "practice", a "practitioner", an "appointment") with clinic specifics in configuration and seed data, so other verticals (salons, physio, dental, real estate) can be added later without a rewrite.
 
 **Modules in scope:**
@@ -13,12 +15,13 @@ Every new Weline capability ships as a self-contained module in its own Go packa
 | Module | One line | Borrowed from notify-app |
 | --- | --- | --- |
 | Practice | Clinic profile, locations, practitioners, opening hours, services | `practice`, `locations` |
-| Booking | Appointment types, availability, slot search, status machine, public booking page | `appointments`, sdlc `04-calendar-and-booking` |
-| Calendar | Day and week views per practitioner, drag to reschedule | sdlc `04-calendar-and-booking` |
+| Booking | Built-in booking for businesses with no system of record; the "built-in" connector (ADR-002) | `appointments`, sdlc `04-calendar-and-booking` |
+| ~~Calendar~~ | Dropped (ADR-002): clinics already have a calendar in their practice system | — |
 | Reminders | Confirmations, 24-hour reminders, reschedule and cancel over WhatsApp | `appointments/notifications.py` |
 | AI responses | Clinic-aware automated replies, FAQ answers, intent detection, human handover | planned `ai` module |
-| Connectors | Cliniko first, then other practice management systems and calendars | planned `connectors/booking` |
-| CRM | Patient profile, tags, timeline, recalls, segments | `contacts` |
+| Connectors | The core of the product (ADR-002): one interface, Cliniko first, then calendars, other practice systems and vertical CRMs | planned `connectors/booking` |
+| Audiences, Consent, Ads | Broadcast segments and retargeting, opt-in and STOP, click-to-WhatsApp ad attribution (build guide Phase 2) | — |
+| CRM | Reduced (ADR-002): recalls move to Reminders, segments to Audiences; an optional contact timeline later | `contacts` |
 
 **Licence stance:** this code lives inside Weline, so it is AGPL-3.0. The repo may be private, but every customer who uses the hosted app must be offered the full source of the running version (see Compliance, security and AGPL).
 
@@ -270,9 +273,9 @@ Turns availability into appointments, by staff, by the public booking page, or b
 - **Endpoints:** `GET /api/x/booking/slots?service=&practitioner=&from=&to=` (also used by chatbot `api_call`), `POST/PATCH /api/x/booking/appointments`, `POST /api/x/booking/appointments/{id}/status`, public `GET/POST /api/x/booking/public/{slug}/...` (no login, rate limited, captcha).
 - **WhatsApp:** a chatbot flow "Book an appointment" asks the service, calls `/slots`, shows times as list buttons, then calls `POST /appointments`.
 
-### Calendar
+### Calendar (dropped, ADR-002)
 
-The reception view of the day.
+The reception view of the day. Dropped: clinics run their day in their practice system's calendar.
 
 - **Screens:** day view with one column per practitioner on the practice's slot grid and a now line; week view; drag to move or resize (calls Booking, which re-checks clashes); colour by status; click an appointment to open the patient and their WhatsApp chat.
 - **Tables:** none of its own; reads Booking and Practice. Optional `wl.calendar_views` for saved filters.
@@ -327,6 +330,8 @@ One view of each patient across bookings and chats.
 | Multi-vertical packs | Seed services, templates and AI knowledge for salons, physio, dental |
 
 ## Roadmap and build order
+
+> **Superseded by [ADR-002](../adr/ADR-002-connect-dont-build-pms.md).** The current order is: messaging platform gaps → connector layer and Cliniko → AI agent → reminders and recalls → multi-business SaaS → more connectors and vertical packs. See [`../build-guide/README.md`](../build-guide/README.md). The original order is kept below for history.
 
 Build in dependency order: Practice and Booking first because every other module reads them, Reminders next because clinics feel them on day one, then AI, Cliniko and CRM. Each phase is a usable release on its own.
 

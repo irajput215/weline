@@ -15,6 +15,8 @@
 
 This guide turns the Weline Module SDLC doc into an ordered list of prompts you paste into Claude Code, one at a time. Each step is one branch and one pull request into `dev`.
 
+**Direction ([ADR-002](../adr/ADR-002-connect-dont-build-pms.md), 2026-11-12):** Weline connects WhatsApp to the system each business already uses (Cliniko first) instead of building a practice management system. Phases 2 to 7 below follow that order.
+
 ## How to use this guide
 
 1. Start every step on a fresh branch from `dev` (the prompt tells Claude to do it).
@@ -35,12 +37,14 @@ Tips that save a lot of pain:
 | File | Covers |
 | --- | --- |
 | [phase-0-foundation.md](phase-0-foundation.md) | Steps 0.1 to 0.10 (rules, repo setup, module kit, seams, example module, CI, webhook receiver, system docs) and the Phase 0 gate |
-| [module-workflow.md](module-workflow.md) | Prompts A (docs first), B (build), C (review and close out), used for every module in Phases 1 to 5 |
-| [phase-1-practice-booking-calendar.md](phase-1-practice-booking-calendar.md) | 1.1 Practice, 1.2 Booking (extras, chatbot flow), 1.3 Calendar, WhatsApp templates, Phase 1 gate |
-| [phase-2-reminders.md](phase-2-reminders.md) | Reminders extras and Phase 2 gate |
-| [phase-3-ai-responses.md](phase-3-ai-responses.md) | AI responses extras and Phase 3 gate |
-| [phase-4-cliniko-connector.md](phase-4-cliniko-connector.md) | Cliniko connector extras and Phase 4 gate |
-| [phase-5-crm-recalls.md](phase-5-crm-recalls.md) | CRM and recalls scope and Phase 5 gate |
+| [module-workflow.md](module-workflow.md) | Prompts A (docs first), B (build), C (review and close out), used for every module |
+| [phase-1-practice-booking-calendar.md](phase-1-practice-booking-calendar.md) | 1.1 Practice, 1.2 Booking (done, now the built-in fallback); 1.3 Calendar dropped |
+| [phase-2-messaging-platform.md](phase-2-messaging-platform.md) | Audiences and retargeting, consent (opt-in, STOP), ads attribution, one source of opening hours, templates |
+| [phase-3-connectors-cliniko.md](phase-3-connectors-cliniko.md) | Cliniko spike, connector layer, Cliniko connector, privacy before the first real clinic |
+| [phase-4-ai-agent.md](phase-4-ai-agent.md) | AI agent: knowledge base, booking through the connector, clinical handover, evals |
+| [phase-5-reminders-recalls.md](phase-5-reminders-recalls.md) | Reminders and recalls driven by the connected system |
+| [phase-6-saas.md](phase-6-saas.md) | Multi-business SaaS: model ADR, sign-up and onboarding, plans and billing, operator console |
+| [phase-7-connectors-verticals.md](phase-7-connectors-verticals.md) | Vertical packs, calendar connectors, more practice systems, real estate |
 | [recurring.md](recurring.md) | Upstream sync, release and bug fix prompts |
 
 ## Progress tracker
@@ -58,10 +62,19 @@ Tips that save a lot of pain:
 * [x] [Phase 0 gate](phase-0-foundation.md#phase-0-gate)
 * [x] [1.1 Practice](phase-1-practice-booking-calendar.md#11-practice)
 * [x] [1.2 Booking + chatbot flow](phase-1-practice-booking-calendar.md#12-booking)
-* [ ] [1.3 Calendar](phase-1-practice-booking-calendar.md#13-calendar)
-* [ ] [WhatsApp templates submitted to Meta](phase-1-practice-booking-calendar.md#phase-1-gate)
-* [ ] [Phase 1 gate](phase-1-practice-booking-calendar.md#phase-1-gate)
-* [ ] [Phase 2 Reminders](phase-2-reminders.md)
-* [ ] [Phase 3 AI responses](phase-3-ai-responses.md)
-* [ ] [Phase 4 Cliniko connector](phase-4-cliniko-connector.md)
-* [ ] [Phase 5 CRM and recalls](phase-5-crm-recalls.md)
+* [x] ~~1.3 Calendar~~ (dropped by [ADR-002](../adr/ADR-002-connect-dont-build-pms.md))
+* [ ] [2.1 Audiences and retargeting](phase-2-messaging-platform.md#21-audiences-and-retargeting)
+* [ ] [2.2 Consent: opt-in and STOP](phase-2-messaging-platform.md#22-consent-opt-in-and-stop)
+* [ ] [2.3 Ads attribution (spike, then module)](phase-2-messaging-platform.md#23-click-to-whatsapp-ads-attribution)
+* [ ] [2.4 One source of opening hours](phase-2-messaging-platform.md#24-one-source-of-opening-hours)
+* [ ] [WhatsApp templates submitted to Meta](phase-2-messaging-platform.md#whatsapp-templates-you-now)
+* [ ] [Phase 2 gate](phase-2-messaging-platform.md#phase-2-gate)
+* [ ] [3.0 Cliniko access and API spike](phase-3-connectors-cliniko.md#30-cliniko-access-and-api-spike)
+* [ ] [3.1 Connector layer](phase-3-connectors-cliniko.md#31-connector-layer)
+* [ ] [3.2 Cliniko connector](phase-3-connectors-cliniko.md#32-cliniko-connector)
+* [ ] [3.3 Privacy before the first real clinic](phase-3-connectors-cliniko.md#33-privacy-before-the-first-real-clinic)
+* [ ] [Phase 3 gate](phase-3-connectors-cliniko.md#phase-3-gate)
+* [ ] [Phase 4 AI agent](phase-4-ai-agent.md)
+* [ ] [Phase 5 Reminders and recalls](phase-5-reminders-recalls.md)
+* [ ] [Phase 6 Multi-business SaaS](phase-6-saas.md)
+* [ ] [Phase 7 More connectors and vertical packs](phase-7-connectors-verticals.md)

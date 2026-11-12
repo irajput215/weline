@@ -1,6 +1,10 @@
 # Phase 1: Practice, Booking, Calendar
 
-**Goal:** a clinic can set up its practice, take bookings (by staff, the public booking page and WhatsApp) and run its day from a calendar.
+**Goal:** a clinic can set up its practice and take bookings (by staff, the public booking page and WhatsApp).
+
+> **Changed by [ADR-002](../adr/ADR-002-connect-dont-build-pms.md) (2026-11-12):** Weline connects to each
+> business's own system instead of building a practice management system. 1.1 and 1.2 are done and stay as the
+> built-in fallback; **1.3 Calendar is dropped**; the old Phase 1 gate is replaced by the Phase 2 and 3 gates.
 
 **Prerequisites:** the [Phase 0 gate](phase-0-foundation.md#phase-0-gate) is passed.
 
@@ -36,13 +40,15 @@ chatbot flow in Weline's flow builder: ask service, api_call to /slots, show tim
 api_call to create the appointment, confirm. Include the exact api_call URLs, headers and response mappings.
 ```
 
-## 1.3 Calendar
+## 1.3 Calendar (dropped)
 
-Day view (one column per practitioner, practice slot grid, now line, status colours), week view, drag to move or resize (calls Booking, which re-checks clashes), click to open the patient and their chat.
+Dropped by [ADR-002](../adr/ADR-002-connect-dont-build-pms.md): clinics already have a calendar in their practice
+system. The docs that were written are preserved in the closed PR #33.
 
-## Phase 1 gate
+## Phase 1 gate (replaced)
 
-- [ ] A pilot clinic runs a full week of bookings in Weline
-- [ ] WhatsApp templates submitted to Meta now (confirmation, 24-hour reminder, reschedule, cancellation, recall), because Phase 2 needs them approved
+The pilot-week gate is replaced: a pilot clinic now runs on its own practice system through the Cliniko connector
+(Phase 3 gate). The WhatsApp templates item moved to Phase 2: submit them early, because reminders (Phase 5) need them
+approved.
 
-Next: [Phase 2: Reminders](phase-2-reminders.md).
+Next: [Phase 2: Messaging platform](phase-2-messaging-platform.md).
