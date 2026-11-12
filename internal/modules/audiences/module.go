@@ -41,5 +41,18 @@ func (m *Module) Permissions() []kit.Permission {
 	}
 }
 
-// Register implements kit.Module. Filled in with the routes in stage 3.
-func (m *Module) Register(_ *fastglue.Fastglue) {}
+// Register implements kit.Module.
+func (m *Module) Register(g *fastglue.Fastglue) {
+	for _, rt := range routes(m.app, NewService(m.app.DB)) {
+		switch rt.method {
+		case "GET":
+			g.GET(rt.path, rt.handler)
+		case "POST":
+			g.POST(rt.path, rt.handler)
+		case "PUT":
+			g.PUT(rt.path, rt.handler)
+		case "DELETE":
+			g.DELETE(rt.path, rt.handler)
+		}
+	}
+}
