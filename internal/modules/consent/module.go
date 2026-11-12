@@ -52,8 +52,22 @@ func (m *Module) Permissions() []kit.Permission {
 	}
 }
 
-// Register implements kit.Module: starts the sweep for Meta's opt-out signal.
-// Routes come in stage 3.
-func (m *Module) Register(_ *fastglue.Fastglue) {
+// Register implements kit.Module: mounts the routes and starts the sweep for
+// Meta's opt-out signal.
+func (m *Module) Register(g *fastglue.Fastglue) {
+	for _, rt := range routes(m.app, m.svc()) {
+		switch rt.method {
+		case "GET":
+			g.GET(rt.path, rt.handler)
+		case "POST":
+			g.POST(rt.path, rt.handler)
+		case "PUT":
+			g.PUT(rt.path, rt.handler)
+		}
+	}
 	go m.svc().runSweep(context.Background())
 }
+
+// The registry hands modules that implement kit.EventHandler to the hooks
+// receiver; this keeps Consent on that list.
+var _ kit.EventHandler = (*Module)(nil)
