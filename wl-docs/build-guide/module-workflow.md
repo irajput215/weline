@@ -1,4 +1,4 @@
-# How every feature module is built (Phases 1 to 5)
+# How every feature module is built
 
 Each module uses the same three prompts. Replace `<module>` and the description.
 

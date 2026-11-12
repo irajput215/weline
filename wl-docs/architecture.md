@@ -10,7 +10,7 @@ and [`../CLAUDE.md`](../CLAUDE.md). Data: [`data-model.md`](data-model.md). Secu
 | Component | What it is | Where |
 | --- | --- | --- |
 | **Weline core** | Upstream whatomate: auth, organizations, roles, contacts, inbox, templates, campaigns, chatbot flows, outbound webhooks, WhatsApp client. Kept as close to upstream as possible. | `cmd/`, `internal/` (except `internal/modules/`), `frontend/src/` (except `frontend/src/modules/`) |
-| **Modules** | Clinic features (practice, booking, calendar, reminders, AI, connectors, CRM), each a Go package + a Vue folder. Today: `example` (template), `practice`, `booking`. | `internal/modules/<module>/`, `frontend/src/modules/<module>/` |
+| **Modules** | Features as Go packages + Vue folders: the messaging platform additions (audiences, consent, ads), connectors to each business's own system (Cliniko first), the AI agent and reminders ([ADR-002](adr/ADR-002-connect-dont-build-pms.md)). Today: `example` (template), `practice`, `booking` (the built-in fallback). | `internal/modules/<module>/`, `frontend/src/modules/<module>/` |
 | **Module kit** | Shared module plumbing: module contract, migration runner, permission seeder, `kit.Guard`, typed errors, `kit.Sender`, events. | `internal/modules/kit/` |
 | **Registry** | Lists module factories; mounts routes, runs migrations, wires event handlers. | `internal/modules/registry.go`, `frontend/src/modules/index.ts` |
 | **Public routes** | Unauthenticated module pages and APIs live outside `/api` (upstream's auth covers all of `/api`): the hooks receiver and Booking's `/book/<slug>` page with `/x/booking/public/...`. | `internal/modules/hooks/`, `internal/modules/booking/page.go` |

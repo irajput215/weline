@@ -1,7 +1,9 @@
 # CLAUDE.md
 
 Project: Weline, a fork of whatomate (Go backend with fastglue + GORM, Vue 3 + Pinia + vue-i18n frontend).
-We add clinic practice-management features as modules. Full process: `wl-docs/sdlc/weline-module-sdlc.md`.
+We add WhatsApp-first features for clinics (and later other small businesses) as modules, connecting to each
+business's own system (Cliniko first) rather than replacing it: `wl-docs/adr/ADR-002-connect-dont-build-pms.md`.
+Full process: `wl-docs/sdlc/weline-module-sdlc.md`.
 Step-by-step build guide, session rules and progress tracker: `wl-docs/build-guide/README.md`.
 
 ## Hard rules

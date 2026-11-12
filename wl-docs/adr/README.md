@@ -10,6 +10,7 @@ whenever a design choice would be expensive to undo (SDLC phase 2, "Design").
 | ADR | Decision | Status |
 | --- | --- | --- |
 | [ADR-001](ADR-001-modules-inside-weline.md) | Modules inside Weline under AGPL, joined by five seams | accepted |
+| [ADR-002](ADR-002-connect-dont-build-pms.md) | Connect to each business's own system; don't build a practice management system | accepted |
 
 ## Template
 
