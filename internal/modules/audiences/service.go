@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shridarpatil/whatomate/internal/models"
+	"github.com/shridarpatil/whatomate/internal/modules/consent"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/shridarpatil/whatomate/internal/templateutil"
 	"gorm.io/gorm"
@@ -18,11 +19,14 @@ import (
 // Service holds the audiences rules (requirements R1–R13). Every method takes
 // the organization first and filters every query by it.
 type Service struct {
-	db *gorm.DB
+	db      *gorm.DB
+	consent *consent.Service // settings only: "marketing only to people who opted in"
 }
 
 // NewService returns the audiences service.
-func NewService(db *gorm.DB) *Service { return &Service{db: db} }
+func NewService(db *gorm.DB) *Service {
+	return &Service{db: db, consent: consent.NewService(db, nil, nil, nil)}
+}
 
 // MaxRecipients is the per-campaign limit (Q5).
 const MaxRecipients = 10000
@@ -82,13 +86,15 @@ func (sendRow) TableName() string { return "wl.audiences_sends" }
 // Excluded counts contacts left out, by reason (R6).
 type Excluded struct {
 	OptedOut   int `json:"opted_out"`
+	NoOptIn    int `json:"no_opt_in"` // marketing template while Consent requires an opt-in
 	NoNumber   int `json:"no_number"`
 	Duplicates int `json:"duplicates"`
 	OverLimit  int `json:"over_limit"`
 }
 
 func (e Excluded) jsonb() models.JSONB {
-	return models.JSONB{"opted_out": e.OptedOut, "no_number": e.NoNumber, "duplicates": e.Duplicates, "over_limit": e.OverLimit}
+	return models.JSONB{"opted_out": e.OptedOut, "no_opt_in": e.NoOptIn, "no_number": e.NoNumber, "duplicates": e.Duplicates,
+		"over_limit": e.OverLimit}
 }
 
 // SampleContact is a masked preview row (R2).
@@ -105,8 +111,12 @@ type Preview struct {
 	// MarketingOptOut is how many would be left out with a marketing template
 	// (R2): equal to Excluded.OptedOut when the preview is for one, else counted
 	// among the recipients so the builder can show it before a template is chosen.
-	MarketingOptOut int             `json:"marketing_opt_out"`
-	Sample          []SampleContact `json:"sample"`
+	MarketingOptOut int `json:"marketing_opt_out"`
+	// NotRecorded is how many recipients have no recorded opt-in (Consent R9).
+	// RequireOptIn says whether they are left out of marketing templates.
+	NotRecorded  int             `json:"not_recorded"`
+	RequireOptIn bool            `json:"require_opt_in"`
+	Sample       []SampleContact `json:"sample"`
 }
 
 // Send is a created campaign as the history shows it.
@@ -323,6 +333,7 @@ type contactRow struct {
 	ProfileName     string
 	Metadata        models.JSONB `gorm:"type:jsonb"`
 	MarketingOptOut bool
+	OptedIn         bool // Consent has an opt-in on record
 }
 
 var nonDigits = regexp.MustCompile(`\D`)
@@ -350,7 +361,9 @@ func (s *Service) count(ctx context.Context, orgID uuid.UUID, r *Rules) (int, er
 func (s *Service) evaluate(ctx context.Context, orgID uuid.UUID, r *Rules) ([]contactRow, error) {
 	where, args := r.compile(orgID)
 	var rows []contactRow
-	err := s.db.WithContext(ctx).Raw(`SELECT c.id, c.phone_number, c.profile_name, c.metadata, c.marketing_opt_out
+	err := s.db.WithContext(ctx).Raw(`SELECT c.id, c.phone_number, c.profile_name, c.metadata, c.marketing_opt_out,
+			EXISTS (SELECT 1 FROM wl.consent_status cs WHERE cs.organization_id = c.organization_id AND cs.contact_id = c.id
+				AND cs.marketing = 'opted_in') AS opted_in
 		FROM contacts c WHERE `+where+` ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC, c.id`, args...).Scan(&rows).Error
 	if err != nil {
 		return nil, fmt.Errorf("evaluate segment: %w", err)
@@ -358,8 +371,8 @@ func (s *Service) evaluate(ctx context.Context, orgID uuid.UUID, r *Rules) ([]co
 	return rows, nil
 }
 
-// select applies the exclusions (R6, R7, R13) and the limit.
-func pick(rows []contactRow, marketing bool) ([]contactRow, Excluded) {
+// pick applies the exclusions (R6, R7, R13, Consent R9) and the limit.
+func pick(rows []contactRow, marketing, requireOptIn bool) ([]contactRow, Excluded) {
 	var ex Excluded
 	seen := map[string]bool{}
 	out := make([]contactRow, 0, len(rows))
@@ -373,6 +386,9 @@ func pick(rows []contactRow, marketing bool) ([]contactRow, Excluded) {
 		case marketing && c.MarketingOptOut:
 			seen[p] = true
 			ex.OptedOut++
+		case marketing && requireOptIn && !c.OptedIn:
+			seen[p] = true
+			ex.NoOptIn++
 		case len(out) >= MaxRecipients:
 			seen[p] = true
 			ex.OverLimit++
@@ -446,13 +462,19 @@ func (s *Service) Preview(ctx context.Context, orgID uuid.UUID, in PreviewInput)
 	if err != nil {
 		return nil, err
 	}
-	kept, ex := pick(rows, marketing)
-	out := &Preview{Matched: len(rows), Recipients: len(kept), Excluded: ex, MarketingOptOut: ex.OptedOut, Sample: []SampleContact{}}
-	if !marketing {
-		for _, c := range kept {
-			if c.MarketingOptOut {
-				out.MarketingOptOut++
-			}
+	cs, err := s.consent.Settings(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	kept, ex := pick(rows, marketing, cs.RequireOptIn)
+	out := &Preview{Matched: len(rows), Recipients: len(kept), Excluded: ex, MarketingOptOut: ex.OptedOut,
+		NotRecorded: ex.NoOptIn, RequireOptIn: cs.RequireOptIn, Sample: []SampleContact{}}
+	for _, c := range kept {
+		if !marketing && c.MarketingOptOut {
+			out.MarketingOptOut++
+		}
+		if !c.OptedIn && !c.MarketingOptOut {
+			out.NotRecorded++
 		}
 	}
 	for i := 0; i < len(kept) && i < sampleSize; i++ {
@@ -626,7 +648,11 @@ func (s *Service) CreateSend(ctx context.Context, orgID, userID uuid.UUID, in Se
 	if err != nil {
 		return nil, err
 	}
-	kept, ex := pick(rows, strings.EqualFold(t.Category, "MARKETING"))
+	cs, err := s.consent.Settings(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	kept, ex := pick(rows, strings.EqualFold(t.Category, "MARKETING"), cs.RequireOptIn)
 	if len(kept) == 0 {
 		return nil, kit.Invalid("no one to send to after exclusions")
 	}

@@ -15,6 +15,7 @@ var (
 	ErrForbidden = errors.New("insufficient permissions") // 403
 	ErrNotFound  = errors.New("not found")                // 404
 	ErrConflict  = errors.New("conflict")                 // 409
+	ErrGone      = errors.New("gone")                     // 410
 	ErrTooMany   = errors.New("too many requests")        // 429
 	ErrNotReady  = errors.New("not available")            // 503
 )
@@ -22,7 +23,7 @@ var (
 // Error is a service error with a message that is safe to show the user.
 // Never put phone numbers, names or message text in Message.
 type Error struct {
-	Kind    error // one of ErrInvalid, ErrForbidden, ErrNotFound, ErrConflict, ErrTooMany, ErrNotReady
+	Kind    error // one of ErrInvalid, ErrForbidden, ErrNotFound, ErrConflict, ErrGone, ErrTooMany, ErrNotReady
 	Message string
 }
 
@@ -41,6 +42,10 @@ func NotFound(format string, args ...any) error { return newErr(ErrNotFound, for
 // Conflict returns a 409 error that names the clash, e.g.
 // Conflict("slot taken by appointment %s", id).
 func Conflict(format string, args ...any) error { return newErr(ErrConflict, format, args) }
+
+// Gone is a 410: something the caller relied on has expired (for example an
+// import preview).
+func Gone(format string, args ...any) error { return newErr(ErrGone, format, args) }
 
 // TooMany returns a 429 error, e.g. TooMany("too many bookings today").
 func TooMany(format string, args ...any) error { return newErr(ErrTooMany, format, args) }
@@ -66,6 +71,8 @@ func StatusOf(err error) int {
 		return fasthttp.StatusNotFound
 	case errors.Is(err, ErrConflict):
 		return fasthttp.StatusConflict
+	case errors.Is(err, ErrGone):
+		return fasthttp.StatusGone
 	case errors.Is(err, ErrTooMany):
 		return fasthttp.StatusTooManyRequests
 	case errors.Is(err, ErrNotReady):

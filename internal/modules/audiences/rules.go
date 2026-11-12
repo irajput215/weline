@@ -42,6 +42,7 @@ var fieldOps = map[string][]string{
 	"last_inbound":     {"within_days", "not_within_days"},
 	"created":          {"within_days", "not_within_days"},
 	"campaign":         {"received", "not_received", "read", "not_read", "read_no_reply", "replied"},
+	"consent":          {"opted_in", "opted_out", "not_recorded"}, // Consent module (2.2 R9)
 }
 
 // RetargetFilters are the campaign ops a retarget can use (R8).
@@ -116,6 +117,8 @@ func (r *Rules) Validate() error {
 			if _, err := c.days(); err != nil {
 				return err
 			}
+		case "consent":
+			// no value
 		case "campaign":
 			v, err := c.str()
 			if err != nil {
@@ -189,6 +192,16 @@ func (r *Rules) compile(orgID uuid.UUID) (string, []any) {
 				v, _ := c.str()
 				parts = append(parts, "c.metadata->>? ILIKE ?")
 				args = append(args, c.Key, "%"+likeEscape(v)+"%")
+			}
+		case "consent":
+			status := "EXISTS (SELECT 1 FROM wl.consent_status cs WHERE cs.organization_id = c.organization_id AND cs.contact_id = c.id%s)"
+			switch c.Op {
+			case "opted_in":
+				parts = append(parts, "(NOT c.marketing_opt_out AND "+fmt.Sprintf(status, " AND cs.marketing = 'opted_in'")+")")
+			case "opted_out":
+				parts = append(parts, "(c.marketing_opt_out OR "+fmt.Sprintf(status, " AND cs.marketing = 'opted_out'")+")")
+			case "not_recorded":
+				parts = append(parts, "(NOT c.marketing_opt_out AND NOT "+fmt.Sprintf(status, "")+")")
 			}
 		case "whatsapp_account":
 			v, _ := c.str()

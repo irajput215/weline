@@ -25,7 +25,8 @@ export const OPS: Record<Field, string[]> = {
   whatsapp_account: ['eq'],
   last_inbound: ['within_days', 'not_within_days'],
   created: ['within_days', 'not_within_days'],
-  campaign: ['received', 'not_received', 'read', 'not_read', 'read_no_reply', 'replied']
+  campaign: ['received', 'not_received', 'read', 'not_read', 'read_no_reply', 'replied'],
+  consent: ['opted_in', 'opted_out', 'not_recorded']
 }
 export const FIELDS = Object.keys(OPS) as Field[]
 export const RETARGET_FILTERS = ['not_received', 'not_read', 'read_no_reply', 'replied'] as const
@@ -36,7 +37,7 @@ export function newCondition(field: Field = 'tag'): Condition {
   const c: Condition = { field, op: OPS[field][0] }
   if (field === 'last_inbound' || field === 'created') c.value = 90
   else if (field === 'metadata') c.key = ''
-  if (field !== 'last_inbound' && field !== 'created' && !(field === 'metadata' && (c.op === 'exists' || c.op === 'not_exists'))) {
+  if (field !== 'last_inbound' && field !== 'created' && field !== 'consent' && !(field === 'metadata' && (c.op === 'exists' || c.op === 'not_exists'))) {
     c.value = c.value ?? ''
   }
   return c
@@ -45,6 +46,7 @@ export function newCondition(field: Field = 'tag'): Condition {
 /** Whether a row has what the server needs (no request for half-filled rows). */
 export function isComplete(c: Condition): boolean {
   if (!OPS[c.field]?.includes(c.op)) return false
+  if (c.field === 'consent') return true
   if (c.field === 'metadata') {
     if (!/^[a-zA-Z0-9_]{1,50}$/.test(c.key ?? '')) return false
     if (c.op === 'exists' || c.op === 'not_exists') return true
@@ -65,6 +67,7 @@ export function cleanRules(r: Rules): Rules {
       const out: Condition = { field: c.field, op: c.op }
       if (c.field === 'metadata') out.key = c.key
       if (c.field === 'last_inbound' || c.field === 'created') out.value = Number(c.value)
+      else if (c.field === 'consent') return out
       else if (!(c.field === 'metadata' && (c.op === 'exists' || c.op === 'not_exists'))) out.value = String(c.value ?? '').trim()
       if (c.field === 'campaign' && c.days) out.days = Number(c.days)
       return out

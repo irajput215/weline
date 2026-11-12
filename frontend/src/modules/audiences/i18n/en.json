@@ -70,7 +70,8 @@
     "whatsapp_account": "WhatsApp number",
     "last_inbound": "Last wrote to us",
     "created": "Added",
-    "campaign": "Campaign"
+    "campaign": "Campaign",
+    "consent": "Consent"
   },
   "ops": {
     "has": "has",
@@ -87,7 +88,10 @@
     "read": "read",
     "not_read": "received but didn't read",
     "read_no_reply": "read but didn't reply",
-    "replied": "replied"
+    "replied": "replied",
+    "opted_in": "opted in",
+    "opted_out": "opted out",
+    "not_recorded": "not recorded"
   },
   "preview": {
     "title": "Who this reaches",
@@ -103,7 +107,9 @@
     "sample": "Examples",
     "noOne": "No one matches yet.",
     "failed": "Couldn't count: {msg}",
-    "marketingOptOut": "{n} opted out of marketing: left out if you use a marketing template"
+    "marketingOptOut": "{n} opted out of marketing: left out if you use a marketing template",
+    "no_opt_in": "{n} without a recorded opt-in (Consent settings)",
+    "notRecorded": "{n} have no recorded opt-in (Consent)"
   },
   "retarget": {
     "title": "Follow up a campaign",

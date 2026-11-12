@@ -3,7 +3,7 @@
 // wl-docs/modules/audiences/api.md
 import { api } from '@/services/api'
 
-export type Field = 'tag' | 'metadata' | 'whatsapp_account' | 'last_inbound' | 'created' | 'campaign'
+export type Field = 'tag' | 'metadata' | 'whatsapp_account' | 'last_inbound' | 'created' | 'campaign' | 'consent'
 
 export interface Condition {
   field: Field
@@ -30,6 +30,7 @@ export interface Segment {
 
 export interface Excluded {
   opted_out: number
+  no_opt_in: number
   no_number: number
   duplicates: number
   over_limit: number
@@ -40,6 +41,8 @@ export interface Preview {
   recipients: number
   excluded: Excluded
   marketing_opt_out: number
+  not_recorded: number
+  require_opt_in: boolean
   sample: { name: string; phone_masked: string }[]
 }
 

@@ -121,6 +121,14 @@ describe('rules helpers', () => {
     expect(isComplete({ field: 'created', op: 'within_days', value: 30 })).toBe(true)
   })
 
+  it('treats the consent rule as complete without a value', () => {
+    expect(isComplete({ field: 'consent', op: 'opted_in' })).toBe(true)
+    expect(isComplete({ field: 'consent', op: 'maybe' })).toBe(false)
+    expect(newCondition('consent')).toEqual({ field: 'consent', op: 'opted_in' })
+    expect(cleanRules({ match: 'all', conditions: [{ field: 'consent', op: 'not_recorded', value: 'x' }] }).conditions)
+      .toEqual([{ field: 'consent', op: 'not_recorded' }])
+  })
+
   it('cleans rules for the server', () => {
     const r = cleanRules({
       match: 'any',
