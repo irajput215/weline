@@ -30,10 +30,13 @@ snake_case of the Go field: `WhatsAppAccount` → **`whats_app_account`**, `What
 | --- | --- | --- |
 | `organizations` | `id`, `name`, `slug`, `deleted_at` | The tenant. Every module row has `organization_id` = `organizations.id`. |
 | `users` | `id`, `organization_id` (default org), `email`, `full_name`, `is_active`, `is_super_admin`, `role_id` | Staff. A user can belong to several orgs through `user_organizations (user_id, organization_id, role_id, is_default)`; the active org comes from `X-Organization-ID` (use `kit.OrgID`, not the token's default). |
-| `contacts` | `id`, `organization_id`, `phone_number`, `profile_name`, `whats_app_account` (account **name**), `assigned_user_id`, `last_inbound_at` (24-hour window), `marketing_opt_out`, `tags`, `deleted_at` | A WhatsApp customer, the clinic's patient. Modules link by `contact_id` and never copy phone or name. |
+| `contacts` | `id`, `organization_id`, `phone_number`, `profile_name`, `whats_app_account` (account **name**), `assigned_user_id`, `last_inbound_at` (24-hour window), `last_message_at`, `marketing_opt_out`, `tags` (jsonb array of names), `metadata` (jsonb contact fields), `created_at`, `deleted_at` | A WhatsApp customer, the clinic's patient. Modules link by `contact_id` and never copy phone or name. |
 | `messages` | `id`, `organization_id`, `contact_id`, `whats_app_account`, `whats_app_message_id`, `direction` (`incoming`/`outgoing`), `message_type`, `status` (`pending`/`sent`/`delivered`/`read`/`failed`/`received`), `template_name`, `sent_by_user_id`, `created_at` | Modules read status by id (e.g. reminder sends). `content` is message text: never log it. |
 | `whatsapp_accounts` | `id`, `organization_id`, `name` (unique per org; contacts/messages/templates reference it by name), `phone_id`, `is_default_outgoing`, `status` | `access_token`, `app_secret`, `pin` are encrypted and only ever handled by core (`kit.Sender` resolves accounts through core). |
-| `templates` | `organization_id`, `whats_app_account`, `name`, `language`, `status` (`APPROVED` to send) | Per WhatsApp account; `kit.Sender.SendTemplate` checks approval. |
+| `templates` | `id`, `organization_id`, `whats_app_account`, `name`, `language`, `category` (`MARKETING`/`UTILITY`/`AUTHENTICATION`), `status` (`APPROVED` to send), `header_type`, `header_content`, `body_content` | Per WhatsApp account; `kit.Sender.SendTemplate` checks approval. |
+| `bulk_message_campaigns` | `id`, `organization_id`, `whats_app_account`, `name`, `template_id`, `status` (`draft` … `completed`), counts, `created_by`, `completed_at` | Campaigns. Audiences creates drafts only; starting stays in Campaigns (`campaigns:execute`). |
+| `bulk_message_recipients` | `campaign_id`, `phone_number`, `recipient_name`, `template_params`, `header_params`, `status` (`pending`/`sent`/`delivered`/`read`/`failed`), `sent_at`, `read_at`, `deleted_at` | Recipients can only be added while the campaign is a draft. Upstream's sender skips `marketing_opt_out` contacts for marketing templates. |
+| `tags` | `organization_id`, `name` | The tag list; contacts carry tag names in `contacts.tags`. |
 | `webhooks` | (managed row) `organization_id`, `name` = "Weline modules (managed, do not edit)", `url`, `events`, `headers`, `secret`, `is_active` | Created by `internal/modules/hooks`; the receiver reads `secret`. |
 | `permissions`, `custom_roles`, `role_permissions` | `permissions.resource`, `action`; `custom_roles.name`, `is_system` | Module permissions (`wl_<module>_<thing>`) are inserted by `kit.SeedPermissions`. |
 
@@ -234,6 +237,63 @@ erDiagram
         text to_status
         jsonb changes
         uuid changed_by_id }
+```
+
+### audiences
+
+Segments and the campaigns created from them, built in Phase 2.1 (migration `audiences/0001_create_audiences`).
+Full design: [`modules/audiences/design.md`](modules/audiences/design.md#data-model).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.audiences_segments` | A named set of rules over contacts (`rules` jsonb: tag, contact field, WhatsApp number, activity, past campaign), description, who created and last changed it | Name unique per org among live rows; soft delete (`deleted_at`); `UNIQUE (organization_id, id)` for the composite key below |
+| `wl.audiences_sends` | One row per campaign created here: `kind` (`segment` or `retarget`), the segment or source campaign and filter, the upstream `campaign_id`, a snapshot of the rules and variable mapping, recipient count and exclusions by reason, who created it | Append-only; `kind = 'segment'` exactly when there's no source campaign; composite FK `(organization_id, segment_id)` so a send can't point at another org's segment (`ON DELETE SET NULL (segment_id)`) |
+
+**Upstream rows it writes:** a draft `bulk_message_campaigns` row and its `bulk_message_recipients` (phone number in
+digits, the contact's name, and the rendered template variables, which may include contact field values), through
+upstream's models in one transaction, the same rows Weline's own recipient import writes. Campaigns and recipients
+follow upstream's lifecycle (deleted with the campaign).
+
+**Reads:** `contacts` (`tags`, `metadata`, `whats_app_account`, `last_inbound_at`, `last_message_at`,
+`marketing_opt_out`, `created_at`), `bulk_message_campaigns` / `bulk_message_recipients` (status, `sent_at`,
+`read_at`) for campaign rules and retargets, incoming `messages` (`contact_id`, `created_at`) for "replied",
+`templates`, `tags`, `whatsapp_accounts`. Contacts are matched to campaign recipients by phone number with
+non-digits removed.
+
+**Patient data:** segments hold rules, not people; a segment's contacts are worked out each time. The send row
+keeps counts only. Names and numbers reach the browser only as the masked sample (first 2 and last 3 digits).
+
+```mermaid
+erDiagram
+    organizations ||--o{ "wl.audiences_segments" : "organization_id"
+    "wl.audiences_segments" ||--o{ "wl.audiences_sends" : "segment_id (composite FK, set null)"
+    bulk_message_campaigns ||--o| "wl.audiences_sends" : "campaign_id (created, no FK)"
+    bulk_message_campaigns ||--o{ "wl.audiences_sends" : "source_campaign_id (retarget, no FK)"
+    bulk_message_campaigns ||--o{ bulk_message_recipients : "upstream"
+    contacts ||..o{ bulk_message_recipients : "matched by normalised phone"
+    users ||--o{ "wl.audiences_sends" : "created_by_id (no FK)"
+
+    "wl.audiences_segments" { uuid id PK
+        uuid organization_id
+        varchar name
+        varchar description
+        jsonb rules
+        uuid created_by_id
+        uuid updated_by_id
+        timestamptz deleted_at }
+    "wl.audiences_sends" { uuid id PK
+        uuid organization_id
+        varchar kind
+        uuid segment_id
+        uuid source_campaign_id
+        varchar retarget_filter
+        uuid campaign_id
+        jsonb rules_snapshot
+        jsonb variables
+        int recipient_count
+        jsonb excluded
+        uuid created_by_id
+        timestamptz created_at }
 ```
 
 ### calendar

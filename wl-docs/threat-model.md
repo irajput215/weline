@@ -3,13 +3,13 @@
 One page, updated by prompt C whenever a module adds a public endpoint, a new kind of data or an external
 integration. Architecture: [`architecture.md`](architecture.md). Data: [`data-model.md`](data-model.md).
 STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure, **D**enial of service,
-**E**levation of privilege. Last reviewed: 2026-11-09 (Phase 1.2, Booking module).
+**E**levation of privilege. Last reviewed: 2026-11-12 (Phase 2.1, Audiences module).
 
 ## Assets
 
 | Asset | Where | Why it matters |
 | --- | --- | --- |
-| Patient contact data (phone, name, appointments, CRM profile) | `contacts`, `wl.booking_appointments` and history, future `wl.*` tables | Health-related personal information under the Privacy Act 1988 / APPs |
+| Patient contact data (phone, name, appointments, CRM profile) | `contacts`, `wl.booking_appointments` and history, campaign recipients (`bulk_message_recipients`, written by Audiences with names and rendered template values), future `wl.*` tables | Health-related personal information under the Privacy Act 1988 / APPs |
 | Messages | `messages.content`, media storage | May contain health details; never logged |
 | WhatsApp access tokens, app secrets, PINs | `whatsapp_accounts` (encrypted) | Send as the clinic, read its traffic |
 | Webhook signing secrets | `webhooks.secret` (plain text, upstream design) | Forge events into modules |
@@ -27,6 +27,7 @@ STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure
 | **Public booking page** `/book/<slug>`, `/x/booking/public/<slug>/…` (no login, outside `/api`) | Fake or spam bookings; booking under someone else's mobile | Tampered slot, practitioner or price | – | Other patients' bookings, internal ids, whether a mobile is already known | Booking spam, slot scraping | – | Cloudflare Turnstile verified server-side on every booking, refused (503) until keys are set; rate limits per hashed IP (60 reads/min, 5 bookings/h) and per hashed mobile (3/day), failing open if Redis is down; the server recomputes the slot (client sends ids and a start time only; duration and end come from the service); responses carry clinic name, locations, services, practitioner names and roles, free times and the caller's own reference only, the same whatever the mobile; strict CSP with a nonce, `frame-ancestors 'none'`, `credentials: 'omit'`; unknown slug 404. Tested in `internal/modules/booking/handlers_test.go`. See open risk 10. |
 | **`POST /x/hooks/weline`** (module event receiver) | Forged events | Payload altered in transit | – | – | Flooding | Event injected into another org | Per-org random token in `X-Weline-Hook-Token` (stored in the webhook's custom headers), constant-time compare, required on every delivery; plus HMAC-SHA256 of the raw body with the org's secret **whenever Weline sends a signature** (upstream omits it on cached deliveries, see open risk 1); `X-Weline-Org` is proven by the token; HTTPS only; stale (>1 h) or future deliveries rejected; Redis de-duplication; 401 before any work (`internal/modules/hooks/receiver.go`). Outside `/api`, so no session needed (by design). |
 | **Chatbot `api_call` nodes** → module endpoints | Calls made with someone's API key | Flow edited to call another URL | – | API key visible in flow config | – | API key with more rights than needed | Calls go through Weline's SSRF-safe client (`internal/handlers/webhooks.go` `SSRFSafeDialer`); module endpoints still need auth + `wl_` permission. **Open risk:** the key sits in the flow config. Booking's chatbot endpoints only book for the phone number of the conversation's contact in the key's org, and offers expire after 30 minutes. |
+| **Audiences** (`/api/x/audiences`) → draft campaigns | – | Rules crafted to inject SQL or read another org's data | Who created which campaign for whom | Contacts' phone numbers; other orgs' campaigns or templates; contact attributes inferred from counts | Expensive rules, huge audiences | Creating campaigns without Weline's campaign permission | Rules are a closed set of fields and operators compiled to **parameterised SQL**; contact field names must match `^[a-zA-Z0-9_]{1,50}$`, LIKE wildcards escaped (injection tests in `internal/modules/audiences/service_test.go`); every query filtered by org, and campaign and template ids checked to be the org's; the preview returns masked numbers only (first 2 and last 3 digits); creating a campaign needs `wl_audiences_sends:create` **and** upstream `campaigns:write`, and only makes a **draft** (starting needs `campaigns:execute` in Campaigns); `confirm_count` must match or the request is refused; at most 20 conditions and 10,000 recipients; each send is recorded with its creator, rules snapshot and exclusions (`wl.audiences_sends`). Opted-out contacts are left out for marketing templates, and upstream's sender checks again. See open risks 12–13. |
 | **Meta webhook** (`/api/webhook`, upstream) | Forged WhatsApp events | – | – | – | Flooding | – | Upstream verifies `X-Hub-Signature-256` **only when the account has an App Secret stored**. Set it for every account. |
 | **Connector syncs** (planned, Phase 4) | Spoofed practice-system responses | – | Sync log | Credentials leak | Rate limits (Cliniko 200/min) | – | To build: HTTPS only, encrypted credentials in `wl.connector_accounts`, `wl.connector_syncs` log, backoff on 429, no live calls in CI. |
 | **Outbound sends** (`kit.Sender`) | – | – | Who sent it | Message to the wrong patient | – | Sending as another org | Contact and account resolved inside the org (`internal/modules/kit/sender.go`); messages are stored and visible in the inbox; templates must be approved. **Open risk:** module sends carry no `sent_by_user_id` yet. |
@@ -75,3 +76,12 @@ STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure
     add mobile verification (WhatsApp one-time code) if abuse appears.
 11. **Booking records are patient data without a deletion job yet.** The retention rule (7 years after the
     appointment) is recorded in `wl-docs/modules/booking/design.md`; the job must exist before real patients.
+12. **Broadcast consent rests on `marketing_opt_out` only.** Audiences leaves out contacts who opted out, but
+    Weline has no recorded opt-in yet, and STOP isn't handled until step 2.2 (Consent). Until then a manager can
+    send marketing templates to anyone who hasn't opted out through Meta. That risks complaints, a lower Meta
+    quality rating, and Spam Act 2003 issues. Step 2.2 records opt-in and handles STOP; send marketing only to people
+    who agreed to it.
+13. **Counts reveal facts about contacts the viewer may not otherwise see.** Anyone with
+    `wl_audiences_segments:read` (reception by default) can count contacts by tag, contact field value or campaign
+    response across the whole organization, and see a masked sample with names. That is aggregate access beyond
+    an agent's assigned chats. Remove `read` from roles that shouldn't see it (Q1).

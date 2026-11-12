@@ -198,6 +198,7 @@ func TestPreview_RulesAndExclusions(t *testing.T) {
 	assert.Equal(t, 5, p.Matched)
 	assert.Equal(t, 3, p.Recipients, "opt-outs count only for marketing templates")
 	assert.Equal(t, Excluded{Duplicates: 1, NoNumber: 1}, p.Excluded)
+	assert.Equal(t, 1, p.MarketingOptOut, "shown before a template is chosen (R2)")
 	require.Len(t, p.Sample, 3)
 	for _, s := range p.Sample {
 		assert.Contains(t, s.PhoneMasked, "•")
@@ -208,6 +209,7 @@ func TestPreview_RulesAndExclusions(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, p.Recipients)
 	assert.Equal(t, 1, p.Excluded.OptedOut)
+	assert.Equal(t, 1, p.MarketingOptOut)
 
 	in.TemplateID = &f.util.ID
 	p, err = f.svc.Preview(ctx, f.org, in)

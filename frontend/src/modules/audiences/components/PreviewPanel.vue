@@ -40,6 +40,9 @@ const excluded = computed(() =>
             <li v-for="[k, n] in excluded" :key="k" :data-testid="`excluded-${k}`">{{ t(`wl.audiences.preview.${k}`, { n, max: MAX }) }}</li>
           </ul>
         </div>
+        <p v-if="preview.excluded.opted_out === 0 && preview.marketing_opt_out > 0" class="text-muted-foreground" data-testid="preview-marketing-opt-out">
+          {{ t('wl.audiences.preview.marketingOptOut', { n: preview.marketing_opt_out }) }}
+        </p>
         <div v-if="preview.sample.length">
           <p class="font-medium">{{ t('wl.audiences.preview.sample') }}</p>
           <ul class="text-muted-foreground" data-testid="preview-sample">

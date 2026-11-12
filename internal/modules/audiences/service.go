@@ -99,10 +99,14 @@ type SampleContact struct {
 
 // Preview is what a set of rules reaches.
 type Preview struct {
-	Matched    int             `json:"matched"`    // contacts matching the rules
-	Recipients int             `json:"recipients"` // left after exclusions: what a campaign would get
-	Excluded   Excluded        `json:"excluded"`
-	Sample     []SampleContact `json:"sample"`
+	Matched    int      `json:"matched"`    // contacts matching the rules
+	Recipients int      `json:"recipients"` // left after exclusions: what a campaign would get
+	Excluded   Excluded `json:"excluded"`
+	// MarketingOptOut is how many would be left out with a marketing template
+	// (R2): equal to Excluded.OptedOut when the preview is for one, else counted
+	// among the recipients so the builder can show it before a template is chosen.
+	MarketingOptOut int             `json:"marketing_opt_out"`
+	Sample          []SampleContact `json:"sample"`
 }
 
 // Send is a created campaign as the history shows it.
@@ -443,7 +447,14 @@ func (s *Service) Preview(ctx context.Context, orgID uuid.UUID, in PreviewInput)
 		return nil, err
 	}
 	kept, ex := pick(rows, marketing)
-	out := &Preview{Matched: len(rows), Recipients: len(kept), Excluded: ex, Sample: []SampleContact{}}
+	out := &Preview{Matched: len(rows), Recipients: len(kept), Excluded: ex, MarketingOptOut: ex.OptedOut, Sample: []SampleContact{}}
+	if !marketing {
+		for _, c := range kept {
+			if c.MarketingOptOut {
+				out.MarketingOptOut++
+			}
+		}
+	}
 	for i := 0; i < len(kept) && i < sampleSize; i++ {
 		out.Sample = append(out.Sample, SampleContact{Name: kept[i].ProfileName, PhoneMasked: maskPhone(kept[i].PhoneNumber)})
 	}

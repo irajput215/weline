@@ -39,6 +39,7 @@ export interface Preview {
   matched: number
   recipients: number
   excluded: Excluded
+  marketing_opt_out: number
   sample: { name: string; phone_masked: string }[]
 }
 

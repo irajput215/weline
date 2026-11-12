@@ -32,7 +32,11 @@
     "count": "Contacts now",
     "lastUsed": "Last used",
     "deleteConfirmTitle": "Delete {name}?",
-    "deleteConfirmDescription": "Campaigns already created from it are kept."
+    "deleteConfirmDescription": "Campaigns already created from it are kept.",
+    "duplicate": "Duplicate",
+    "copyName": "{name} (copy)",
+    "copyNameN": "{name} (copy {n})",
+    "duplicated": "Copied as {name}"
   },
   "builder": {
     "newTitle": "New segment",
@@ -98,7 +102,8 @@
     "over_limit": "{n} over the {max} limit",
     "sample": "Examples",
     "noOne": "No one matches yet.",
-    "failed": "Couldn't count: {msg}"
+    "failed": "Couldn't count: {msg}",
+    "marketingOptOut": "{n} opted out of marketing: left out if you use a marketing template"
   },
   "retarget": {
     "title": "Follow up a campaign",
@@ -118,7 +123,8 @@
       "not_read": "Received but didn't read",
       "read_no_reply": "Read but didn't reply",
       "replied": "Replied"
-    }
+    },
+    "saveAsSegment": "Save as segment"
   },
   "history": {
     "title": "Campaigns created here",

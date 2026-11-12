@@ -63,7 +63,7 @@ Tips that save a lot of pain:
 * [x] [1.1 Practice](phase-1-practice-booking-calendar.md#11-practice)
 * [x] [1.2 Booking + chatbot flow](phase-1-practice-booking-calendar.md#12-booking)
 * [x] ~~1.3 Calendar~~ (dropped by [ADR-002](../adr/ADR-002-connect-dont-build-pms.md))
-* [ ] [2.1 Audiences and retargeting](phase-2-messaging-platform.md#21-audiences-and-retargeting)
+* [x] [2.1 Audiences and retargeting](phase-2-messaging-platform.md#21-audiences-and-retargeting)
 * [ ] [2.2 Consent: opt-in and STOP](phase-2-messaging-platform.md#22-consent-opt-in-and-stop)
 * [ ] [2.3 Ads attribution (spike, then module)](phase-2-messaging-platform.md#23-click-to-whatsapp-ads-attribution)
 * [ ] [2.4 One source of opening hours](phase-2-messaging-platform.md#24-one-source-of-opening-hours)
