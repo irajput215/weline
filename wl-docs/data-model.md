@@ -86,7 +86,9 @@ erDiagram
 
 Redis keys: `wl:hooks:seen:<org>:<event>:<id>` (24 h, webhook de-duplication); `wl:booking:offer:<org>:<id>`
 (30 min, chatbot time offers: labels, practitioner ids and times, no patient data); `wl:booking:rl:<bucket>:<hash>`
-(public page rate limits, keyed by a hash of the IP or mobile, never the raw value).
+(public page rate limits, keyed by a hash of the IP or mobile, never the raw value);
+`wl:consent:import:<org>:<token>` (15 min, a parsed opt-in CSV between preview and apply: digits-only numbers, dates
+and notes); `wl:consent:sweep` (about 5 min, lock so one instance sweeps for Meta's opt-out changes).
 
 ## Modules
 
@@ -294,6 +296,80 @@ erDiagram
         jsonb excluded
         uuid created_by_id
         timestamptz created_at }
+```
+
+### consent
+
+Opt-in, opt-out and the consent history, built in Phase 2.2 (migration `consent/0001_create_consent`).
+Full design: [`modules/consent/design.md`](modules/consent/design.md#data-model).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.consent_settings` | Per-organization opt-out and opt-in word lists, opt-in button phrases, the two reply texts, the opt-out tag, `require_opt_in` and `service_after_stop` (`continue`/`stop`) | One row per organization; no row = defaults |
+| `wl.consent_status` | Current marketing consent per contact: `opted_in` or `opted_out`, its source and date, and the event that set it | PK `(organization_id, contact_id)`; no row = not recorded; `opted_out` always matches `contacts.marketing_opt_out`, and the sweep repairs any difference; composite FK to the last event |
+| `wl.consent_events` | Every opt-in and opt-out: action, source (`keyword`, `button`, `staff`, `import`, `meta`; `ad`, `web_form` reserved), state before, when given and recorded, who recorded it, the upstream message id, the matched keyword (never the message text), the evidence note, the import | **Append-only** (the module has no update or delete); `UNIQUE (organization_id, id)`; composite FK to the import |
+| `wl.consent_imports` | One row per applied CSV: file name, proof description, row counts by outcome, who imported it | `UNIQUE (organization_id, id)`; the file itself isn't stored |
+
+**Upstream rows it writes:** `contacts.marketing_opt_out` and `contacts.tags` (adds or removes the opt-out tag),
+through upstream's `models.Contact`, in the same transaction as the consent event. It sends confirmation replies
+through `kit.Sender`, which stores them as ordinary outgoing `messages`.
+
+**Reads:** `contacts` (`phone_number`, `profile_name`, `marketing_opt_out`, `tags`, `deleted_at`), `organizations.name`
+(for `{business}` in replies), `users.full_name` and `user_organizations` (who recorded a change). Audiences reads
+`wl.consent_status` and `wl.consent_settings` for its Consent rule and `no_opt_in` exclusion.
+
+**Patient data:** the history ties a contact to consent decisions, staff notes (which may name a form or date) and
+the matched keyword. Numbers reach the browser masked (first 2 and last 3 digits). Imported files aren't stored; the
+parsed rows sit in Redis for 15 minutes between preview and apply.
+
+```mermaid
+erDiagram
+    organizations ||--o| "wl.consent_settings" : "organization_id"
+    contacts ||--o| "wl.consent_status" : "contact_id (no FK)"
+    contacts ||--o{ "wl.consent_events" : "contact_id (no FK)"
+    "wl.consent_events" ||--o| "wl.consent_status" : "last_event_id (composite FK)"
+    "wl.consent_imports" ||--o{ "wl.consent_events" : "import_id (composite FK)"
+    messages ||--o{ "wl.consent_events" : "message_id (no FK)"
+    users ||--o{ "wl.consent_events" : "recorded_by_id (no FK)"
+
+    "wl.consent_settings" { uuid organization_id PK
+        jsonb opt_out_keywords
+        jsonb opt_in_keywords
+        jsonb opt_in_phrases
+        text opt_out_reply
+        text opt_in_reply
+        varchar opt_out_tag
+        bool require_opt_in
+        varchar service_after_stop }
+    "wl.consent_status" { uuid organization_id PK
+        uuid contact_id PK
+        varchar marketing
+        varchar source
+        timestamptz given_at
+        uuid last_event_id }
+    "wl.consent_events" { uuid id PK
+        uuid organization_id
+        uuid contact_id
+        varchar action
+        varchar source
+        varchar previous
+        timestamptz given_at
+        timestamptz recorded_at
+        uuid recorded_by_id
+        uuid message_id
+        varchar keyword
+        varchar evidence
+        uuid import_id }
+    "wl.consent_imports" { uuid id PK
+        uuid organization_id
+        varchar filename
+        varchar evidence
+        int rows_total
+        int applied
+        int skipped_unknown
+        int skipped_invalid
+        int skipped_opted_out_later
+        uuid created_by_id }
 ```
 
 ### calendar
