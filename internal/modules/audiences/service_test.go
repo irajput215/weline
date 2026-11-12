@@ -491,7 +491,6 @@ func TestConsentRuleAndRequireOptIn(t *testing.T) {
 	yes := true
 	_, err = cs.SaveSettings(ctx, f.org, f.user, consent.SettingsPatch{RequireOptIn: &yes})
 	require.NoError(t, err)
-	f.svc = NewService(f.db) // fresh settings cache
 	p, err = f.svc.Preview(ctx, f.org, flu)
 	require.NoError(t, err)
 	assert.Equal(t, 1, p.Recipients, "only the opted-in contact")

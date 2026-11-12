@@ -222,11 +222,24 @@ func (c *settingsCache) drop(org uuid.UUID) {
 	delete(c.m, org)
 }
 
-// Settings returns the organization's settings, or the defaults.
-func (s *Service) Settings(ctx context.Context, orgID uuid.UUID) (Settings, error) {
+// cachedSettings returns the settings from a one-minute cache, for the event
+// path only (every incoming message reads them). Saving through this service
+// clears the entry.
+func (s *Service) cachedSettings(ctx context.Context, orgID uuid.UUID) (Settings, error) {
 	if st, ok := s.cache.get(orgID); ok {
 		return st, nil
 	}
+	st, err := s.Settings(ctx, orgID)
+	if err != nil {
+		return Settings{}, err
+	}
+	s.cache.put(orgID, st)
+	return st, nil
+}
+
+// Settings returns the organization's settings, or the defaults, always fresh:
+// other modules (Audiences) read them through their own Service.
+func (s *Service) Settings(ctx context.Context, orgID uuid.UUID) (Settings, error) {
 	var rows []settingsRow
 	if err := s.db.WithContext(ctx).Where("organization_id = ?", orgID).Limit(1).Find(&rows).Error; err != nil {
 		return Settings{}, fmt.Errorf("load consent settings: %w", err)
@@ -243,7 +256,6 @@ func (s *Service) Settings(ctx context.Context, orgID uuid.UUID) (Settings, erro
 			}
 		}
 	}
-	s.cache.put(orgID, st)
 	return st, nil
 }
 

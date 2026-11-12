@@ -87,6 +87,21 @@ export const useConsentStore = defineStore('wl-consent', () => {
     nextBefore.value = e.next_before
   })
 
+  /**
+   * Updates counts and history in place, without the loading state, so dialogs
+   * open on the page stay as they are.
+   */
+  async function refresh() {
+    try {
+      const [s, e] = await Promise.all([consentApi.summary(), consentApi.events({ ...filters })])
+      summary.value = s
+      events.value = e.events ?? []
+      nextBefore.value = e.next_before
+    } catch {
+      // keep what's shown; the next load reports the problem
+    }
+  }
+
   /** Reloads the history with the current filters (the counts don't change). */
   async function applyFilters() {
     try {
@@ -124,6 +139,6 @@ export const useConsentStore = defineStore('wl-consent', () => {
 
   return {
     state, summary, events, nextBefore, filters, loadingMore, settings, defaults, saving, saveError,
-    loadOverview, applyFilters, loadMore, loadSettings, saveSettings, save
+    loadOverview, refresh, applyFilters, loadMore, loadSettings, saveSettings, save
   }
 })

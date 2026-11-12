@@ -65,7 +65,7 @@ func (s *Service) HandleIncoming(ctx context.Context, e kit.Event) error {
 	if !textTypes[d.MessageType] {
 		return nil
 	}
-	st, err := s.Settings(ctx, e.OrgID)
+	st, err := s.cachedSettings(ctx, e.OrgID)
 	if err != nil {
 		return err
 	}

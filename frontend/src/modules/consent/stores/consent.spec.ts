@@ -59,6 +59,17 @@ describe('consent store', () => {
     expect(store.nextBefore).toBeNull()
   })
 
+  it('refreshes without the loading state', async () => {
+    c.summary.mockResolvedValue({ opted_in: 5 })
+    c.events.mockResolvedValue({ events: [{ id: 'x' }], next_before: null })
+    const store = useConsentStore()
+    store.state.overview = 'ready'
+    const p = store.refresh()
+    expect(store.state.overview).toBe('ready')
+    await p
+    expect(store.summary?.opted_in).toBe(5)
+  })
+
   it('records the server message when saving settings fails', async () => {
     c.saveSettings.mockRejectedValueOnce(httpError(400, 'opt_in_keywords: "STOP" is also an opt-out keyword'))
     const store = useConsentStore()

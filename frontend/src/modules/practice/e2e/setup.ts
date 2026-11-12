@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process'
 import { expect, request, type APIRequestContext, type Page } from '@playwright/test'
 
 // Test accounts for the practice journeys. They live in the default organization,
@@ -72,4 +73,20 @@ export async function apiAs(baseURL: string, acct: Account) {
     return body.data
   }
   return { call, dispose: () => ctx.dispose() }
+}
+
+/**
+ * Runs SQL on the e2e database (the WHATOMATE_DATABASE__* settings the e2e
+ * script exports). Only for what CI can't do through the app: Meta approving a
+ * template, WhatsApp delivery results, the managed webhook row.
+ */
+export function sql(query: string): string {
+  const env = process.env
+  return execFileSync(
+    'psql',
+    ['-h', env.WHATOMATE_DATABASE__HOST ?? 'localhost', '-p', env.WHATOMATE_DATABASE__PORT ?? '5432',
+      '-U', env.WHATOMATE_DATABASE__USER ?? 'postgres', '-d', env.WHATOMATE_DATABASE__NAME ?? 'weline_e2e',
+      '-v', 'ON_ERROR_STOP=1', '-Atc', query],
+    { env: { ...env, PGPASSWORD: env.WHATOMATE_DATABASE__PASSWORD ?? 'postgres' }, encoding: 'utf8' }
+  ).trim()
 }

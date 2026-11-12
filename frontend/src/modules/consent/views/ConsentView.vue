@@ -122,7 +122,7 @@ onMounted(store.loadOverview)
       <Button variant="ghost" :disabled="store.loadingMore" @click="store.loadMore()">{{ t('wl.consent.overview.loadMore') }}</Button>
     </div>
 
-    <ContactConsentDialog v-model:open="contactOpen" @changed="store.loadOverview" />
-    <ImportDialog v-if="canCreate" v-model:open="importOpen" @done="store.loadOverview" />
+    <ContactConsentDialog v-model:open="contactOpen" @changed="store.refresh" />
+    <ImportDialog v-if="canCreate" v-model:open="importOpen" @done="store.refresh" />
   </ConsentShell>
 </template>
