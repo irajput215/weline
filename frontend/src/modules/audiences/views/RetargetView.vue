@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Repeat, Send } from 'lucide-vue-next'
+import { BookmarkPlus, Repeat, Send } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -19,6 +20,16 @@ import type { Retarget, RetargetFilter } from '../api'
 const { t } = useI18n()
 const auth = useAuthStore()
 const store = useAudiencesStore()
+const router = useRouter()
+const canSaveSegment = computed(() => auth.hasPermission('wl_audiences_segments', 'create'))
+
+/** Opens the builder with this retarget as a rule (R9). */
+function saveAsSegment() {
+  if (!retarget.value) return
+  const query: Record<string, string> = { campaign: retarget.value.campaign_id, op: retarget.value.filter }
+  if (retarget.value.days) query.days = String(retarget.value.days)
+  void router.push({ path: '/x/audiences/segments/new', query })
+}
 
 const canSend = computed(() => auth.hasPermission('wl_audiences_sends', 'create') && auth.hasPermission('campaigns', 'write'))
 const campaignId = ref('')
@@ -115,6 +126,7 @@ onMounted(load)
                 <Input id="wl-aud-rt-days" v-model.number="days" type="number" min="1" max="365" placeholder="7" class="w-24" />
               </div>
             </div>
+            <div class="flex flex-wrap gap-2">
             <Button
               v-if="canSend"
               :disabled="!store.preview || store.preview.recipients === 0 || store.previewLoading"
@@ -123,6 +135,10 @@ onMounted(load)
             >
               <Send class="h-4 w-4 mr-2" />{{ t('wl.audiences.builder.createCampaign') }}
             </Button>
+            <Button v-if="canSaveSegment" variant="outline" data-testid="retarget-save-segment" @click="saveAsSegment">
+              <BookmarkPlus class="h-4 w-4 mr-2" />{{ t('wl.audiences.retarget.saveAsSegment') }}
+            </Button>
+            </div>
           </CardContent>
         </Card>
         <PreviewPanel :preview="store.preview" :loading="store.previewLoading" :error="store.previewError" />

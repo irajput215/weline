@@ -104,6 +104,7 @@ test.describe.serial('audiences', () => {
 
     // Alice, Ben and Otto (Olive wrote too long ago, Mia isn't tagged).
     await expect(page.getByTestId('preview-matched')).toHaveText('3 contacts match')
+    await expect(page.getByTestId('preview-marketing-opt-out')).toContainText('1 opted out of marketing') // Otto (R2)
     const sample = page.getByTestId('preview-sample')
     await expect(sample).toContainText(`Alice ${run}`)
     await expect(sample).not.toContainText(phones.alice)
@@ -113,6 +114,14 @@ test.describe.serial('audiences', () => {
     await expect(page).toHaveURL(/\/x\/audiences\/segments\/[0-9a-f-]{36}$/)
     await page.getByTestId('audiences-tab-segments').click()
     await expect(page.getByTestId(`segment-row-${segment}`).getByTestId('segment-count')).toHaveText('3')
+
+    // Duplicate it (R3), then delete the copy.
+    await page.getByTestId(`segment-row-${segment}`).getByTestId('segment-duplicate').click()
+    const copy = page.getByTestId(`segment-row-${segment} (copy)`)
+    await expect(copy.getByTestId('segment-count')).toHaveText('3')
+    await copy.getByTestId('segment-delete').click()
+    await page.getByTestId('segment-delete-confirm').click()
+    await expect(copy).toHaveCount(0)
   })
 
   test('manager creates a draft campaign from it; the opted-out contact is left out', async ({ page }) => {
@@ -146,6 +155,18 @@ test.describe.serial('audiences', () => {
     await page.goto('/x/audiences/retarget')
     await page.getByTestId(`retarget-row-${winter}`).click()
     await expect(page.getByTestId('preview-recipients')).toHaveText('2 would get the message') // Ben and Mia
+
+    // The same follow-up can be kept as a segment rule (R9).
+    await page.getByTestId('retarget-save-segment').click()
+    await expect(page).toHaveURL(/\/x\/audiences\/segments\/new\?/)
+    await expect(page.getByTestId('preview-matched')).toHaveText('2 contacts match')
+    await page.getByTestId('segment-name').fill(`Winter non-readers ${run}`)
+    await page.getByTestId('segment-save').click()
+    await expect(page).toHaveURL(/\/x\/audiences\/segments\/[0-9a-f-]{36}$/)
+
+    await page.goto('/x/audiences/retarget')
+    await page.getByTestId(`retarget-row-${winter}`).click()
+    await expect(page.getByTestId('preview-recipients')).toHaveText('2 would get the message')
     await page.getByTestId('retarget-create-campaign').click()
 
     const dialog = page.getByRole('dialog', { name: 'Create campaign' })

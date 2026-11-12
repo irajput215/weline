@@ -84,6 +84,33 @@ describe('audiences store', () => {
   })
 })
 
+describe('duplicating a segment', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    Object.values(a).forEach(fn => fn.mockReset())
+  })
+
+  it('takes the first free name', async () => {
+    a.createSegment
+      .mockRejectedValueOnce(httpError(409, 'taken'))
+      .mockResolvedValueOnce({ segment: { id: 's2', name: 'VIP (copy 2)' } })
+    const store = useAudiencesStore()
+    const copy = await store.duplicateSegment({ id: 's1', name: 'VIP', description: 'd', rules: { match: 'all', conditions: [] } } as never,
+      ['VIP (copy)', 'VIP (copy 2)'])
+    expect(copy?.name).toBe('VIP (copy 2)')
+    expect(a.createSegment).toHaveBeenLastCalledWith({ name: 'VIP (copy 2)', description: 'd', rules: { match: 'all', conditions: [] } })
+    expect(store.segments.map(s => s.id)).toEqual(['s2'])
+  })
+
+  it('stops on other errors', async () => {
+    a.createSegment.mockRejectedValueOnce(httpError(403))
+    const store = useAudiencesStore()
+    expect(await store.duplicateSegment({ name: 'VIP', rules: {} } as never, ['a', 'b'])).toBeNull()
+    expect(a.createSegment).toHaveBeenCalledTimes(1)
+    expect(store.saveError).toBe('forbidden')
+  })
+})
+
 describe('rules helpers', () => {
   it('checks rows are complete', () => {
     expect(isComplete({ field: 'tag', op: 'has', value: 'vip' })).toBe(true)

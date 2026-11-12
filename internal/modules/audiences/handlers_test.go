@@ -217,3 +217,31 @@ func TestHandlers_Sends(t *testing.T) {
 	r = f.api(t, reception, req{method: "GET", path: base + "/sends", query: map[string]string{"campaign_id": "bad"}})
 	assert.Equal(t, http.StatusBadRequest, r.code)
 }
+
+func TestPermissions_DefaultGrants(t *testing.T) {
+	db := setupDB(t)
+	org := testutil.CreateTestOrganization(t, db)
+	roles := map[string]*models.CustomRole{}
+	for _, name := range []string{"admin", "manager", "agent"} {
+		roles[name] = testutil.CreateTestRoleExact(t, db, org.ID, name, true, name == "agent", nil)
+	}
+	require.NoError(t, db.Exec("DELETE FROM role_permissions WHERE permission_id IN (SELECT id FROM permissions WHERE resource LIKE 'wl_audiences_%')").Error)
+	require.NoError(t, db.Exec("DELETE FROM permissions WHERE resource LIKE 'wl_audiences_%'").Error)
+	require.NoError(t, kit.SeedPermissions(db, New(nil, nil).Permissions()))
+
+	has := func(role, res, act string) bool {
+		var n int64
+		require.NoError(t, db.Raw(`SELECT count(*) FROM role_permissions rp JOIN permissions p ON p.id = rp.permission_id
+			WHERE rp.custom_role_id = ? AND p.resource = ? AND p.action = ?`, roles[role].ID, res, act).Scan(&n).Error)
+		return n == 1
+	}
+	for _, role := range []string{"admin", "manager"} {
+		for _, act := range []string{"read", "create", "update", "delete"} {
+			assert.True(t, has(role, PermSegments, act), role+" "+act)
+		}
+		assert.True(t, has(role, PermSends, "create"), role)
+	}
+	assert.True(t, has("agent", PermSegments, "read"), "reception views segments")
+	assert.False(t, has("agent", PermSegments, "create"))
+	assert.False(t, has("agent", PermSends, "create"), "reception can't create campaigns")
+}

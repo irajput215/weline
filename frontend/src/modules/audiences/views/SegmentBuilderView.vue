@@ -16,8 +16,8 @@ import ConditionRow from '../components/ConditionRow.vue'
 import CreateCampaignDialog from '../components/CreateCampaignDialog.vue'
 import PreviewPanel from '../components/PreviewPanel.vue'
 import SaveError from '../components/SaveError.vue'
-import { MAX_CONDITIONS, cleanRules, isComplete, newCondition, useAudiencesStore, type LoadState } from '../stores/audiences'
-import type { Rules } from '../api'
+import { MAX_CONDITIONS, OPS, cleanRules, isComplete, newCondition, useAudiencesStore, type LoadState } from '../stores/audiences'
+import type { Condition, Rules } from '../api'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -59,9 +59,18 @@ async function load() {
   } else if (!id.value) {
     name.value = ''
     description.value = ''
-    rules.value = { match: 'all', conditions: [newCondition('tag')] }
+    rules.value = { match: 'all', conditions: [fromQuery() ?? newCondition('tag')] }
   }
   savedSnapshot.value = id.value ? snapshot() : ''
+}
+
+/** A campaign rule passed from Retarget's "Save as segment" (R9). */
+function fromQuery(): Condition | null {
+  const campaign = String(route.query.campaign ?? '')
+  const op = String(route.query.op ?? '')
+  if (!campaign || !OPS.campaign.includes(op)) return null
+  const days = Number(route.query.days)
+  return { field: 'campaign', op, value: campaign, ...(Number.isInteger(days) && days > 0 ? { days } : {}) }
 }
 
 let timer: ReturnType<typeof setTimeout> | undefined

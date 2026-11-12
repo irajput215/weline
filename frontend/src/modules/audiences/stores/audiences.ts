@@ -186,13 +186,40 @@ export const useAudiencesStore = defineStore('wl-audiences', () => {
     return !!res
   }
 
+  /**
+   * Copies a segment under the first free name from names (R3). Returns the copy,
+   * or null after recording the error.
+   */
+  async function duplicateSegment(source: Segment, names: string[]): Promise<Segment | null> {
+    saving.value = true
+    saveError.value = null
+    try {
+      for (const name of names) {
+        try {
+          const res = await audiencesApi.createSegment({ name, description: source.description, rules: source.rules })
+          segments.value = [...segments.value, { ...res.segment, count: source.count }].sort((a, b) => a.name.localeCompare(b.name))
+          return res.segment
+        } catch (err) {
+          if (statusOf(err) !== 409) throw err
+        }
+      }
+      saveError.value = 'error'
+      return null
+    } catch (err) {
+      saveError.value = messageOf(err) || (statusOf(err) === 403 ? 'forbidden' : 'error')
+      return null
+    } finally {
+      saving.value = false
+    }
+  }
+
   async function createSend(body: SendInput): Promise<SendResult | null> {
     return save(() => audiencesApi.createSend(body))
   }
 
   return {
     state, segments, segment, fields, sends, preview, previewLoading, previewError, saving, saveError,
-    loadSegments, loadSegment, loadFields, loadSends, runPreview, resetPreview, saveSegment, deleteSegment, createSend
+    loadSegments, loadSegment, loadFields, loadSends, runPreview, resetPreview, saveSegment, deleteSegment, duplicateSegment, createSend
   }
 })
 

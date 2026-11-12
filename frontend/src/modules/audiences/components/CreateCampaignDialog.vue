@@ -82,11 +82,15 @@ async function count() {
   }
 }
 
-/** The message as the first sample contact would see it. */
+/** The message as the first few sample contacts would see it (R5). */
 const rendered = computed(() => {
+  const sample = preview.value?.sample.slice(0, 3) ?? []
+  return (sample.length ? sample : [undefined]).map(renderFor).filter(Boolean)
+})
+
+function renderFor(first: { name: string; phone_masked: string } | undefined): string {
   const tp = template.value
   if (!tp) return ''
-  const first = preview.value?.sample[0]
   const fill = (text: string, vars: Record<string, VarSource>) =>
     text.replace(/\{\{\s*([^}\s]+)\s*\}\}/g, (_, name: string) => {
       const v = vars[name]
@@ -100,7 +104,7 @@ const rendered = computed(() => {
     })
   const head = tp.header_type?.toUpperCase() === 'TEXT' && tp.header_content ? fill(tp.header_content, header.value) + '\n\n' : ''
   return head + fill(tp.body_content, body.value)
-})
+}
 
 function varsComplete(vars: Record<string, VarSource>) {
   return Object.values(vars).every(v =>
@@ -200,7 +204,9 @@ async function create() {
 
           <div v-if="template" class="space-y-1">
             <p class="text-sm font-medium">{{ t('wl.audiences.send.messagePreview') }}</p>
-            <p class="whitespace-pre-wrap rounded-md border border-border bg-muted/40 p-3 text-sm" data-testid="send-message-preview">{{ rendered }}</p>
+            <div class="space-y-2" data-testid="send-message-preview">
+              <p v-for="(msg, i) in rendered" :key="i" class="whitespace-pre-wrap rounded-md border border-border bg-muted/40 p-3 text-sm">{{ msg }}</p>
+            </div>
           </div>
         </div>
 

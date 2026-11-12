@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-import { Plus, Trash2, UsersRound } from 'lucide-vue-next'
+import { Copy, Plus, Trash2, UsersRound } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,14 @@ const store = useAudiencesStore()
 const canCreate = computed(() => auth.hasPermission('wl_audiences_segments', 'create'))
 const canDelete = computed(() => auth.hasPermission('wl_audiences_segments', 'delete'))
 const toDelete = ref<Segment | null>(null)
+
+async function duplicate(s: Segment) {
+  const names = [t('wl.audiences.segments.copyName', { name: s.name })]
+  for (let n = 2; n <= 5; n++) names.push(t('wl.audiences.segments.copyNameN', { name: s.name, n }))
+  const copy = await store.duplicateSegment(s, names.map(n => n.slice(0, 120)))
+  if (copy) toast.success(t('wl.audiences.segments.duplicated', { name: copy.name }))
+  else toast.error(store.saveError === 'forbidden' ? t('wl.audiences.saveForbidden') : store.saveError === 'error' || !store.saveError ? t('wl.audiences.saveFailed') : store.saveError)
+}
 
 async function confirmDelete() {
   if (!toDelete.value) return
@@ -60,7 +68,7 @@ onMounted(store.loadSegments)
               <TableHead>{{ t('wl.audiences.segments.name') }}</TableHead>
               <TableHead class="text-right">{{ t('wl.audiences.segments.count') }}</TableHead>
               <TableHead>{{ t('wl.audiences.segments.lastUsed') }}</TableHead>
-              <TableHead v-if="canDelete" />
+              <TableHead v-if="canCreate || canDelete" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -71,8 +79,20 @@ onMounted(store.loadSegments)
               </TableCell>
               <TableCell class="text-right tabular-nums" data-testid="segment-count">{{ s.count ?? '—' }}</TableCell>
               <TableCell>{{ s.last_used_at ? formatDate(s.last_used_at) : t('wl.audiences.never') }}</TableCell>
-              <TableCell v-if="canDelete" class="text-right">
-                <Button variant="ghost" size="icon" :aria-label="t('wl.audiences.delete')" @click="toDelete = s">
+              <TableCell v-if="canCreate || canDelete" class="text-right whitespace-nowrap">
+                <Button
+                  v-if="canCreate"
+                  variant="ghost"
+                  size="icon"
+                  :aria-label="t('wl.audiences.segments.duplicate')"
+                  :title="t('wl.audiences.segments.duplicate')"
+                  :disabled="store.saving"
+                  data-testid="segment-duplicate"
+                  @click="duplicate(s)"
+                >
+                  <Copy class="h-4 w-4" />
+                </Button>
+                <Button v-if="canDelete" variant="ghost" size="icon" :aria-label="t('wl.audiences.delete')" data-testid="segment-delete" @click="toDelete = s">
                   <Trash2 class="h-4 w-4" />
                 </Button>
               </TableCell>
