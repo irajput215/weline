@@ -5,7 +5,7 @@ staff who take a patient's "yes" or "stop" at the desk or on the phone. Build gu
 ([`../../build-guide/phase-2-messaging-platform.md`](../../build-guide/phase-2-messaging-platform.md)), direction
 [ADR-002](../../adr/ADR-002-connect-dont-build-pms.md), follows [Audiences](../audiences/requirements.md).
 
-Status: **draft for review.** Lines marked **(assumption)** are defaults chosen without customer input; each one is
+Status: **built (step 2.2 B) on the defaults below; open questions still to confirm.** Lines marked **(assumption)** are defaults chosen without customer input; each one is
 listed under [Open questions](#open-questions).
 
 Today Weline knows only one thing about consent: a contact's `marketing_opt_out` flag, which Meta sets when someone
