@@ -70,6 +70,7 @@ erDiagram
 | `whatsapp_account` | `eq` | `whats_app_account = ?` |
 | `last_inbound` | `within_days`, `not_within_days` | `last_inbound_at >= now() - interval` (NULL = never) |
 | `created` | `within_days`, `not_within_days` | `created_at …` |
+| `consent` (added in 2.2) | `opted_in`, `opted_out`, `not_recorded` | `EXISTS` over `wl.consent_status`; `marketing_opt_out` counts as opted out |
 | `campaign` | `received`, `read`, `replied`, `not_read`, `not_received` | `EXISTS` over `bulk_message_recipients` by normalised phone and campaign; `replied` = an incoming `messages` row from the contact after the recipient's `sent_at`, within 7 days |
 
 At most 20 conditions; nested groups are out of scope (all / any at one level).

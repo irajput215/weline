@@ -28,9 +28,11 @@ Permission: wl_audiences_segments:delete · Response 200: `{ deleted: true }` ·
 Permission: wl_audiences_segments:read
 Request: `{ rules }` or `{ retarget: { campaign_id, filter, days? } }`, plus optional `{ template_id }` to count
 marketing opt-outs for that template.
-Response 200: `{ matched, recipients, excluded: { opted_out, no_number, duplicates, over_limit }, marketing_opt_out, sample: [ { name, phone_masked } ] }`
+Response 200: `{ matched, recipients, excluded: { opted_out, no_opt_in, no_number, duplicates, over_limit }, marketing_opt_out, not_recorded, require_opt_in, sample: [ { name, phone_masked } ] }`
 `matched` is how many contacts the rules match; `recipients` is what a campaign would get after the exclusions (the
-number `confirm_count` must equal). `opted_out` counts only when `template_id` is a MARKETING template; `marketing_opt_out` is how many would be left out with a marketing template, so the builder can show it before one is chosen (R2). `sample` holds up
+number `confirm_count` must equal). `opted_out` counts only when `template_id` is a MARKETING template; `marketing_opt_out` is how many would be left out with a marketing template, so the builder can show it before one is chosen (R2). From Consent (2.2 R9): `no_opt_in` counts contacts left out of a
+marketing template because the organization requires an opt-in (`require_opt_in`); `not_recorded` is how many
+recipients have no recorded opt-in. `sample` holds up
 to 20 recipients, most recently active first, with masked numbers.
 Errors: 400 bad rules or filter · 404 campaign or template not in this organization
 
