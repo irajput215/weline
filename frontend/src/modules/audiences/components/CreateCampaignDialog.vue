@@ -138,7 +138,7 @@ async function create() {
 
 <template>
   <Dialog v-model:open="open">
-    <DialogContent class="max-w-3xl max-h-[90vh] overflow-y-auto" data-testid="create-campaign-dialog">
+    <DialogContent class="max-w-3xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>{{ t('wl.audiences.send.title') }}</DialogTitle>
         <DialogDescription>{{ t('wl.audiences.send.description') }}</DialogDescription>
