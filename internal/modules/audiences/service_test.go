@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shridarpatil/whatomate/internal/models"
+	"github.com/shridarpatil/whatomate/internal/modules/consent"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/shridarpatil/whatomate/test/testutil"
 	"github.com/stretchr/testify/assert"
@@ -445,7 +446,61 @@ func TestPick_Limit(t *testing.T) {
 	for i := 0; i < MaxRecipients+5; i++ {
 		rows = append(rows, contactRow{PhoneNumber: "+61" + strconv.Itoa(400000000+i)})
 	}
-	kept, ex := pick(rows, false)
+	kept, ex := pick(rows, false, false)
 	assert.Len(t, kept, MaxRecipients)
 	assert.Equal(t, 5, ex.OverLimit)
+}
+
+// Consent (step 2.2, R9): the consent rule and "marketing only to people who opted in".
+func TestConsentRuleAndRequireOptIn(t *testing.T) {
+	f := newFixture(t)
+	cs := consent.NewService(f.db, nil, nil, nil)
+	in := f.contact(t, f.org, tags("flu"))
+	out := f.contact(t, f.org, tags("flu"))
+	unknown := f.contact(t, f.org, tags("flu"))
+	metaOut := f.contact(t, f.org, tags("flu"), optedOut()) // Meta's flag, no record yet
+	_, err := cs.Record(ctx, f.org, f.user, in.ID, consent.StaffInput{Action: consent.ActionOptIn, Evidence: "form"})
+	require.NoError(t, err)
+	_, err = cs.Record(ctx, f.org, f.user, out.ID, consent.StaffInput{Action: consent.ActionOptOut})
+	require.NoError(t, err)
+
+	ids := func(op string) []uuid.UUID {
+		r, err := parseRules(rulesOf(t, "all", tagRule("flu"), map[string]any{"field": "consent", "op": op}))
+		require.NoError(t, err)
+		rows, err := f.svc.evaluate(ctx, f.org, r)
+		require.NoError(t, err)
+		out := []uuid.UUID{}
+		for _, c := range rows {
+			out = append(out, c.ID)
+		}
+		return out
+	}
+	assert.ElementsMatch(t, []uuid.UUID{in.ID}, ids("opted_in"))
+	assert.ElementsMatch(t, []uuid.UUID{out.ID, metaOut.ID}, ids("opted_out"))
+	assert.ElementsMatch(t, []uuid.UUID{unknown.ID}, ids("not_recorded"))
+	_, err = parseRules(rulesOf(t, "all", map[string]any{"field": "consent", "op": "maybe"}))
+	assert.True(t, isKind(err, kit.ErrInvalid))
+
+	flu := PreviewInput{Rules: rulesOf(t, "all", tagRule("flu")), TemplateID: &f.tmpl.ID}
+	p, err := f.svc.Preview(ctx, f.org, flu)
+	require.NoError(t, err)
+	assert.Equal(t, 2, p.Recipients, "opt-in not required: in and unknown")
+	assert.Equal(t, 1, p.NotRecorded)
+	assert.False(t, p.RequireOptIn)
+
+	yes := true
+	_, err = cs.SaveSettings(ctx, f.org, f.user, consent.SettingsPatch{RequireOptIn: &yes})
+	require.NoError(t, err)
+	f.svc = NewService(f.db) // fresh settings cache
+	p, err = f.svc.Preview(ctx, f.org, flu)
+	require.NoError(t, err)
+	assert.Equal(t, 1, p.Recipients, "only the opted-in contact")
+	assert.Equal(t, 1, p.Excluded.NoOptIn)
+	assert.Equal(t, 2, p.Excluded.OptedOut)
+	assert.True(t, p.RequireOptIn)
+
+	flu.TemplateID = &f.util.ID
+	p, err = f.svc.Preview(ctx, f.org, flu)
+	require.NoError(t, err)
+	assert.Equal(t, 4, p.Recipients, "utility templates aren't marketing")
 }

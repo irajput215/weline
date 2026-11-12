@@ -15,9 +15,9 @@ var migrations = []kit.Migration{
 -- Per-organization settings; no row = defaults (requirements R1, R3, R5, R9, R10).
 CREATE TABLE wl.consent_settings (
     organization_id    uuid PRIMARY KEY,
-    opt_out_keywords   text[]      NOT NULL,
-    opt_in_keywords    text[]      NOT NULL,
-    opt_in_phrases     text[]      NOT NULL DEFAULT '{}',
+    opt_out_keywords   jsonb       NOT NULL,
+    opt_in_keywords    jsonb       NOT NULL,
+    opt_in_phrases     jsonb       NOT NULL DEFAULT '[]',
     opt_out_reply      text        NOT NULL,
     opt_in_reply       text        NOT NULL,
     opt_out_tag        varchar(50) NOT NULL,

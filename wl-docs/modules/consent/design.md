@@ -33,7 +33,7 @@ All tables in schema `wl`, every row carries `organization_id`, all times UTC.
 
 | Table | Columns | Notes |
 | --- | --- | --- |
-| `wl.consent_settings` | `organization_id` PK, `opt_out_keywords` text[], `opt_in_keywords` text[], `opt_in_phrases` text[], `opt_out_reply` text, `opt_in_reply` text, `opt_out_tag` varchar(50), `require_opt_in` bool (R9, default false), `service_after_stop` varchar(10) `continue`/`stop` (R10, default `continue`), `updated_by_id`, `updated_at` | No row = defaults (see requirements R1, R3, R5). Keywords stored upper-case, normalised; at most 30 per list, 50 characters each |
+| `wl.consent_settings` | `organization_id` PK, `opt_out_keywords`, `opt_in_keywords`, `opt_in_phrases` (jsonb arrays of text), `opt_out_reply` text, `opt_in_reply` text, `opt_out_tag` varchar(50), `require_opt_in` bool (R9, default false), `service_after_stop` varchar(10) `continue`/`stop` (R10, default `continue`), `updated_by_id`, `updated_at` | No row = defaults (see requirements R1, R3, R5). Keywords stored upper-case, normalised; at most 30 per list, 50 characters each |
 | `wl.consent_status` | `organization_id`, `contact_id` (PK together), `marketing` varchar(10) `opted_in`/`opted_out`, `source`, `given_at`, `last_event_id`, `updated_at` | One row per contact whose consent is known. No row = **not recorded**. `opted_out` always matches `contacts.marketing_opt_out = true`; the sweep repairs any difference |
 | `wl.consent_events` | `id`, `organization_id`, `contact_id`, `action` `opt_in`/`opt_out`, `source` `keyword`/`button`/`staff`/`import`/`meta`/`ad`/`web_form`, `previous` (`opted_in`/`opted_out`/null), `given_at` (when the person gave it), `recorded_at`, `recorded_by_id` (staff and imports), `message_id` (upstream `messages.id` for keyword and button), `keyword` (the matched keyword, never the full text), `evidence` varchar(500), `import_id` | **Append-only**: the module has no update or delete for events (enforced in code, tests and review). Index `(organization_id, recorded_at DESC)` and `(organization_id, contact_id, recorded_at DESC)` |
 | `wl.consent_imports` | `id`, `organization_id`, `filename`, `evidence` varchar(1000), `rows_total`, `applied`, `skipped_unknown`, `skipped_invalid`, `skipped_opted_out_later`, `created_by_id`, `created_at` | One row per applied CSV. The file itself isn't stored |
@@ -53,9 +53,9 @@ erDiagram
     users ||--o{ "wl.consent_events" : "recorded_by_id (no FK)"
 
     "wl.consent_settings" { uuid organization_id PK
-        text_array opt_out_keywords
-        text_array opt_in_keywords
-        text_array opt_in_phrases
+        jsonb opt_out_keywords
+        jsonb opt_in_keywords
+        jsonb opt_in_phrases
         text opt_out_reply
         text opt_in_reply
         varchar opt_out_tag

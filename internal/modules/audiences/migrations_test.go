@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/shridarpatil/whatomate/internal/modules/consent"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/shridarpatil/whatomate/test/testutil"
 	"github.com/stretchr/testify/assert"
@@ -14,6 +15,8 @@ import (
 func setupDB(t *testing.T) *gorm.DB {
 	t.Helper()
 	db := testutil.SetupTestDB(t)
+	// Audiences reads Consent's tables (2.2 R9), as in the registry's order.
+	require.NoError(t, kit.RunMigrations(db, consent.Name, consent.New(nil, nil).Migrations()))
 	require.NoError(t, kit.RunMigrations(db, Name, migrations))
 	return db
 }
