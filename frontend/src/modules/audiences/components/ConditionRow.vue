@@ -15,7 +15,9 @@ defineEmits<{ remove: [] }>()
 const { t } = useI18n()
 const listId = computed(() => `wl-aud-keys-${props.index}`)
 const isDays = computed(() => cond.value.field === 'last_inbound' || cond.value.field === 'created')
-const needsValue = computed(() => !(cond.value.field === 'metadata' && ['exists', 'not_exists'].includes(cond.value.op)))
+const needsValue = computed(
+  () => cond.value.field !== 'consent' && !(cond.value.field === 'metadata' && ['exists', 'not_exists'].includes(cond.value.op))
+)
 const needsReplyDays = computed(() => cond.value.field === 'campaign' && ['read_no_reply', 'replied'].includes(cond.value.op))
 
 function setField(f: unknown) {

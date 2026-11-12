@@ -43,6 +43,9 @@ const excluded = computed(() =>
         <p v-if="preview.excluded.opted_out === 0 && preview.marketing_opt_out > 0" class="text-muted-foreground" data-testid="preview-marketing-opt-out">
           {{ t('wl.audiences.preview.marketingOptOut', { n: preview.marketing_opt_out }) }}
         </p>
+        <p v-if="!preview.require_opt_in && preview.not_recorded > 0" class="text-muted-foreground" data-testid="preview-not-recorded">
+          {{ t('wl.audiences.preview.notRecorded', { n: preview.not_recorded }) }}
+        </p>
         <div v-if="preview.sample.length">
           <p class="font-medium">{{ t('wl.audiences.preview.sample') }}</p>
           <ul class="text-muted-foreground" data-testid="preview-sample">
