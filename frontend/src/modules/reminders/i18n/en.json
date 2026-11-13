@@ -1,0 +1,91 @@
+{
+  "section": "Reminders",
+  "nav": {
+    "reminders": "Reminders & recalls"
+  },
+  "title": "Reminders & recalls",
+  "subtitle": "WhatsApp reminders before appointments, and recalls for patients due back",
+  "tabs": {
+    "rules": "Rules",
+    "sends": "Activity",
+    "recalls": "Recalls due"
+  },
+  "forbiddenTitle": "No access",
+  "forbiddenDescription": "You don't have permission to view this part of reminders.",
+  "saveForbidden": "You don't have permission to change this.",
+  "saveFailed": "Couldn't save. Check your connection and try again.",
+  "saved": "Saved",
+  "save": "Save",
+  "cancel": "Cancel",
+  "addRule": "Add a rule",
+  "editRule": "Edit rule",
+  "remove": "Delete",
+  "edit": "Edit",
+  "rulesEmpty": "No rules yet",
+  "rulesEmptyHelp": "Add a reminder (for example, a day before each appointment) or a recall (for example, six months after a visit).",
+  "kind": "Type",
+  "kinds": {
+    "reminder": "Reminder",
+    "recall": "Recall"
+  },
+  "name": "Name",
+  "offsetHours": "Hours before the appointment",
+  "offsetHelp": "Between half an hour and 14 days (336 hours).",
+  "recallDays": "Days after the last visit",
+  "recallHelp": "Between 7 and 1095 days.",
+  "template": "Approved WhatsApp template",
+  "templateHelp": "Only templates Meta has approved can be sent outside the 24-hour window.",
+  "language": "Template language",
+  "variables": "Template variables, in order",
+  "variablesHelp": "What fills {'{{1}}'}, {'{{2}}'}, … in the template. Recalls can't use time, place or practitioner.",
+  "variableNames": {
+    "name": "First name",
+    "service": "Service",
+    "when": "Date and time",
+    "location": "Location",
+    "practitioner": "Practitioner"
+  },
+  "enabled": "On",
+  "off": "Off",
+  "timing": "When",
+  "beforeHours": "{n} h before",
+  "afterDays": "{n} days after",
+  "replyNote": "Patients can reply Confirm, Cancel or Reschedule; cancelling frees the time in your system, rescheduling goes to your team.",
+  "sendsEmpty": "Nothing sent yet.",
+  "when": "Sent",
+  "rule": "Rule",
+  "appointment": "Appointment",
+  "status": "Status",
+  "reply": "Reply",
+  "statuses": {
+    "pending": "Sending",
+    "sent": "Sent",
+    "failed": "Failed",
+    "skipped": "Skipped"
+  },
+  "reasons": {
+    "opted_out": "opted out",
+    "no_opt_in": "no marketing opt-in",
+    "no_mobile": "no mobile number",
+    "no_whatsapp_number": "no WhatsApp number set up",
+    "no_contact": "couldn't find the patient",
+    "consent_unknown": "consent unknown",
+    "send_failed": "WhatsApp refused it"
+  },
+  "replies": {
+    "": "—",
+    "confirmed": "Confirmed",
+    "cancelled": "Cancelled",
+    "reschedule": "Wants to move"
+  },
+  "loadMore": "Show more",
+  "recallRule": "Recall rule",
+  "noRecallRules": "Add a recall rule on the Rules tab first.",
+  "dueEmpty": "Nobody is due for this recall.",
+  "patient": "Patient",
+  "service": "Service",
+  "lastVisit": "Last visit",
+  "selectAll": "Select all",
+  "sendSelected": "Send to {n} selected",
+  "sentCounts": "Sent {sent}, skipped {skipped} (opted out or no mobile), already sent this month {already}."
+}

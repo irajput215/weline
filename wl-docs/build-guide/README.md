@@ -75,6 +75,6 @@ Tips that save a lot of pain:
 * [ ] [3.3 Privacy before the first real clinic](phase-3-connectors-cliniko.md#33-privacy-before-the-first-real-clinic) (audit trail, log scrubbing and booking retention built 2026-11-13; hosting waits on your choice, ADR-004)
 * [ ] [Phase 3 gate](phase-3-connectors-cliniko.md#phase-3-gate)
 * [ ] [Phase 4 AI agent](phase-4-ai-agent.md) (built 2026-11-13; real-model evals and the Cliniko staging check wait on keys)
-* [ ] [Phase 5 Reminders and recalls](phase-5-reminders-recalls.md)
+* [ ] [Phase 5 Reminders and recalls](phase-5-reminders-recalls.md) (built 2026-11-13; the gate waits on the Cliniko trial, staging and approved templates)
 * [ ] [Phase 6 Multi-business SaaS](phase-6-saas.md)
 * [ ] [Phase 7 More connectors and vertical packs](phase-7-connectors-verticals.md)

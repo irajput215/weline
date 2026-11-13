@@ -315,6 +315,21 @@ The AI agent, built in Phase 4 (migration `ai/0001_create_ai`). Full design: [`m
 `contacts` (name and number for the connector), `organizations.name`. **Writes through upstream:** agent transfers (via
 the `HandOver` accessor) and messages (via `kit.Sender`).
 
+### reminders
+
+Reminders and recalls, built in Phase 5 (migration `reminders/0001_create_reminders`). Full design:
+[`modules/reminders/design.md`](modules/reminders/design.md).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.reminder_rules` | Kind (`reminder` or `recall`), name, offset before the appointment or days after a visit, approved template and language, variables in order, services, on/off | Checks on kind and ranges; `UNIQUE (organization_id, id)` for the composite key below |
+| `wl.reminder_sends` | One row per reminder (rule, appointment id, start time) or recall (rule, customer id, month): status and skip reason, the Weline contact and message, the patient's reply | `UNIQUE (organization_id, rule_id, target_id, start_at)` so nothing is sent twice; composite FK to the rule, `ON DELETE CASCADE`; no message text or numbers |
+
+**Reads through the connector:** appointments (live, never copied) and the customer's name and mobile
+(`provider.GetCustomer`). **Writes through upstream:** contacts for patients who never wrote (number and name, on the
+default WhatsApp account), messages (via `kit.Sender`) and agent transfers (via `HandOver`). **Writes through the
+connector:** confirm and cancel.
+
 ### audiences
 
 Segments and the campaigns created from them, built in Phase 2.1 (migration `audiences/0001_create_audiences`).
@@ -504,11 +519,11 @@ erDiagram
 
 ### reminders
 
-_Not built yet (Phase 2)._
-
 ```mermaid
 erDiagram
-    "wl.booking_appointments" ||--o{ "wl.reminder_sends" : "appointment_id"
+    organizations ||--o{ "wl.reminder_rules" : "organization_id"
+    "wl.reminder_rules" ||--o{ "wl.reminder_sends" : "(organization_id, rule_id)"
+    contacts ||--o{ "wl.reminder_sends" : "contact_id (by id, no FK)"
 ```
 
 ### ai
