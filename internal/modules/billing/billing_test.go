@@ -109,6 +109,9 @@ func TestTrialLimits(t *testing.T) {
 	f := newFixture(t, true)
 	f.broadcast(t, 150, f.now.Add(-time.Hour))
 	f.broadcast(t, 5000, f.now.AddDate(0, -1, 0)) // last month doesn't count
+	other := testutil.CreateTestOrganization(t, f.db).ID
+	require.NoError(t, f.db.Exec(`INSERT INTO wl.audiences_sends (organization_id, kind, campaign_id, recipient_count, created_at)
+		VALUES (?, 'segment', ?, 9999, ?)`, other, uuid.New(), f.now).Error) // another organization's sends don't count here
 	assert.NoError(t, f.svc.Allow(ctx, f.org, kit.MetricBroadcast, 50), "150 + 50 = the trial's 200")
 	err := f.svc.Allow(ctx, f.org, kit.MetricBroadcast, 51)
 	require.ErrorIs(t, err, kit.ErrLimit)
