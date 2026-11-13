@@ -21,6 +21,11 @@ func setupDB(t *testing.T) *gorm.DB {
 	for _, m := range []kit.Module{practice.New(nil, nil), booking.New(nil, nil), consent.New(nil, nil)} {
 		require.NoError(t, kit.RunMigrations(db, m.Name(), m.Migrations()))
 	}
+	// The test database is shared across packages, and Booking's tables
+	// reference Practice's: roll Booking back afterwards (as Booking's own tests
+	// do) or Practice's rollback test can't drop its tables.
+	bk := booking.New(nil, nil)
+	t.Cleanup(func() { _ = kit.RollbackLast(db, bk.Name(), bk.Migrations()) })
 	require.NoError(t, kit.RunMigrations(db, Name, migrations))
 	return db
 }

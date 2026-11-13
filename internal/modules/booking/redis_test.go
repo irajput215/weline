@@ -21,7 +21,7 @@ func TestRedisOffersAndLimiter(t *testing.T) {
 	at := time.Date(2027, 3, 8, 9, 0, 0, 0, time.UTC)
 	pr := uuid.New()
 
-	id, err := store.save(ctx, org, offer{Items: []offerItem{{Label: "Mon 8 Mar 09:00", PractitionerID: &pr, StartsAt: &at}}})
+	id, err := store.save(ctx, org, offer{Items: []offerItem{{Label: "Mon 8 Mar 09:00", PractitionerID: pr.String(), StartsAt: &at}}})
 	require.NoError(t, err)
 	got, err := store.load(ctx, org, id)
 	require.NoError(t, err)

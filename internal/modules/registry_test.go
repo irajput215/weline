@@ -1,12 +1,14 @@
 package modules
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/shridarpatil/whatomate/internal/config"
 	"github.com/shridarpatil/whatomate/internal/handlers"
 	"github.com/shridarpatil/whatomate/internal/models"
+	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/shridarpatil/whatomate/test/testutil"
 	"github.com/stretchr/testify/assert"
@@ -128,4 +130,41 @@ func TestRegister_CallsEveryModule(t *testing.T) {
 	}
 	Register(fastglue.NewGlue(), &handlers.App{Log: testutil.NopLogger()}, nil)
 	assert.Equal(t, 2, calls)
+}
+
+// wiring stubs: a source of a resolver and a consumer of it.
+type stubSource struct {
+	kit.Module
+	r provider.Resolver
+}
+
+func (s stubSource) Providers() provider.Resolver { return s.r }
+
+type stubConsumer struct {
+	kit.Module
+	got provider.Resolver
+}
+
+func (c *stubConsumer) UseProviders(r provider.Resolver) { c.got = r }
+
+func TestWireProviders(t *testing.T) {
+	r := provider.ResolverFunc(func(context.Context, uuid.UUID) (provider.Provider, error) { return nil, nil })
+	c := &stubConsumer{}
+	wireProviders([]kit.Module{c})
+	assert.Nil(t, c.got, "no source: consumers keep their own")
+	wireProviders([]kit.Module{c, stubSource{r: r}})
+	assert.NotNil(t, c.got, "the source's resolver reaches the consumer, whatever the order")
+
+	// The real modules: Booking consumes, Connectors provides.
+	var hasSource, hasConsumer bool
+	for _, f := range factories {
+		m := f(nil, nil)
+		if _, ok := m.(provider.Source); ok {
+			hasSource = true
+		}
+		if _, ok := m.(provider.Consumer); ok {
+			hasConsumer = true
+		}
+	}
+	assert.True(t, hasSource && hasConsumer)
 }
