@@ -5,7 +5,7 @@
     "locations": "Locations",
     "practitioners": "Practitioners",
     "services": "Services",
-    "hours": "Opening hours"
+    "hours": "Booking hours"
   },
   "title": "Clinic setup",
   "subtitle": "Your practice details, locations, practitioners, services and opening hours",
@@ -88,8 +88,8 @@
     "rolesPlaceholder": "GP, Nurse"
   },
   "hours": {
-    "title": "Opening hours",
-    "description": "Weekly hours for each location, in {tz} time.",
+    "title": "Booking hours",
+    "description": "When patients can book at each location, in {tz} time. Built-in booking uses these hours only.",
     "closed": "Closed",
     "noLocations": "Add a location before setting opening hours.",
     "closuresTitle": "Closures",
@@ -103,7 +103,9 @@
     "allLocations": "All locations",
     "addClosure": "Add closure",
     "reasonPlaceholder": "Good Friday",
-    "past": "past"
+    "past": "past",
+    "openSource": "Whether you're open, and the out-of-hours reply on WhatsApp, come from the chatbot's business hours.",
+    "openSourceLink": "Chatbot business hours"
   },
   "weekdays": {
     "1": "Monday",

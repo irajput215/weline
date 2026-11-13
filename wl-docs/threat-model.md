@@ -3,7 +3,7 @@
 One page, updated by prompt C whenever a module adds a public endpoint, a new kind of data or an external
 integration. Architecture: [`architecture.md`](architecture.md). Data: [`data-model.md`](data-model.md).
 STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure, **D**enial of service,
-**E**levation of privilege. Last reviewed: 2026-11-13 (Phase 2.3, Ads module).
+**E**levation of privilege. Last reviewed: 2026-11-13 (Phase 2.4, one source of opening hours).
 
 ## Assets
 
@@ -103,3 +103,9 @@ STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure
     be inflated (low impact: marketing tags and counts only). Patients who delete the code aren't counted, so
     counts are also a minimum. Meta's own referral data, which can't be faked this way, is out of reach without an
     upstream change (`wl-docs/modules/ads/spike.md`, option b declined).
+17. **Upstream checks business hours against the server's clock.** Its out-of-hours reply compares the chatbot's
+    business hours with `time.Now()` in the server's time zone, and staging sets `TZ=UTC` (`render.yaml`). A Sydney
+    clinic's out-of-hours reply would go out 10–11 hours off, telling patients the clinic is closed when it's open
+    and the reverse. Weline's own `IsOpen` (Practice) uses the clinic's time zone, so the two disagree until the
+    server's `TZ` is the clinic's zone. Set `TZ=Australia/Sydney` while all clinics share one zone; supporting several
+    zones needs upstream to store a time zone with the business hours.

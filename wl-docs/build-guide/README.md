@@ -66,7 +66,7 @@ Tips that save a lot of pain:
 * [x] [2.1 Audiences and retargeting](phase-2-messaging-platform.md#21-audiences-and-retargeting)
 * [x] [2.2 Consent: opt-in and STOP](phase-2-messaging-platform.md#22-consent-opt-in-and-stop)
 * [x] [2.3 Ads attribution (spike, then module)](phase-2-messaging-platform.md#23-click-to-whatsapp-ads-attribution)
-* [ ] [2.4 One source of opening hours](phase-2-messaging-platform.md#24-one-source-of-opening-hours)
+* [x] [2.4 One source of opening hours](phase-2-messaging-platform.md#24-one-source-of-opening-hours)
 * [ ] [WhatsApp templates submitted to Meta](phase-2-messaging-platform.md#whatsapp-templates-you-now)
 * [ ] [Phase 2 gate](phase-2-messaging-platform.md#phase-2-gate)
 * [ ] [3.0 Cliniko access and API spike](phase-3-connectors-cliniko.md#30-cliniko-access-and-api-spike)

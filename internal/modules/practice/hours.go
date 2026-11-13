@@ -163,51 +163,5 @@ func (s *Service) ActiveServices(ctx context.Context, orgID uuid.UUID) ([]Clinic
 // Location returns the clinic's time zone as a *time.Location.
 func (p *Profile) Location() (*time.Location, error) { return time.LoadLocation(p.TimeZone) }
 
-// IsOpen reports whether the location is open at the instant at: the location
-// is active, the local weekday has hours covering the local time, and no
-// closure covers the local date. Local means the clinic's time zone, so
-// daylight saving is handled by the zone database.
-func (s *Service) IsOpen(ctx context.Context, orgID, locationID uuid.UUID, at time.Time) (bool, error) {
-	prof, err := s.GetProfile(ctx, orgID)
-	if err != nil {
-		return false, err
-	}
-	loc, err := s.location(ctx, orgID, locationID)
-	if err != nil {
-		return false, err
-	}
-	if !loc.IsActive {
-		return false, nil
-	}
-	tz, err := prof.Location()
-	if err != nil {
-		return false, fmt.Errorf("clinic time zone %q: %w", prof.TimeZone, err)
-	}
-	local := at.In(tz)
-	weekday := int(local.Weekday())
-	if weekday == 0 {
-		weekday = 7
-	}
-	minute := local.Hour()*60 + local.Minute()
-
-	var rows []hourRow
-	if err := s.db.WithContext(ctx).Where("organization_id = ? AND location_id = ? AND weekday = ?", orgID, locationID, weekday).
-		Limit(1).Find(&rows).Error; err != nil {
-		return false, fmt.Errorf("load hours: %w", err)
-	}
-	if len(rows) == 0 || minute < rows[0].OpensMinute || minute >= rows[0].ClosesMinute {
-		return false, nil
-	}
-
-	day := local.Format(dateLayout)
-	var closed int64
-	if err := s.db.WithContext(ctx).Model(&Closure{}).
-		Where("organization_id = ? AND (location_id = ? OR location_id IS NULL) AND starts_on <= ? AND ends_on >= ?", orgID, locationID, day, day).
-		Count(&closed).Error; err != nil {
-		return false, fmt.Errorf("load closures: %w", err)
-	}
-	return closed == 0, nil
-}
-
 // IsNotSetUp reports whether err means the clinic profile is missing.
 func IsNotSetUp(err error) bool { return errors.Is(err, ErrNotSetUp) }
