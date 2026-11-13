@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shridarpatil/whatomate/internal/crypto"
+	"github.com/shridarpatil/whatomate/internal/modules/audit"
 	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"gorm.io/gorm"
@@ -279,6 +280,8 @@ func (s *Service) Save(ctx context.Context, orgID, userID uuid.UUID, in SaveInpu
 	}).Create(&row).Error; err != nil {
 		return nil, fmt.Errorf("save connection: %w", err)
 	}
+	audit.Log(ctx, s.db, s.log, orgID, audit.Entry{Actor: &userID, Module: Name, Action: "connection_saved", Entity: "connection",
+		Details: map[string]any{"provider": in.Provider, "new_credentials_set": len(in.Credentials) > 0}})
 	return s.Account(ctx, orgID)
 }
 
@@ -309,7 +312,7 @@ type TestResult struct {
 }
 
 // Test re-tests the stored connection and records the result.
-func (s *Service) Test(ctx context.Context, orgID uuid.UUID) (*TestResult, error) {
+func (s *Service) Test(ctx context.Context, orgID, userID uuid.UUID) (*TestResult, error) {
 	r, err := s.row(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -334,6 +337,8 @@ func (s *Service) Test(ctx context.Context, orgID uuid.UUID) (*TestResult, error
 	if err := s.db.WithContext(ctx).Model(&accountRow{}).Where("organization_id = ?", orgID).Updates(upd).Error; err != nil {
 		return nil, fmt.Errorf("save test result: %w", err)
 	}
+	audit.Log(ctx, s.db, s.log, orgID, audit.Entry{Actor: &userID, Module: Name, Action: "connection_tested", Entity: "connection",
+		Details: map[string]any{"provider": r.Provider, "ok": terr == nil}})
 	acc, err := s.Account(ctx, orgID)
 	if err != nil {
 		return nil, err

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/shridarpatil/whatomate/internal/modules/audit"
 	"github.com/shridarpatil/whatomate/internal/modules/booking"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/shridarpatil/whatomate/internal/modules/practice"
@@ -16,7 +17,7 @@ import (
 func setupDB(t *testing.T) *gorm.DB {
 	t.Helper()
 	db := testutil.SetupTestDB(t)
-	for _, m := range []kit.Module{practice.New(nil, nil), booking.New(nil, nil)} {
+	for _, m := range []kit.Module{audit.New(nil, nil), practice.New(nil, nil), booking.New(nil, nil)} {
 		require.NoError(t, kit.RunMigrations(db, m.Name(), m.Migrations()))
 	}
 	// The test database is shared across packages, and Booking's tables

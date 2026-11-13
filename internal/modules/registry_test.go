@@ -128,6 +128,7 @@ func TestRegister_CallsEveryModule(t *testing.T) {
 		factory(stubModule{name: "a", registered: &calls}),
 		factory(stubModule{name: "b", registered: &calls}),
 	}
+	t.Setenv(ScrubLogsEnv, "off") // keep the test runner's own output untouched
 	Register(fastglue.NewGlue(), &handlers.App{Log: testutil.NopLogger()}, nil)
 	assert.Equal(t, 2, calls)
 }

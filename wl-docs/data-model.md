@@ -292,6 +292,15 @@ erDiagram
         bool is_new }
 ```
 
+### audit
+
+The trail of module changes, built in step 3.3 (migration `audit/0001_create_audit_events`). Details:
+[`modules/audit/README.md`](modules/audit/README.md).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.audit_events` | Who (`actor_user_id`) changed what (`module`, `action`, `entity`, `entity_id`) and when (`at`), with details that never hold personal data or secrets | Append-only; index `(organization_id, at DESC)`; admins read it |
+
 ### audiences
 
 Segments and the campaigns created from them, built in Phase 2.1 (migration `audiences/0001_create_audiences`).
