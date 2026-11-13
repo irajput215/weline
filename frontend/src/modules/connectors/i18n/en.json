@@ -1,0 +1,57 @@
+{
+  "section": "Integrations",
+  "nav": {
+    "system": "Connected system"
+  },
+  "title": "Connected system",
+  "subtitle": "Where WhatsApp bookings go: Weline's built-in booking or the system your business already uses",
+  "forbiddenTitle": "No access",
+  "forbiddenDescription": "You don't have permission to view the connected system.",
+  "saveForbidden": "You don't have permission to change the connected system.",
+  "saveFailed": "Couldn't save. Check your connection and try again.",
+  "readOnly": "You can see the connected system but not change it.",
+  "providers": {
+    "builtin": "Weline's built-in booking",
+    "cliniko": "Cliniko"
+  },
+  "providerDescriptions": {
+    "builtin": "Appointments are kept in Weline. Set up your clinic in Clinic and Bookings.",
+    "cliniko": "Bookings go straight into your Cliniko diary."
+  },
+  "statuses": {
+    "connected": "Connected",
+    "error": "Not working",
+    "not_set_up": "Not set up"
+  },
+  "current": "In use",
+  "comingSoon": "Coming soon",
+  "choose": "Use this",
+  "fields": {
+    "api_key": "API key"
+  },
+  "secretSet": "Saved. Leave empty to keep it.",
+  "saveAndTest": "Test and save",
+  "test": "Test connection",
+  "lastTest": "Last tested {when}",
+  "lastSync": "Last synced {when}",
+  "never": "never",
+  "lastError": "Last error: {error}",
+  "switchNote": "Switching changes where new WhatsApp bookings go. Appointments already made stay where they are.",
+  "saved": "Saved",
+  "log": {
+    "title": "Recent activity",
+    "empty": "No connection tests or syncs yet.",
+    "when": "When",
+    "what": "What",
+    "outcome": "Result",
+    "kinds": {
+      "test": "Connection test",
+      "sync": "Sync"
+    },
+    "outcomes": {
+      "ok": "OK",
+      "error": "Error",
+      "running": "Running"
+    }
+  }
+}
