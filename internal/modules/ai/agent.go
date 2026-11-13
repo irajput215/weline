@@ -30,6 +30,7 @@ const (
 	OutcomeEmergency   = "emergency"
 	OutcomeIgnored     = "ignored"
 	OutcomeError       = "error"
+	OutcomeLimit       = "limit_reached" // the plan's monthly AI runs are used up
 
 	pendingTTL = 30 * time.Minute
 	maxOffer   = 5
@@ -61,7 +62,14 @@ type Service struct {
 	sender    kit.Sender
 	log       Logger
 	now       func() time.Time
-	mem       sync.Map // pending choices when there's no Redis (tests)
+	mem       sync.Map   // pending choices when there's no Redis (tests)
+	limits    kit.Limits // plan limits (billing); nil = unlimited
+}
+
+// WithLimits meters model calls against the organization's plan.
+func (s *Service) WithLimits(l kit.Limits) *Service {
+	s.limits = l
+	return s
 }
 
 // NewService returns the agent.
@@ -196,7 +204,13 @@ func (s *Service) Decide(ctx context.Context, orgID, contactID uuid.UUID, text s
 		}
 	}
 
-	// 3. Classify.
+	// 3. Classify, if the plan has AI runs left (emergencies above never wait on it).
+	if s.limits != nil {
+		if err := s.limits.Allow(ctx, orgID, kit.MetricAIRuns, 1); err != nil {
+			r := &Result{Reply: handoverReply, Intent: IntentOther, Outcome: OutcomeLimit}
+			return r, s.handOver(ctx, orgID, contactID, st, r, "AI: monthly limit reached")
+		}
+	}
 	llm, err := s.llmFor(ctx, orgID)
 	if err != nil {
 		r := &Result{Reply: handoverReply, Intent: IntentOther}

@@ -21,6 +21,13 @@ import (
 type Service struct {
 	db      *gorm.DB
 	consent *consent.Service // settings only: "marketing only to people who opted in"
+	limits  kit.Limits       // plan limits (billing); nil = unlimited
+}
+
+// WithLimits meters broadcast recipients against the organization's plan.
+func (s *Service) WithLimits(l kit.Limits) *Service {
+	s.limits = l
+	return s
 }
 
 // NewService returns the audiences service.
@@ -658,6 +665,11 @@ func (s *Service) CreateSend(ctx context.Context, orgID, userID uuid.UUID, in Se
 	}
 	if in.ConfirmCount != len(kept) {
 		return nil, kit.Conflict("the audience changed (now %d recipients, you confirmed %d); please check again", len(kept), in.ConfirmCount)
+	}
+	if s.limits != nil {
+		if err := s.limits.Allow(ctx, orgID, kit.MetricBroadcast, len(kept)); err != nil {
+			return nil, err
+		}
 	}
 	send.RecipientCount, send.Excluded = len(kept), ex.jsonb()
 

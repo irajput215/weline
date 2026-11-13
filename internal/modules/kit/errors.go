@@ -23,7 +23,7 @@ var (
 // Error is a service error with a message that is safe to show the user.
 // Never put phone numbers, names or message text in Message.
 type Error struct {
-	Kind    error // one of ErrInvalid, ErrForbidden, ErrNotFound, ErrConflict, ErrGone, ErrTooMany, ErrNotReady
+	Kind    error // one of ErrInvalid, ErrForbidden, ErrNotFound, ErrConflict, ErrGone, ErrTooMany, ErrNotReady, ErrLimit
 	Message string
 }
 
@@ -77,6 +77,8 @@ func StatusOf(err error) int {
 		return fasthttp.StatusTooManyRequests
 	case errors.Is(err, ErrNotReady):
 		return fasthttp.StatusServiceUnavailable
+	case errors.Is(err, ErrLimit):
+		return fasthttp.StatusPaymentRequired
 	default:
 		return fasthttp.StatusInternalServerError
 	}
@@ -101,4 +103,9 @@ func SendError(r *fastglue.Request, err error) error {
 		msg = err.Error()
 	}
 	return r.SendErrorEnvelope(status, msg, nil, "")
+}
+
+// Unauthenticated returns a 401 error (a webhook whose signature doesn't check out).
+func Unauthenticated(format string, args ...any) error {
+	return newErr(ErrUnauthenticated, format, args)
 }

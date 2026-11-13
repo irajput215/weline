@@ -77,6 +77,21 @@ func TestPipeline_IgnoredEmergencyAndHandover(t *testing.T) {
 	assert.Contains(t, r.Reply, "automated assistant", "first reply says it's automated")
 	assert.Zero(t, f.llm.calls, "no model call for an emergency")
 
+	// The plan's AI runs are used up: no model call, a person takes over; emergencies above still answered.
+	f.hand.active = map[uuid.UUID]bool{} // the team closed the emergency chat
+	f.svc.WithLimits(noRuns{})
+	calls := f.llm.calls
+	r, err = f.svc.Run(ctx, f.org, f.contact, nil, "what are your prices?")
+	require.NoError(t, err)
+	assert.Equal(t, OutcomeLimit, r.Outcome)
+	assert.True(t, r.HandedOver)
+	assert.Equal(t, calls, f.llm.calls, "no model call over the limit")
+	f.hand.active = map[uuid.UUID]bool{}
+	r, err = f.svc.Run(ctx, f.org, f.contact, nil, "chest pain again")
+	require.NoError(t, err)
+	assert.Equal(t, OutcomeEmergency, r.Outcome, "emergencies never wait on the plan")
+	f.svc.WithLimits(nil)
+
 	r, err = f.svc.Run(ctx, f.org, f.contact, nil, "are you open today?")
 	require.NoError(t, err)
 	assert.Equal(t, OutcomeIgnored, r.Outcome, "a person owns the chat now")
@@ -249,4 +264,10 @@ func (claimer) Events() []string { return []string{"message.incoming"} }
 func (claimer) HandleEvent(ctx context.Context, _ kit.Event) error {
 	kit.Claim(ctx, "reminders")
 	return nil
+}
+
+type noRuns struct{}
+
+func (noRuns) Allow(context.Context, uuid.UUID, string, int) error {
+	return kit.LimitReached("no AI runs left")
 }

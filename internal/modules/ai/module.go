@@ -26,8 +26,12 @@ type Module struct {
 	app       *handlers.App
 	cfg       *config.Config
 	providers provider.Resolver
+	limits    kit.Limits
 	service   *Service
 }
+
+// UseLimits implements kit.LimitsUser: model calls are metered.
+func (m *Module) UseLimits(l kit.Limits) { m.limits = l }
 
 // New only stores its arguments.
 func New(app *handlers.App, cfg *config.Config) kit.Module { return &Module{app: app, cfg: cfg} }
@@ -45,7 +49,7 @@ func (m *Module) svc() *Service {
 		llmFor := func(ctx context.Context, orgID uuid.UUID) (kit.LLM, error) {
 			return NewLLM(ctx, m.app.DB, key, orgID, &http.Client{Timeout: llmTimeout}, defaultEndpoints)
 		}
-		m.service = NewService(m.app.DB, m.app.Redis, llmFor, m.providers, m.app, kit.NewSender(m.app.DB, m.app), m.app.Log)
+		m.service = NewService(m.app.DB, m.app.Redis, llmFor, m.providers, m.app, kit.NewSender(m.app.DB, m.app), m.app.Log).WithLimits(m.limits)
 	}
 	return m.service
 }

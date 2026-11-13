@@ -15,8 +15,12 @@ const (
 
 // Module is the audiences module.
 type Module struct {
-	app *handlers.App
+	app    *handlers.App
+	limits kit.Limits
 }
+
+// UseLimits implements kit.LimitsUser: broadcast recipients are metered.
+func (m *Module) UseLimits(l kit.Limits) { m.limits = l }
 
 // New only stores its arguments: the registry calls it with a nil app.
 func New(app *handlers.App, _ *config.Config) kit.Module { return &Module{app: app} }
@@ -43,7 +47,7 @@ func (m *Module) Permissions() []kit.Permission {
 
 // Register implements kit.Module.
 func (m *Module) Register(g *fastglue.Fastglue) {
-	for _, rt := range routes(m.app, NewService(m.app.DB)) {
+	for _, rt := range routes(m.app, NewService(m.app.DB).WithLimits(m.limits)) {
 		switch rt.method {
 		case "GET":
 			g.GET(rt.path, rt.handler)

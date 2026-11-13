@@ -40,6 +40,6 @@
   "intent": "Asked for",
   "outcome": "What happened",
   "intents": { "book": "Booking", "reschedule": "Moving", "cancel": "Cancelling", "question": "Question", "clinical": "Health matter", "complaint": "Complaint", "other": "Other", "": "—" },
-  "outcomes": { "answered": "Answered", "offered_times": "Offered times", "asked": "Asked a question", "booked": "Booked", "rescheduled": "Moved", "cancelled": "Cancelled", "handed_over": "Passed to the team", "emergency": "Emergency: passed to the team", "ignored": "Ignored", "error": "Error" },
+  "outcomes": { "answered": "Answered", "offered_times": "Offered times", "asked": "Asked a question", "booked": "Booked", "rescheduled": "Moved", "cancelled": "Cancelled", "handed_over": "Passed to the team", "emergency": "Emergency: passed to the team", "ignored": "Ignored", "error": "Error", "limit_reached": "Plan limit reached: passed to the team" },
   "loadMore": "Show more"
 }
