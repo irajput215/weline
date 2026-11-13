@@ -102,8 +102,11 @@ per business. Not attribution on its own.
    ad id and `ctwa_clid`, and wins over a code.
 3. Keep **c2** as the fallback if (b) is refused or stalls for more than one upstream release.
 
-## Questions for you
+## Decision (2026-11-13)
 
-- OK to prepare the upstream pull request (b)? It goes to `shridarpatil/whatomate`, under your GitHub account.
-- Are clinics already running click-to-WhatsApp ads? If so, which other entry points matter (website button, Google,
-  QR code at the desk)? That decides how much c1 matters beyond Meta.
+- **No upstream pull request** (option b is not pursued). Meta's ad id and `ctwa_clid` stay out of reach for now.
+- **Which entry points clinics use is not known.** So the module goes with **c1, ad codes**, which works the same for
+  Meta ads, the website, Google, posters and QR codes.
+- c2 (receiving Meta's webhook first) stays a fallback, to reconsider only if a clinic needs the real ad id or
+  Meta's Conversions API.
+- Next: module `ads`, prompts A, B, C, on c1. Specs in `requirements.md` and `design.md` next to this file.
