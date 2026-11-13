@@ -1,5 +1,26 @@
 # Connectors: release notes
 
+## 3.2: Cliniko
+
+Spec: [`cliniko.md`](cliniko.md). Findings: [`cliniko-spike.md`](cliniko-spike.md).
+
+- **Connect Cliniko** in Integrations → Connected system with an API key from a dedicated Cliniko user. Weline tests the
+  key before saving it, and stores it encrypted.
+- **WhatsApp bookings go into Cliniko:** the same "Book an appointment" flow offers Cliniko's appointment types and
+  free times (for practitioners and types shown in online bookings) and books into the diary. Group classes and types
+  that need online payment aren't offered.
+- **Patients are matched, not duplicated:** Weline finds the patient by their mobile (through a phone index it keeps as
+  hashes, refreshed every 5 minutes), or by name and mobile, and only adds a new patient when there's no match. The
+  option can be turned off.
+- **Settings:** how many days ahead patients can book (default 14), offer practitioners and types hidden from online
+  bookings, create new patients.
+
+**Before connecting:** set `WELINE_CLINIKO_CONTACT_EMAIL` (Cliniko needs a contact email in every request) and
+`WHATOMATE_APP__ENCRYPTION_KEY` on the server.
+
+**Known limits:** changes made in Cliniko reach Weline by polling (Cliniko has no webhooks); cancellations made in
+Cliniko aren't shown in Weline's screens; only individual appointments.
+
 ## 3.1: Connected system (first release)
 
 Shipped in Weline Phase 3.1. Spec: [`requirements.md`](requirements.md). Design: [`design.md`](design.md).

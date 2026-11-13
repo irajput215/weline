@@ -3,7 +3,7 @@
 One page, updated by prompt C whenever a module adds a public endpoint, a new kind of data or an external
 integration. Architecture: [`architecture.md`](architecture.md). Data: [`data-model.md`](data-model.md).
 STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure, **D**enial of service,
-**E**levation of privilege. Last reviewed: 2026-11-13 (Phase 3.1, connector layer).
+**E**levation of privilege. Last reviewed: 2026-11-13 (Phase 3.2, Cliniko connector).
 
 ## Assets
 
@@ -35,7 +35,7 @@ STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure
 | **Ads** (`/api/x/ads`) and code matching on `message.incoming` | Anyone typing a code to inflate counts or give themselves a tag | Links pointing patients to another number or text; tags crafted to break Audiences | Who created or changed an entry point | Other orgs' entry points or arrivals; full numbers | Event floods; huge reports | Reception viewing attribution | Codes need a letter and a digit and match only as whole words; one arrival per contact, entry point and day; only verified hooks deliveries count. Numbers are digits only (8–15, country code), messages ≤ 500 characters and must hold the code, and the link is built by the server with URL encoding. Tags are letters, digits, `-` and `_` (≤ 50), and the module only adds tags. Creator and last editor recorded. Every query filtered by org, composite keys, contact looked up inside the event's org; numbers masked; no message text stored or logged. Active codes cached in memory, one small transaction per match; reports capped at 366 days (about 0.6 s for 50,000 arrivals). Reception has no `wl_ads_entrypoints` by default. See open risk 16. |
 | **Connectors** (`/api/x/connectors`) and the provider resolver | Someone saving a key for another clinic's system | Credentials or provider swapped to send bookings elsewhere | Who changed the connected system | Credentials read back; another org's provider used | A slow provider hanging WhatsApp | Managers or reception changing the system | Only `wl_connectors_settings:update` (admins) can choose or test; the connection test runs before anything is saved; credentials encrypted (`enc:`), refused without an encryption key, never returned or logged; `updated_by_id` recorded; providers built bound to one organization's row; 10-second test timeout and typed errors turned into the flow's error branch; the chatbot refuses offers made before a provider switch. See open risk 18. |
 | **Meta webhook** (`/api/webhook`, upstream) | Forged WhatsApp events | – | – | – | Flooding | – | Upstream verifies `X-Hub-Signature-256` **only when the account has an App Secret stored**. Set it for every account. |
-| **Connector syncs** (Cliniko, step 3.2) | Spoofed practice-system responses | – | Sync log | Credentials leak | Rate limits (Cliniko 200/min) | – | Built in 3.1: encrypted credentials, `wl.connector_syncs`. To build in 3.2: HTTPS only, backoff on 429 with `X-RateLimit-Reset`, no live calls in CI. |
+| **Cliniko API** (outbound, `api.<shard>.cliniko.com`) and the phone index sync | Spoofed responses; a key pointed at another account | – | Sync log | The key in logs or errors; patient names and numbers kept by Weline | Cliniko's 200/min limit; a slow Cliniko | – | HTTPS to the shard derived from the key (validated against Cliniko's format); `links.next` only followed inside the account's API URL; Basic auth key never logged or put in errors (errors keep Cliniko's status and a short message, never bodies); 10-second timeouts; one wait on a 429 when the reset is within 10 s, otherwise `RateLimited`; only ids and salted phone hashes kept (`wl.connector_links`), free times cached in memory for a minute; sync on one instance with a Redis lock. See open risk 19. |
 | **Outbound sends** (`kit.Sender`) | – | – | Who sent it | Message to the wrong patient | – | Sending as another org | Contact and account resolved inside the org (`internal/modules/kit/sender.go`); messages are stored and visible in the inbox; templates must be approved. **Open risk:** module sends carry no `sent_by_user_id` yet. |
 
 ## Cross-cutting controls
@@ -116,3 +116,8 @@ STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure
     with Weline's `encryption_key` (as WhatsApp tokens are), so anyone with both the database and the key can read
     it. Keep the key out of the repository and backups, ask clinics to create a dedicated Cliniko user with the least
     access, and add the audit trail for credential use (step 3.3).
+19. **Weline acts in a clinic's Cliniko with the full rights of the key's user.** Cliniko keys can't be scoped, so a
+    key from an admin user lets Weline (and anyone who extracts the key) read and change everything in that Cliniko
+    account. Ask clinics to create a dedicated "Weline integration" user with the lowest role that can see the diary
+    and patients, and to revoke the key when they disconnect. Weline only reads names and phone numbers of patients
+    and never stores them.

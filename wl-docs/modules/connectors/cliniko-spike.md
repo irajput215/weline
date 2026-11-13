@@ -155,6 +155,11 @@ patient on WhatsApp" unless the patient picked a reason.
 
 `GET /individual_appointments/{id}/conflicts` reports clashes for an appointment.
 
+**Responses name related records through nested links, not flat ids** (found while building 3.2): an appointment has
+`patient`, `practitioner`, `appointment_type` and `business` objects with `links.self` URLs
+(`…/v1/practitioners/31`); the id is the last path segment. Requests still send flat `patient_id`, `practitioner_id`
+and so on.
+
 `GET /individual_appointments` filters: `patient_id`, `practitioner_id`, `business_id`, `appointment_type_id`,
 `starts_at`, `ends_at`, `updated_at`, `created_at`, `cancelled_at`, `deleted_at`, `archived_at`, `did_not_arrive`.
 `GET /bookings` lists individual and group appointments together with extra filters (`patient_ids`,

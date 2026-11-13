@@ -95,8 +95,7 @@ func TestAccount_BuiltInByDefault(t *testing.T) {
 	for _, pi := range f.svc.Providers() {
 		names = append(names, pi.Name)
 	}
-	assert.Equal(t, []string{"builtin", "fake", "cliniko"}, names, "built-in first, then built ones, then coming soon")
-	assert.False(t, f.svc.Providers()[2].Available, "cliniko is coming soon until 3.2")
+	assert.Equal(t, []string{"builtin", "fake"}, names, "built-in first, then the others")
 }
 
 func TestSave_TestsEncryptsAndLogs(t *testing.T) {
@@ -159,7 +158,7 @@ func TestSave_TestsEncryptsAndLogs(t *testing.T) {
 
 func TestSave_Refusals(t *testing.T) {
 	f := newFixture(t)
-	for _, name := range []string{"cliniko", "nope", ""} {
+	for _, name := range []string{"nope", ""} {
 		_, err := f.svc.Save(ctx, f.org, f.user, SaveInput{Provider: name, Credentials: map[string]string{"api_key": "good"}})
 		assert.True(t, isKind(err, kit.ErrInvalid), "provider %q", name)
 	}

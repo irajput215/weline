@@ -71,7 +71,7 @@ Tips that save a lot of pain:
 * [ ] [Phase 2 gate](phase-2-messaging-platform.md#phase-2-gate)
 * [ ] [3.0 Cliniko access and API spike](phase-3-connectors-cliniko.md#30-cliniko-access-and-api-spike) (from the published API, 2026-11-13; live checks wait for a trial key)
 * [x] [3.1 Connector layer](phase-3-connectors-cliniko.md#31-connector-layer)
-* [ ] [3.2 Cliniko connector](phase-3-connectors-cliniko.md#32-cliniko-connector)
+* [x] [3.2 Cliniko connector](phase-3-connectors-cliniko.md#32-cliniko-connector)
 * [ ] [3.3 Privacy before the first real clinic](phase-3-connectors-cliniko.md#33-privacy-before-the-first-real-clinic)
 * [ ] [Phase 3 gate](phase-3-connectors-cliniko.md#phase-3-gate)
 * [ ] [Phase 4 AI agent](phase-4-ai-agent.md)

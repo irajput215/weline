@@ -4,7 +4,7 @@ Build guide step 3.2 ([`../../build-guide/phase-3-connectors-cliniko.md`](../../
 It implements the connector interface ([`design.md`](design.md#the-interface)) on Cliniko's API as recorded in
 [`cliniko-spike.md`](cliniko-spike.md).
 
-Status: **draft for review.** Built from the published API; recorded fixtures from a trial replace the hand-made ones
+Status: **built (step 3.2, 2026-11-13)** from the published API; recorded fixtures from a trial replace the hand-made ones
 once a trial key exists (spike, "To verify").
 
 ## Requirements
@@ -76,10 +76,26 @@ Go tests with an `httptest.Server` serving hand-made fixtures shaped like the sp
 
 ## DoD
 
-- [ ] C1–C9 implemented and tested
-- [ ] Connected system offers Cliniko (no longer "coming soon"); choosing it tests the key first
-- [ ] The WhatsApp flow books into Cliniko through the interface (test with the fake server)
-- [ ] Fixtures re-recorded from a trial account (names and numbers replaced) and the spike's "To verify" list checked
-- [ ] Verified on staging with a Cliniko trial: connect, WhatsApp booking lands in Cliniko, cancel from Cliniko shows in
-      Weline's next sync
-- [ ] `wl-docs` updated (threat model: Cliniko entry point; release notes)
+- [x] C1–C9 implemented and tested (`internal/modules/connectors/cliniko`: 8 tests against a fake Cliniko server;
+  `internal/modules/connectors/cliniko_test.go`: connect, sync and a WhatsApp booking end to end)
+- [x] Connected system offers Cliniko; choosing it tests the key first (journey 1 checks the refusal in CI, where
+  there's no key)
+- [x] The WhatsApp flow books into Cliniko through the interface (`TestCliniko_ConnectSyncAndBookOnWhatsApp`: catalog,
+  free times, booking with the patient found through the phone index, and the contact linked)
+- [ ] Fixtures re-recorded from a trial account and the spike's "To verify" list checked.
+  **Not done:** needs a Cliniko trial key. The fake server follows the published API; the one shape learnt while
+  building (appointments name their patient, practitioner, type and business through nested `links.self` URLs, not flat
+  ids) is in the spike.
+- [ ] Verified on staging with a Cliniko trial: connect, WhatsApp booking lands in Cliniko, the phone index sync runs.
+  **You:** set `WELINE_CLINIKO_CONTACT_EMAIL` and `WHATOMATE_APP__ENCRYPTION_KEY` on Render, create a trial and a
+  "Weline integration" user and key, then connect it in Integrations → Connected system.
+- [x] `wl-docs` updated: threat model (Cliniko entry point and open risk 19), connectors release notes (3.2), spike
+  (nested links).
+
+### Notes from the build
+
+- Cancellations made in Cliniko aren't pushed to Weline (no webhooks); the WhatsApp flow doesn't need them yet.
+  Reminders (Phase 5) read appointments from Cliniko when they send, so they always see the current state.
+- The phone index sync runs every 5 minutes on one instance (Redis lock `wl:connectors:sync`), re-reading from a minute
+  before the last run.
+- Patients created from WhatsApp with a single name get the last name "(WhatsApp)" for the clinic to correct.

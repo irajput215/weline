@@ -91,7 +91,7 @@ func TestHandlers_Flow(t *testing.T) {
 	r := run(t, manager, f.svc, "GET", base+"/account", nil, f.org, f.user)
 	require.Equal(t, http.StatusOK, r.code, r.msg)
 	assert.Equal(t, "builtin", r.data["account"].(map[string]any)["provider"])
-	assert.Len(t, r.data["providers"], 3)
+	assert.Len(t, r.data["providers"], 2)
 
 	assert.Equal(t, http.StatusForbidden, run(t, manager, f.svc, "PUT", base+"/account", map[string]any{"provider": "builtin"}, f.org, f.user).code,
 		"managers can't change it (Q2)")
