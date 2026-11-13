@@ -18,6 +18,7 @@ const { t } = useI18n()
 const auth = useAuthStore()
 const store = useOnboardingStore()
 const canEdit = computed(() => auth.hasPermission('wl_onboarding_setup', 'update'))
+const canPacks = computed(() => auth.hasPermission('wl_packs_install', 'read'))
 const loading = computed(() => store.state === 'loading' || store.state === 'idle')
 const c = computed(() => store.checklist)
 const pct = computed(() => (c.value && c.value.total ? Math.round((c.value.done / c.value.total) * 100) : 0))
@@ -73,6 +74,8 @@ onMounted(() => void store.load())
                   </Select>
                 </div>
                 <p v-if="s.key === 'whatsapp'" class="text-xs text-muted-foreground">{{ t('wl.onboarding.metaCharges') }}</p>
+                <RouterLink v-if="s.key === 'vertical' && c.vertical && canPacks" to="/x/packs" class="text-sm text-primary underline"
+                  data-testid="onboarding-packs">{{ t('wl.onboarding.packs') }}</RouterLink>
               </div>
               <Button v-if="s.key !== 'vertical'" as-child variant="outline" size="sm">
                 <RouterLink :to="s.link" :data-testid="`onboarding-go-${s.key}`">{{ t('wl.onboarding.go') }}</RouterLink>

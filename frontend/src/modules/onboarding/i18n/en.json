@@ -23,6 +23,7 @@
     "first_message": { "title": "Send your first message", "help": "Reply to a chat or send a test message from Chat." }
   },
   "vertical": "Type of business",
+  "packs": "Set up templates, AI and reminders for your industry →",
   "verticals": { "allied_health": "Allied health (physio, chiro, psychology…)", "dental": "Dental", "medical": "Medical / GP", "beauty": "Beauty and wellness", "fitness": "Fitness and studios", "other": "Something else" },
   "metaCharges": "Meta charges for some WhatsApp messages (mainly templates such as reminders and broadcasts). Meta bills you directly through your WhatsApp Business account; Weline doesn't add to it."
 }
