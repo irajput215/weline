@@ -1,0 +1,28 @@
+{
+  "section": "Get started",
+  "nav": { "start": "Setup checklist" },
+  "title": "Set up Weline",
+  "subtitle": "A few steps to get your WhatsApp working for your business",
+  "progress": "{done} of {total} done",
+  "allDone": "You're all set. Patients can message you on WhatsApp.",
+  "forbiddenTitle": "No access",
+  "forbiddenDescription": "Ask your admin or practice manager to finish setting up.",
+  "saveForbidden": "You don't have permission to change this.",
+  "saveFailed": "Couldn't save. Check your connection and try again.",
+  "go": "Open",
+  "done": "Done",
+  "hide": "Hide checklist",
+  "show": "Show checklist again",
+  "hidden": "The checklist is hidden. You can still finish any step from here.",
+  "steps": {
+    "business": { "title": "Business details", "help": "Name, time zone, locations and opening hours." },
+    "whatsapp": { "title": "Connect your WhatsApp number", "help": "Use Meta's sign-up in WhatsApp accounts to connect the number patients message." },
+    "system": { "title": "Connect your system", "help": "Cliniko, or Weline's built-in diary if you don't use one. Bookings and reminders work from it." },
+    "vertical": { "title": "Choose your type of business", "help": "Sets sensible defaults for your industry." },
+    "team": { "title": "Invite your team", "help": "Add reception and managers so they can answer chats." },
+    "first_message": { "title": "Send your first message", "help": "Reply to a chat or send a test message from Chat." }
+  },
+  "vertical": "Type of business",
+  "verticals": { "allied_health": "Allied health (physio, chiro, psychology…)", "dental": "Dental", "medical": "Medical / GP", "beauty": "Beauty and wellness", "fitness": "Fitness and studios", "other": "Something else" },
+  "metaCharges": "Meta charges for some WhatsApp messages (mainly templates such as reminders and broadcasts). Meta bills you directly through your WhatsApp Business account; Weline doesn't add to it."
+}

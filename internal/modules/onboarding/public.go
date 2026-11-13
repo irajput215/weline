@@ -12,6 +12,7 @@ import (
 	"html/template"
 	"net"
 	"os"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -43,9 +44,23 @@ const (
 	pageReadsPerMin  = 60
 )
 
-// BuildCommit is set at build time (-ldflags "-X ...onboarding.BuildCommit=<sha>")
-// so /x/source points at the exact source running.
-var BuildCommit = ""
+// BuildCommit is the commit running, so /x/source points at its exact source:
+// Go records it in the binary when building from a git checkout (vcs.revision);
+// -ldflags "-X .../onboarding.BuildCommit=<sha>" overrides it.
+var BuildCommit = vcsRevision()
+
+func vcsRevision() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+	for _, s := range info.Settings {
+		if s.Key == "vcs.revision" {
+			return s.Value
+		}
+	}
+	return ""
+}
 
 //go:embed page.html
 var pageHTML string
