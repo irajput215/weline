@@ -11,6 +11,9 @@ whenever a design choice would be expensive to undo (SDLC phase 2, "Design").
 | --- | --- | --- |
 | [ADR-001](ADR-001-modules-inside-weline.md) | Modules inside Weline under AGPL, joined by five seams | accepted |
 | [ADR-002](ADR-002-connect-dont-build-pms.md) | Connect to each business's own system; don't build a practice management system | accepted |
+| [ADR-003](ADR-003-scrub-patient-identifiers-from-logs.md) | Scrub patient identifiers from the process output | proposed (built, on by default) |
+| [ADR-004](ADR-004-australian-hosting.md) | Host staging and production in Australia | proposed |
+| [ADR-005](ADR-005-saas-model.md) | One shared Weline for all businesses; AGPL source link; Stripe; Meta bills businesses directly | proposed |
 
 ## Template
 

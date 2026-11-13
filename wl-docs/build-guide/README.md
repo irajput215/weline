@@ -76,5 +76,5 @@ Tips that save a lot of pain:
 * [ ] [Phase 3 gate](phase-3-connectors-cliniko.md#phase-3-gate)
 * [ ] [Phase 4 AI agent](phase-4-ai-agent.md) (built 2026-11-13; real-model evals and the Cliniko staging check wait on keys)
 * [ ] [Phase 5 Reminders and recalls](phase-5-reminders-recalls.md) (built 2026-11-13; the gate waits on the Cliniko trial, staging and approved templates)
-* [ ] [Phase 6 Multi-business SaaS](phase-6-saas.md)
+* [ ] [Phase 6 Multi-business SaaS](phase-6-saas.md) (6.0 ADR-005 proposed 2026-11-13, built on its recommendation)
 * [ ] [Phase 7 More connectors and vertical packs](phase-7-connectors-verticals.md)
