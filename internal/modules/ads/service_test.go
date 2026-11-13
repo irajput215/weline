@@ -503,7 +503,7 @@ func TestTagsAddedToTheList(t *testing.T) {
 		require.NoError(t, f.db.Model(&models.Tag{}).Where("organization_id = ?", f.org).Order("name").Pluck("name", &n).Error)
 		return n
 	}
-	assert.Equal(t, []string{"FROM-SKI26", "campaign-flu-season-2026", "from-flu24"}, names())
+	assert.ElementsMatch(t, []string{"FROM-SKI26", "campaign-flu-season-2026", "from-flu24"}, names(), "order depends on the collation")
 
 	f.entry(t, "SKI26") // its tag exists in another case: not added again
 	assert.Len(t, names(), 3)
