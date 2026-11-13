@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shridarpatil/whatomate/internal/modules/audit"
 	"github.com/shridarpatil/whatomate/internal/modules/booking"
 	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
@@ -154,6 +155,19 @@ func TestSave_TestsEncryptsAndLogs(t *testing.T) {
 		assert.NotContains(t, line, "good")
 		assert.NotContains(t, line, "bad")
 	}
+
+	// Every save is in the audit trail, without the key (step 3.3).
+	evs, err := audit.List(ctx, f.db, f.org, "connectors", nil)
+	require.NoError(t, err)
+	require.Len(t, evs, 3)
+	assert.Equal(t, "connection_saved", evs[0].Action)
+	assert.JSONEq(t, `{"provider": "builtin", "new_credentials_set": false}`, string(evs[0].Details))
+	assert.JSONEq(t, `{"provider": "fake", "new_credentials_set": true}`, string(evs[2].Details))
+	require.NotNil(t, evs[0].Actor)
+	assert.Equal(t, f.user, evs[0].Actor.ID)
+	for _, e := range evs {
+		assert.NotContains(t, string(e.Details), "good")
+	}
 }
 
 func TestSave_Refusals(t *testing.T) {
@@ -172,13 +186,13 @@ func TestSave_Refusals(t *testing.T) {
 
 func TestTest_UpdatesStatus(t *testing.T) {
 	f := newFixture(t)
-	res, err := f.svc.Test(ctx, f.org)
+	res, err := f.svc.Test(ctx, f.org, f.user)
 	require.NoError(t, err)
 	assert.True(t, res.OK, "built-in is always connected")
 
 	_, err = f.svc.Save(ctx, f.org, f.user, SaveInput{Provider: "fake", Credentials: map[string]string{"api_key": "good"}})
 	require.NoError(t, err)
-	res, err = f.svc.Test(ctx, f.org)
+	res, err = f.svc.Test(ctx, f.org, f.user)
 	require.NoError(t, err)
 	assert.True(t, res.OK)
 	assert.Equal(t, "connected as Weline integration", res.Message)
@@ -187,7 +201,7 @@ func TestTest_UpdatesStatus(t *testing.T) {
 	enc, err := f.svc.encrypt(map[string]string{"api_key": "revoked"})
 	require.NoError(t, err)
 	require.NoError(t, f.db.Exec(`UPDATE wl.connector_accounts SET credentials = ? WHERE organization_id = ?`, enc, f.org).Error)
-	res, err = f.svc.Test(ctx, f.org)
+	res, err = f.svc.Test(ctx, f.org, f.user)
 	require.NoError(t, err)
 	assert.False(t, res.OK)
 	assert.Equal(t, StatusError, res.Account.Status)

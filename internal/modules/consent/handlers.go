@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shridarpatil/whatomate/internal/modules/audit"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/zerodha/fastglue"
 )
@@ -35,7 +36,7 @@ func routes(auth kit.Auth, svc *Service) []route {
 		{"POST", base + "/imports/preview", g(PermRecords, kit.ActionCreate, h.previewImport)},
 		{"POST", base + "/imports", g(PermRecords, kit.ActionCreate, h.applyImport)},
 		{"GET", base + "/settings", g(PermSettings, kit.ActionRead, h.getSettings)},
-		{"PUT", base + "/settings", g(PermSettings, kit.ActionUpdate, h.saveSettings)},
+		{"PUT", base + "/settings", g(PermSettings, kit.ActionUpdate, audit.Wrap(svc.db, svc.log, Name, "settings_saved", "settings", h.saveSettings))},
 	}
 }
 

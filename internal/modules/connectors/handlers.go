@@ -62,7 +62,7 @@ func (h *handler) save(r *fastglue.Request, c kit.Caller) error {
 func (h *handler) test(r *fastglue.Request, c kit.Caller) error {
 	ctx, cancel := kit.Context()
 	defer cancel()
-	res, err := h.svc.Test(ctx, c.OrgID)
+	res, err := h.svc.Test(ctx, c.OrgID, c.UserID)
 	if err != nil {
 		return kit.SendError(r, err)
 	}

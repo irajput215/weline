@@ -3,7 +3,7 @@
 One page, updated by prompt C whenever a module adds a public endpoint, a new kind of data or an external
 integration. Architecture: [`architecture.md`](architecture.md). Data: [`data-model.md`](data-model.md).
 STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure, **D**enial of service,
-**E**levation of privilege. Last reviewed: 2026-11-13 (Phase 3.2, Cliniko connector).
+**E**levation of privilege. Last reviewed: 2026-11-13 (Phase 3.3, privacy before the first real clinic).
 
 ## Assets
 
@@ -65,22 +65,28 @@ STRIDE: **S**poofing, **T**ampering, **R**epudiation, **I**nformation disclosure
 5. **Module permissions don't reach organizations created later.** System roles of new orgs come from the
    upstream seed, so admins must grant `wl_` permissions by hand (`kit.SeedPermissions` note). This fails
    closed (no access), not open: in a new org even admins see no Clinic menu until granted.
-6. **Render free tier**: data is hosted in Oregon, not Australia, and free Postgres expires. Production
+6. **Render free tier (plan in ADR-004)**: data is hosted in Oregon, not Australia, and free Postgres expires. Production
    needs an Australian region before real patient data (SDLC "Compliance").
-7. **No audit trail for module reads/writes yet.** Upstream's audit log isn't wired into modules; to do
+7. **Partly closed (3.3): module changes are audited; reads aren't.** `wl.audit_events` records changes to the
+   connected system, clinic setup, consent settings and ads entry points, with the user (`wl-docs/modules/audit`).
+   Still open: who viewed patient data, and credential use per request. Originally: **No audit trail for module reads/writes yet.** Upstream's audit log isn't wired into modules; to do
    before patient data arrives (SDLC privacy checklist). Since Phase 1.1 this includes clinic setup: who
    changed hours, closures, services or the booking slug isn't recorded (only `updated_at`).
 8. **Module sends aren't attributed.** `kit.Sender` doesn't set `sent_by_user_id`, so a staff-triggered
    module message can't be traced to the person from the message row. Add an optional user to the sender
    when the first module sends on a user's behalf (Phase 1.2/2).
-9. **Upstream logs patient identifiers.** Recipient phone numbers on every send (`Text message sent …
+9. **Mitigated (3.3, ADR-003): identifiers are masked in the process's output** by a scrubber Weline starts with its
+   modules (`WELINE_SCRUB_LOGS=off` turns it off). Still open: lines written before modules start, and
+   names inside SQL when debug mode is on; the real fix is upstream. Originally: **Upstream logs patient identifiers.** Recipient phone numbers on every send (`Text message sent …
    phone=…`), and sender numbers and profile names on every incoming message (`Received message from=…`,
    `profile_name=…`), at info level, so they land in the hosting provider's logs. Needs a log-level change
    or log scrubbing before real patients; raise upstream.
 10. **Public bookings can be made under someone else's mobile.** The captcha and per-mobile limits stop bulk abuse,
     but a person can book (and so create a contact) with another person's number. The clinic confirms at arrival;
     add mobile verification (WhatsApp one-time code) if abuse appears.
-11. **Booking records are patient data without a deletion job yet.** The retention rule (7 years after the
+11. **Closed (3.3): a daily job deletes built-in appointments and their history 7 years after the appointment**
+    (`booking.DeleteExpired`, one instance via a Redis lock). Weline's messages (upstream table) still follow
+    upstream's behaviour: no deletion; deciding a messages policy needs your input. Originally: **Booking records are patient data without a deletion job yet.** The retention rule (7 years after the
     appointment) is recorded in `wl-docs/modules/booking/design.md`; the job must exist before real patients.
 12. **Marketing to people with no recorded opt-in is still allowed by default.** Since 2.2 (Consent), STOP is
     handled and opt-ins are recorded with proof, but "Marketing only to people who opted in" is **off** by default

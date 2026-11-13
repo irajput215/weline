@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shridarpatil/whatomate/internal/modules/audit"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/zerodha/fastglue"
 )
@@ -25,26 +26,26 @@ func routes(auth kit.Auth, svc *Service) []route {
 	}
 	return []route{
 		{"GET", base + "/profile", g(PermSettings, kit.ActionRead, h.getProfile)},
-		{"PUT", base + "/profile", g(PermSettings, kit.ActionUpdate, h.saveProfile)},
+		{"PUT", base + "/profile", g(PermSettings, kit.ActionUpdate, audit.Wrap(svc.db, nil, Name, "profile_saved", "profile", h.saveProfile))},
 
 		{"GET", base + "/locations", g(PermLocations, kit.ActionRead, h.listLocations)},
-		{"POST", base + "/locations", g(PermLocations, kit.ActionCreate, h.createLocation)},
-		{"PUT", base + "/locations/{id}", g(PermLocations, kit.ActionUpdate, h.updateLocation)},
+		{"POST", base + "/locations", g(PermLocations, kit.ActionCreate, audit.Wrap(svc.db, nil, Name, "location_created", "location", h.createLocation))},
+		{"PUT", base + "/locations/{id}", g(PermLocations, kit.ActionUpdate, audit.Wrap(svc.db, nil, Name, "location_updated", "location", h.updateLocation))},
 
 		{"GET", base + "/practitioners", g(PermPractitioners, kit.ActionRead, h.listPractitioners)},
-		{"POST", base + "/practitioners", g(PermPractitioners, kit.ActionCreate, h.createPractitioner)},
-		{"PUT", base + "/practitioners/{id}", g(PermPractitioners, kit.ActionUpdate, h.updatePractitioner)},
+		{"POST", base + "/practitioners", g(PermPractitioners, kit.ActionCreate, audit.Wrap(svc.db, nil, Name, "practitioner_created", "practitioner", h.createPractitioner))},
+		{"PUT", base + "/practitioners/{id}", g(PermPractitioners, kit.ActionUpdate, audit.Wrap(svc.db, nil, Name, "practitioner_updated", "practitioner", h.updatePractitioner))},
 		{"GET", base + "/members", g(PermPractitioners, kit.ActionRead, h.listMembers)},
 
 		{"GET", base + "/services", g(PermServices, kit.ActionRead, h.listServices)},
-		{"POST", base + "/services", g(PermServices, kit.ActionCreate, h.createService)},
-		{"PUT", base + "/services/{id}", g(PermServices, kit.ActionUpdate, h.updateService)},
+		{"POST", base + "/services", g(PermServices, kit.ActionCreate, audit.Wrap(svc.db, nil, Name, "service_created", "service", h.createService))},
+		{"PUT", base + "/services/{id}", g(PermServices, kit.ActionUpdate, audit.Wrap(svc.db, nil, Name, "service_updated", "service", h.updateService))},
 
 		{"GET", base + "/locations/{id}/hours", g(PermSettings, kit.ActionRead, h.getHours)},
-		{"PUT", base + "/locations/{id}/hours", g(PermSettings, kit.ActionUpdate, h.setHours)},
+		{"PUT", base + "/locations/{id}/hours", g(PermSettings, kit.ActionUpdate, audit.Wrap(svc.db, nil, Name, "hours_saved", "location", h.setHours))},
 		{"GET", base + "/closures", g(PermSettings, kit.ActionRead, h.listClosures)},
-		{"POST", base + "/closures", g(PermSettings, kit.ActionUpdate, h.createClosure)},
-		{"DELETE", base + "/closures/{id}", g(PermSettings, kit.ActionUpdate, h.deleteClosure)},
+		{"POST", base + "/closures", g(PermSettings, kit.ActionUpdate, audit.Wrap(svc.db, nil, Name, "closure_created", "closure", h.createClosure))},
+		{"DELETE", base + "/closures/{id}", g(PermSettings, kit.ActionUpdate, audit.Wrap(svc.db, nil, Name, "closure_deleted", "closure", h.deleteClosure))},
 	}
 }
 

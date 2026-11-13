@@ -1,6 +1,7 @@
 package booking
 
 import (
+	"context"
 	"strings"
 
 	"github.com/shridarpatil/whatomate/internal/config"
@@ -73,6 +74,13 @@ func (m *Module) Register(g *fastglue.Fastglue) {
 	pub := &public{svc: svc, captcha: captcha, limit: lim, trustProxy: trustProxy}
 	all := append(routesWithCaptcha(m.app, svc, captcha), publicRoutes(pub)...)
 	all = append(all, route{"GET", pagePath, pub.page(basePath)})
+	go svc.runRetention(context.Background(), m.app.Redis, func(n int, err error) {
+		if err != nil {
+			m.app.Log.Error("booking: retention job failed", "error", err)
+		} else if n > 0 {
+			m.app.Log.Info("booking: deleted appointments past retention", "count", n)
+		}
+	})
 	for _, rt := range all {
 		switch rt.method {
 		case "GET":

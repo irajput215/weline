@@ -10,12 +10,14 @@ package modules
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/shridarpatil/whatomate/internal/config"
 	"github.com/shridarpatil/whatomate/internal/handlers"
 	"github.com/shridarpatil/whatomate/internal/modules/ads"
 	"github.com/shridarpatil/whatomate/internal/modules/audiences"
+	"github.com/shridarpatil/whatomate/internal/modules/audit"
 	"github.com/shridarpatil/whatomate/internal/modules/booking"
 	"github.com/shridarpatil/whatomate/internal/modules/connectors"
 	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
@@ -29,6 +31,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// ScrubLogsEnv turns log scrubbing off when set to "off" (ADR-003).
+const ScrubLogsEnv = "WELINE_SCRUB_LOGS"
+
 // Factory builds a module from Weline's app and config.
 //
 // A factory must only store its arguments: Migrate calls it with nil app and
@@ -40,6 +45,7 @@ type Factory func(app *handlers.App, cfg *config.Config) kit.Module
 // another module's tables comes after it).
 var factories = []Factory{
 	example.New,
+	audit.New, // other modules write to its table at run time
 	practice.New,
 	booking.New, // reads practice tables, so migrates after it
 	consent.New,
@@ -52,6 +58,13 @@ var factories = []Factory{
 // with every module that implements kit.EventHandler. Called from
 // setupRoutes, before the frontend catch-all route.
 func Register(g *fastglue.Fastglue, app *handlers.App, cfg *config.Config) {
+	// Mask phone numbers and names in everything the process logs from here on
+	// (upstream logs them at info level; ADR-003). WELINE_SCRUB_LOGS=off turns it off.
+	if os.Getenv(ScrubLogsEnv) != "off" {
+		if err := kit.ScrubStdout(); err != nil {
+			app.Log.Error("Weline log scrubbing not started", "error", err)
+		}
+	}
 	mods := make([]kit.Module, 0, len(factories))
 	for _, f := range factories {
 		mods = append(mods, f(app, cfg))

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shridarpatil/whatomate/internal/modules/audit"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/zerodha/fastglue"
 )
@@ -29,11 +30,11 @@ func routes(auth kit.Auth, svc *Service) []route {
 	}
 	return []route{
 		{"GET", base + "/entrypoints", g(kit.ActionRead, h.list)},
-		{"POST", base + "/entrypoints", g(kit.ActionCreate, h.create)},
+		{"POST", base + "/entrypoints", g(kit.ActionCreate, audit.Wrap(svc.db, svc.log, Name, "entrypoint_created", "entrypoint", h.create))},
 		{"GET", base + "/entrypoints/{id}", g(kit.ActionRead, h.get)},
-		{"PUT", base + "/entrypoints/{id}", g(kit.ActionUpdate, h.update)},
-		{"POST", base + "/entrypoints/{id}/archive", g(kit.ActionDelete, h.archive)},
-		{"DELETE", base + "/entrypoints/{id}", g(kit.ActionDelete, h.remove)},
+		{"PUT", base + "/entrypoints/{id}", g(kit.ActionUpdate, audit.Wrap(svc.db, svc.log, Name, "entrypoint_updated", "entrypoint", h.update))},
+		{"POST", base + "/entrypoints/{id}/archive", g(kit.ActionDelete, audit.Wrap(svc.db, svc.log, Name, "entrypoint_archived", "entrypoint", h.archive))},
+		{"DELETE", base + "/entrypoints/{id}", g(kit.ActionDelete, audit.Wrap(svc.db, svc.log, Name, "entrypoint_deleted", "entrypoint", h.remove))},
 		{"GET", base + "/entrypoints/{id}/arrivals", g(kit.ActionRead, h.arrivals)},
 	}
 }
