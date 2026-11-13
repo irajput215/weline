@@ -21,6 +21,8 @@ const { t } = useI18n()
 const store = usePracticeStore()
 const auth = useAuthStore()
 const canEdit = computed(() => auth.hasPermission('wl_practice_settings', 'update'))
+// Business hours live in Weline's chatbot settings (step 2.4); link there when the user can open them.
+const canSeeChatbot = computed(() => auth.hasPermission('settings.chatbot', 'read'))
 
 const locationId = ref<string>('')
 const times = computed(() => timeOptions(store.profile?.slot_minutes ?? 15))
@@ -102,6 +104,12 @@ onMounted(load)
         <CardHeader>
           <CardTitle>{{ t('wl.practice.hours.title') }}</CardTitle>
           <CardDescription>{{ t('wl.practice.hours.description', { tz: store.profile?.time_zone ?? '' }) }}</CardDescription>
+          <p class="text-sm text-muted-foreground" data-testid="hours-open-source">
+            {{ t('wl.practice.hours.openSource') }}
+            <RouterLink v-if="canSeeChatbot" to="/settings/chatbot" class="underline" data-testid="hours-chatbot-link">
+              {{ t('wl.practice.hours.openSourceLink') }}
+            </RouterLink>
+          </p>
         </CardHeader>
         <CardContent class="space-y-4">
           <div class="max-w-xs">

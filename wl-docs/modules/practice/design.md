@@ -92,11 +92,25 @@ GetProfile(ctx, orgID) (*Profile, error)              // ErrNotSetUp until saved
 ActiveLocations(ctx, orgID) ([]Location, error)
 ActivePractitioners(ctx, orgID) ([]Practitioner, error) // with LocationIDs
 ActiveServices(ctx, orgID) ([]ClinicService, error)
-IsOpen(ctx, orgID, locationID, at time.Time) (bool, error) // clinic time zone, weekday hours, closures
+IsOpen(ctx, orgID, account string, at time.Time) (bool, error) // chatbot business hours, clinic time zone (2.4)
 ```
 
-`IsOpen` converts `at` to the clinic's time zone, then checks the weekday row and closures for that local date. It
-is the rule Booking builds slot search on.
+`IsOpen` is the one answer to "is the business open?" (step 2.4). It reads Weline's chatbot settings
+(`chatbot_settings`, through upstream's `models.ChatbotSettings`, organization-scoped): the WhatsApp number's own row
+(`account`) wins over the organization's default (`account` = ""), as upstream's chatbot picks them. It applies
+upstream's rules:
+
+- business hours off, or none set → open (upstream sends no out-of-hours reply then);
+- otherwise the local weekday's entry must be enabled, and the local time between `start_time` and `end_time`, end
+  included to the minute;
+- a weekday with no entry is closed.
+
+Local time is the clinic's profile time zone (default `Australia/Sydney` before the profile is saved). Upstream's own
+check uses the server's clock instead, so the two agree only when the server's `TZ` is the clinic's zone (threat model
+open risk 17).
+
+Location hours and closures no longer answer "open": Booking uses them for slots only. Business hours have no
+closures, so public holidays need the chatbot's hours changed for the day, or a closure in Practice for bookings only.
 
 ## Screens
 

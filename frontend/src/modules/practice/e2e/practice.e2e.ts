@@ -71,6 +71,11 @@ test.describe.serial('practice setup', () => {
     await expect(page.getByTestId('hours-from-1')).toHaveText('08:30')
     await expect(page.getByTestId('hours-to-5')).toHaveText('17:00')
     await expect(page.getByTestId('hours-open-6')).toHaveAttribute('aria-checked', 'false')
+
+    // These hours are for booking only; "open" comes from the chatbot's business hours (step 2.4).
+    await expect(page.getByTestId('hours-open-source')).toContainText("chatbot's business hours")
+    await page.getByTestId('hours-chatbot-link').click()
+    await expect(page).toHaveURL(/\/settings\/chatbot/)
   })
 
   test('owner adds two practitioners, one linked to a login', async ({ page }) => {

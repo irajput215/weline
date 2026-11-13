@@ -55,7 +55,7 @@ one is listed under [Open questions](#open-questions) for you to confirm or corr
 - R13 Services can be deactivated and reactivated; they are never deleted.
 
 **Opening hours and closures**
-- R14 Each location has opening hours per weekday: closed, or one opening and one closing time on the slot grid
+- R14 Each location has booking hours per weekday (named opening hours before 2.4): closed, or one opening and one closing time on the slot grid
   (closing after opening). A location with no hours set is closed every day. **(assumption: one block per day,
   no lunch break, the same every week, Q3)**
 - R15 Closures block whole days for one location or for all locations, between two dates inclusive, with a
@@ -72,8 +72,12 @@ one is listed under [Open questions](#open-questions) for you to confirm or corr
 
 **For other modules**
 - R18 The module offers a Go service other modules call (never HTTP between modules): clinic profile, active
-  locations, active practitioners with their locations, active services, and "is location L open at instant T"
-  using the clinic's time zone and closures.
+  locations, active practitioners with their locations, active services, and "is the business open at instant T"
+  in the clinic's time zone.
+  - **Changed in 2.4 (one source of opening hours):** "open" comes from Weline's chatbot business hours (Settings →
+    Chatbot), the same hours the out-of-hours reply uses, not from location hours. Location hours (R14) and
+    closures (R15) are only for built-in booking slots, and the hours page says so and links to the chatbot business
+    hours.
 
 ## Non-functional
 

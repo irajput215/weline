@@ -1,5 +1,17 @@
 # Practice: release notes
 
+## 2.4: One source of opening hours
+
+- **Whether you're open now comes from the chatbot's business hours** (Settings → Chatbot), the same hours the
+  out-of-hours reply on WhatsApp uses. Set your hours there once.
+- **Clinic → Opening hours is now Booking hours.** It only decides when patients can book with built-in booking. The
+  page says so and links to the chatbot's business hours.
+- **For other modules:** `IsOpen(ctx, orgID, account, at)` now reads the chatbot business hours (the WhatsApp number's
+  own settings first, then the organization's) in the clinic's time zone. It no longer takes a location.
+- **Check on the server:** Weline's own out-of-hours reply uses the server's clock. Set the server's `TZ` to your
+  clinic's zone (for example `Australia/Sydney`), or the reply goes out at the wrong times. Staging has `TZ=UTC`.
+- Closures (public holidays) still apply to booking only. On a public holiday, change the chatbot's hours for the day.
+
 ## 1.1: Clinic setup (first release)
 
 Shipped in Weline Phase 1.1. Spec: [`requirements.md`](requirements.md). Design: [`design.md`](design.md).

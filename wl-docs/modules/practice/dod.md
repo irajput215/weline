@@ -34,3 +34,18 @@ Status: built and reviewed (step 1.1 C, 2026-11-09). Two items wait on things on
   **Not done:** needs this merged and deployed. Then: Clinic → Practice profile, add a location, hours and a
   closure, two practitioners and two services; log in as an agent and check everything is read-only.
 - [x] Release notes written (`release-notes.md`).
+
+## 2.4: One source of opening hours (2026-11-13)
+
+- [x] `IsOpen` reads the chatbot business hours (R18 updated); location hours and closures only feed booking slots.
+  Tests: `TestIsOpen_UsesChatbotBusinessHours`, `TestIsOpen_AccountSettingsAndSwitchedOff`, `TestIsOpen_ClinicTimeZone`.
+- [x] The hours page is "Booking hours", says what it's for and links to Settings → Chatbot (practice journey 2).
+- [x] Docs: requirements, design, test plan, release notes; data model (`chatbot_settings` read) and threat model
+  (open risk 17).
+- [x] No upstream file changed (seam guard). No migration.
+- [ ] **Server time zone.** Upstream's out-of-hours reply runs on the server's clock, and staging sets `TZ=UTC` in
+  `render.yaml`. So Sydney business hours are checked against UTC, 10–11 hours off. **You:** set `TZ` to
+  `Australia/Sydney` on Render (Environment), or tell me to change `render.yaml`. It's one zone per server, so
+  clinics in other zones need upstream to support a time zone (open risk 17).
+- [ ] Verified on staging: set chatbot business hours, message out of hours, get the out-of-hours reply. Needs the TZ
+  fix first.

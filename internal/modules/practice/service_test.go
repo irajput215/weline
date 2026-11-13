@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shridarpatil/whatomate/internal/models"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/shridarpatil/whatomate/test/testutil"
 	"github.com/stretchr/testify/assert"
@@ -326,7 +327,7 @@ func TestClosures(t *testing.T) {
 	require.NoError(t, f.svc.DeleteClosure(ctx, f.org, c.ID))
 }
 
-// ---------- IsOpen (R18) ----------
+// ---------- IsOpen (R18, step 2.4: chatbot business hours) ----------
 
 func utc(s string) time.Time {
 	t, err := time.Parse(time.RFC3339, s)
@@ -336,60 +337,107 @@ func utc(s string) time.Time {
 	return t
 }
 
-func TestIsOpen(t *testing.T) {
+// businessHours saves upstream chatbot settings with business hours, as the
+// chatbot settings page does. account "" is the organization's default.
+func (f *fx) businessHours(t *testing.T, org uuid.UUID, account string, enabled bool, hours ...map[string]any) {
+	t.Helper()
+	arr := models.JSONBArray{}
+	for _, h := range hours {
+		arr = append(arr, h)
+	}
+	cs := models.ChatbotSettings{OrganizationID: org, WhatsAppAccount: account}
+	cs.BusinessHours.Enabled = enabled
+	cs.BusinessHours.Hours = arr
+	require.NoError(t, f.db.Create(&cs).Error)
+}
+
+func day(d int, enabled bool, start, end string) map[string]any {
+	return map[string]any{"day": float64(d), "enabled": enabled, "start_time": start, "end_time": end}
+}
+
+func TestIsOpen_UsesChatbotBusinessHours(t *testing.T) {
 	f := newFx(t)
 	f.withProfile(t, 15, "Australia/Sydney")
+	// Location hours say open all week: they no longer decide "open" (step 2.4).
 	loc := f.location(t, "Main")
 	var week []Hours
-	for d := 1; d <= 6; d++ { // Monday to Saturday, closed Sunday
-		week = append(week, Hours{Weekday: d, OpensAt: "09:00", ClosesAt: "17:00"})
+	for d := 1; d <= 7; d++ {
+		week = append(week, Hours{Weekday: d, OpensAt: "06:00", ClosesAt: "22:00"})
 	}
 	_, err := f.svc.SetHours(ctx, f.org, loc.ID, week)
 	require.NoError(t, err)
-	_, err = f.svc.CreateClosure(ctx, f.org, ClosureInput{StartsOn: "2026-06-10", EndsOn: "2026-06-10", Reason: "Staff day"})
+
+	open, err := f.svc.IsOpen(ctx, f.org, "", utc("2026-06-07T00:00:00Z"))
 	require.NoError(t, err)
+	assert.True(t, open, "no chatbot settings: always open, like upstream (no out-of-hours reply)")
+
+	var hours []map[string]any
+	for d := 1; d <= 5; d++ { // Monday to Friday 09:00-17:00
+		hours = append(hours, day(d, true, "09:00", "17:00"))
+	}
+	hours = append(hours, day(6, false, "09:00", "12:00")) // Saturday off; Sunday missing
+	f.businessHours(t, f.org, "", true, hours...)
 
 	cases := []struct {
 		name string
 		at   string
 		open bool
 	}{
-		{"Mon 09:00 AEST (UTC Sunday 23:00) - weekday from local date", "2026-06-07T23:00:00Z", true},
+		{"Mon 09:00 AEST (UTC Sunday 23:00): weekday from the local date", "2026-06-07T23:00:00Z", true},
 		{"Mon 08:59 AEST", "2026-06-07T22:59:00Z", false},
-		{"Mon 16:59 AEST", "2026-06-08T06:59:00Z", true},
-		{"Mon 17:00 AEST closing time is closed", "2026-06-08T07:00:00Z", false},
-		{"Sun 10:00 AEST closed weekday", "2026-06-07T00:00:00Z", false},
-		{"Wed 10:00 AEST all-locations closure", "2026-06-10T00:00:00Z", false},
-		{"Sat 3 Oct 09:30 AEST (before DST)", "2026-10-02T23:30:00Z", true},
+		{"Mon 17:00 AEST: end included to the minute, as upstream", "2026-06-08T07:00:00Z", true},
+		{"Mon 17:01 AEST", "2026-06-08T07:01:00Z", false},
+		{"Sat 10:00 AEST: day disabled", "2026-06-13T00:00:00Z", false},
+		{"Sun 10:00 AEST: day missing", "2026-06-14T00:00:00Z", false},
+		{"Fri 2 Oct 09:30 AEST (before DST)", "2026-10-01T23:30:00Z", true},
 		{"Mon 5 Oct 09:30 AEDT (after DST, +11)", "2026-10-04T22:30:00Z", true},
 		{"Mon 5 Oct 08:30 AEDT", "2026-10-04T21:30:00Z", false},
 	}
 	for _, c := range cases {
-		open, err := f.svc.IsOpen(ctx, f.org, loc.ID, utc(c.at))
+		open, err := f.svc.IsOpen(ctx, f.org, "", utc(c.at))
 		require.NoError(t, err, c.name)
 		assert.Equal(t, c.open, open, c.name)
 	}
-
-	_, err = f.svc.UpdateLocation(ctx, f.org, loc.ID, LocationPatch{IsActive: ptr(false)})
-	require.NoError(t, err)
-	open, err := f.svc.IsOpen(ctx, f.org, loc.ID, utc("2026-06-08T00:00:00Z"))
-	require.NoError(t, err)
-	assert.False(t, open, "inactive location is never open")
 }
 
-func TestIsOpen_PerthHasNoDST(t *testing.T) {
+func TestIsOpen_AccountSettingsAndSwitchedOff(t *testing.T) {
 	f := newFx(t)
-	f.withProfile(t, 30, "Australia/Perth")
-	loc := f.location(t, "Perth CBD")
-	_, err := f.svc.SetHours(ctx, f.org, loc.ID, []Hours{{Weekday: 1, OpensAt: "09:00", ClosesAt: "17:00"}})
-	require.NoError(t, err)
+	f.withProfile(t, 15, "Australia/Sydney")
+	f.businessHours(t, f.org, "", true, day(1, true, "09:00", "17:00"))
+	f.businessHours(t, f.org, "Bondi line", true, day(1, true, "07:00", "12:00"))
+	f.businessHours(t, f.org, "After hours line", false, day(1, false, "00:00", "00:00"))
+	mon0730 := utc("2026-06-07T21:30:00Z") // Mon 07:30 AEST
+	for account, want := range map[string]bool{
+		"":                 false, // organization default: opens 09:00
+		"Bondi line":       true,  // its own settings win
+		"Unknown line":     false, // no own settings: the default applies
+		"After hours line": true,  // business hours off: always open
+	} {
+		open, err := f.svc.IsOpen(ctx, f.org, account, mon0730)
+		require.NoError(t, err)
+		assert.Equal(t, want, open, "account %q", account)
+	}
 
+	other := testutil.CreateTestOrganization(t, f.db)
+	open, err := f.svc.IsOpen(ctx, other.ID, "", mon0730)
+	require.NoError(t, err)
+	assert.True(t, open, "another organization's hours don't apply")
+}
+
+func TestIsOpen_ClinicTimeZone(t *testing.T) {
+	f := newFx(t)
+	f.businessHours(t, f.org, "", true, day(1, true, "09:00", "17:00"))
+	open, err := f.svc.IsOpen(ctx, f.org, "", utc("2026-10-04T22:30:00Z")) // Mon 09:30 in Sydney
+	require.NoError(t, err)
+	assert.True(t, open, "before the profile is saved: Australia/Sydney")
+
+	f.withProfile(t, 30, "Australia/Perth")
 	for at, want := range map[string]bool{
 		"2026-10-05T01:00:00Z": true,  // Mon 09:00 AWST (+8, unchanged by eastern DST)
 		"2026-10-05T00:59:00Z": false, // Mon 08:59
-		"2026-06-08T01:00:00Z": true,  // winter Mon 09:00
+		"2026-10-04T22:30:00Z": false, // 06:30 in Perth
 	} {
-		open, err := f.svc.IsOpen(ctx, f.org, loc.ID, utc(at))
+		open, err := f.svc.IsOpen(ctx, f.org, "", utc(at))
 		require.NoError(t, err)
 		assert.Equal(t, want, open, at)
 	}

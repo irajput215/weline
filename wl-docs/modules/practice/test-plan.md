@@ -18,7 +18,7 @@ every handler test also runs as a user of a **second organization** where releva
 | Service: duration on/off the grid, bounds, price ≥ 0, at least one role; warning when no practitioner has a role; duplicate name | R12, R13 |
 | Hours: replace week, omit day = closed, closing before opening refused, off-grid refused, repeated weekday refused | R14 |
 | Closures: one location vs all, end before start refused, delete | R15 |
-| `IsOpen`: inside hours; before open; at closing time (closed); closed weekday; closure day; all-locations closure; DST change day in Sydney; clinic in Perth (no DST) | R14, R15, R18 |
+| `IsOpen` (2.4, chatbot business hours): no settings → open; hours off → open; inside hours; before start; end included to the minute; disabled day; missing day; DST change in Sydney; Perth profile; default Sydney before the profile; the WhatsApp number's own settings win; unknown number uses the default; another org's settings ignored; location hours no longer matter | R18 |
 | Migration down then up | data model |
 
 ## Handlers (Go, real Postgres, real route wiring with a fake auth)
