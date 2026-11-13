@@ -363,7 +363,11 @@ func TestCreateSend(t *testing.T) {
 	assert.True(t, isKind(err, kit.ErrNotFound), "another organization's segment")
 
 	in.ConfirmCount = 2
-	res, err := f.svc.CreateSend(ctx, f.org, f.user, in)
+	lim := &fakeLimits{allow: 1}
+	_, err = NewService(f.db).WithLimits(lim).CreateSend(ctx, f.org, f.user, in)
+	assert.True(t, isKind(err, kit.ErrLimit), "the plan's broadcast recipients are checked before the campaign is made")
+	assert.Equal(t, []int{2}, lim.asked)
+	res, err := NewService(f.db).WithLimits(&fakeLimits{allow: 2}).CreateSend(ctx, f.org, f.user, in)
 	require.NoError(t, err)
 	assert.Equal(t, 2, res.Recipients)
 	assert.Equal(t, 1, res.Excluded.OptedOut)
@@ -502,4 +506,17 @@ func TestConsentRuleAndRequireOptIn(t *testing.T) {
 	p, err = f.svc.Preview(ctx, f.org, flu)
 	require.NoError(t, err)
 	assert.Equal(t, 4, p.Recipients, "utility templates aren't marketing")
+}
+
+type fakeLimits struct {
+	allow int
+	asked []int
+}
+
+func (l *fakeLimits) Allow(_ context.Context, _ uuid.UUID, metric string, n int) error {
+	l.asked = append(l.asked, n)
+	if metric != kit.MetricBroadcast || n > l.allow {
+		return kit.LimitReached("over the plan")
+	}
+	return nil
 }

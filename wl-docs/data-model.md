@@ -349,6 +349,19 @@ Sign-up and the setup checklist, built in step 6.1 (migration `onboarding/0001_c
 | --- | --- | --- |
 | `wl.kit_permission_grants` | Which module permission each organization's system roles have been given (`organization_id`, `resource`, `action`) | PK on all three; written by `kit.GrantMissing`; FK to `organizations` with cascade |
 
+### billing
+
+Plans, limits and Stripe subscriptions, built in step 6.2 (migration `billing/0001_create_billing`). Full design:
+[`modules/billing/design.md`](modules/billing/design.md).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.billing_subscriptions` | Plan, Stripe status, trial end, period end, cancel flag, Stripe customer and subscription ids, last event time | One row per organization (FK cascade), made when billing first sees it; no card details |
+| `wl.billing_events` | Stripe event ids already applied, with type and organization | PK on the event id: a retried event applies once |
+
+**Reads (usage, counts only):** `wl.audiences_sends`, `wl.ai_runs`, `wl.connector_accounts`, `contacts`,
+`user_organizations`, `whatsapp_accounts`, outgoing template `messages` joined to `templates` for the category.
+
 ### audiences
 
 Segments and the campaigns created from them, built in Phase 2.1 (migration `audiences/0001_create_audiences`).

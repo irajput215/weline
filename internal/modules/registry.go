@@ -20,6 +20,7 @@ import (
 	"github.com/shridarpatil/whatomate/internal/modules/ai"
 	"github.com/shridarpatil/whatomate/internal/modules/audiences"
 	"github.com/shridarpatil/whatomate/internal/modules/audit"
+	"github.com/shridarpatil/whatomate/internal/modules/billing"
 	"github.com/shridarpatil/whatomate/internal/modules/booking"
 	"github.com/shridarpatil/whatomate/internal/modules/connectors"
 	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
@@ -59,6 +60,7 @@ var factories = []Factory{
 	reminders.New,  // before ai: a reminder reply is claimed before the agent sees it
 	ai.New,         // books through Connectors' resolver; answers from its own knowledge
 	onboarding.New, // reads practice, connectors and upstream tables for its checklist
+	billing.New,    // counts audiences sends and AI runs; its limits are wired into those modules
 }
 
 // Register mounts every module's routes, then the Weline webhook receiver
@@ -77,6 +79,7 @@ func Register(g *fastglue.Fastglue, app *handlers.App, cfg *config.Config) {
 		mods = append(mods, f(app, cfg))
 	}
 	wireProviders(mods)
+	wireLimits(mods)
 	wireGrants(app, mods)
 	var eventHandlers []kit.EventHandler
 	for _, m := range mods {
@@ -122,6 +125,24 @@ func wireGrants(app *handlers.App, mods []kit.Module) {
 			time.Sleep(grantEvery)
 		}
 	}()
+}
+
+// wireLimits gives the billing module's plan limits to the modules that check them.
+func wireLimits(mods []kit.Module) {
+	var src kit.LimitsSource
+	for _, m := range mods {
+		if s, ok := m.(kit.LimitsSource); ok {
+			src = s
+		}
+	}
+	if src == nil {
+		return
+	}
+	for _, m := range mods {
+		if u, ok := m.(kit.LimitsUser); ok {
+			u.UseLimits(src.Limits())
+		}
+	}
 }
 
 func wireProviders(mods []kit.Module) {
