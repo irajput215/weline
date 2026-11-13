@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"sort"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
@@ -25,6 +26,9 @@ type Factory struct {
 	Build func(orgID uuid.UUID, credentials map[string]string, settings json.RawMessage) (provider.Provider, error)
 	// Test checks credentials (a cheap call) and returns a message to show.
 	Test func(ctx context.Context, credentials map[string]string, settings json.RawMessage) (string, error)
+	// sync runs a background sync for one organization (Cliniko's phone
+	// index); nil for providers with nothing to sync.
+	sync func(ctx context.Context, orgID uuid.UUID, credentials map[string]string, settings json.RawMessage, since *time.Time) (map[string]int, error)
 }
 
 // factories is the set of providers this build knows, by name. The built-in
@@ -46,6 +50,4 @@ func (f factories) list() []Factory {
 }
 
 // comingSoon lists providers that aren't built yet, for the settings screen.
-var comingSoon = []Factory{
-	{Name: provider.Cliniko, Fields: []Field{{Name: "api_key", Secret: true}}},
-}
+var comingSoon = []Factory{}

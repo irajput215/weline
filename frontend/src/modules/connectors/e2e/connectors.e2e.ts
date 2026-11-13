@@ -14,17 +14,23 @@ test.describe.serial('connectors', () => {
     ;({ owner, reception } = await createAccounts(baseURL(), run))
   })
 
-  test('an admin sees built-in booking connected and Cliniko coming soon', async ({ page }) => {
+  test('an admin sees built-in booking connected, and a Cliniko key is tested before anything changes', async ({ page }) => {
     await login(page, owner)
     await page.getByRole('menuitem', { name: 'Connected system', exact: true }).click()
     await expect(page).toHaveURL(/\/x\/connectors$/)
     const builtin = page.getByTestId('connectors-provider-builtin')
     await expect(builtin).toContainText("Weline's built-in booking")
     await expect(builtin.getByTestId('connectors-status')).toHaveText('Connected')
-    const cliniko = page.getByTestId('connectors-provider-cliniko')
-    await expect(cliniko).toContainText('Coming soon')
-    await expect(page.getByTestId('connectors-choose-cliniko')).toHaveCount(0)
     await expect(page.getByTestId('connectors-log-empty')).toBeVisible()
+
+    // Cliniko can be chosen; the key is checked before anything is saved. CI has
+    // no encryption key, contact email or Cliniko, so it's refused and says why.
+    await page.getByTestId('connectors-choose-cliniko').click()
+    await page.getByTestId('connectors-field-api_key').fill('notarealkey-au1')
+    await page.getByTestId('connectors-save').click()
+    await expect(page.getByTestId('connectors-error')).toBeVisible()
+    await expect(builtin.getByTestId('connectors-status')).toHaveText('Connected')
+    await expect(page.getByTestId('connectors-provider-cliniko').getByTestId('connectors-status')).toHaveCount(0)
 
     // Choosing built-in again through the API is accepted and logged nothing to test.
     const api = await apiAs(baseURL(), owner)

@@ -5,7 +5,7 @@ practice management system, Cliniko first). Build guide step 3.1
 ([`../../build-guide/phase-3-connectors-cliniko.md`](../../build-guide/phase-3-connectors-cliniko.md#31-connector-layer)),
 direction [ADR-002](../../adr/ADR-002-connect-dont-build-pms.md), Cliniko findings in [`cliniko-spike.md`](cliniko-spike.md).
 
-Status: **draft for review.** Lines marked **(assumption)** are defaults chosen without customer input; each one is
+Status: **built (step 3.1 B) on the defaults below; open questions still to confirm.** Lines marked **(assumption)** are defaults chosen without customer input; each one is
 listed under [Open questions](#open-questions).
 
 Today Weline's WhatsApp booking flow books into Weline's own built-in diary (Booking, step 1.2). Clinics keep their

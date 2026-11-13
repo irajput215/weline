@@ -3,6 +3,7 @@ package connectors
 import (
 	"context"
 	"encoding/json"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/shridarpatil/whatomate/internal/config"
@@ -43,6 +44,7 @@ func (m *Module) svc() *Service {
 		}
 		bk := booking.NewService(m.app.DB).WithRedis(m.app.Redis)
 		m.service = NewService(m.app.DB, key, m.app.Log, BuiltInFactory(bk))
+		m.service.factories[provider.Cliniko] = m.service.ClinikoFactory(ClinikoOptionsFromEnv())
 	}
 	return m.service
 }
@@ -82,6 +84,10 @@ func (m *Module) Register(g *fastglue.Fastglue) {
 			g.PUT(rt.path, rt.handler)
 		}
 	}
+	if os.Getenv(ClinikoContactEmailEnv) == "" {
+		m.app.Log.Warn("connectors: " + ClinikoContactEmailEnv + " not set; Cliniko can't be connected")
+	}
+	go m.svc().runSync(context.Background(), m.app.Redis)
 }
 
 var _ provider.Source = (*Module)(nil)

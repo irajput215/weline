@@ -349,6 +349,53 @@ erDiagram
         timestamptz created_at }
 ```
 
+### connectors
+
+The connected system, links and sync log, built in Phase 3.1 (migration `connectors/0001_create_connectors`).
+Full design: [`modules/connectors/design.md`](modules/connectors/design.md#data-model).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.connector_accounts` | The organization's provider (`builtin`, `cliniko`), its credentials encrypted with Weline's `encryption_key`, status, settings (no secrets), last test, last sync, last error, who changed it | One row per organization (PK); no row = built-in; credentials never returned by the API |
+| `wl.connector_links` | Weline record ↔ provider record: `entity` (`contact`, `appointment`, `phone`), `local_id`, `remote_id`, and for `phone` a SHA-256 of the organization id and the mobile's digits | One link per Weline record and per remote id; `phone` rows have no `local_id` and always a hash; numbers are never stored |
+| `wl.connector_syncs` | Connection tests and sync runs: kind, start, finish, outcome, counts, a safe error message | Append-only; the last 100 per organization kept |
+
+**Upstream rows it writes:** none. **Reads:** none directly; the built-in provider is Booking.
+
+**Secrets:** a connected system's key opens the clinic's records there (for Cliniko, patient records). It's encrypted at
+rest and only decrypted to build the provider for a request.
+
+```mermaid
+erDiagram
+    organizations ||--o| "wl.connector_accounts" : "organization_id"
+    organizations ||--o{ "wl.connector_links" : "organization_id"
+    organizations ||--o{ "wl.connector_syncs" : "organization_id"
+    contacts ||--o{ "wl.connector_links" : "local_id (entity contact, no FK)"
+
+    "wl.connector_accounts" { uuid organization_id PK
+        varchar provider
+        text credentials
+        varchar status
+        jsonb settings
+        timestamptz last_test_at
+        timestamptz last_sync_at
+        varchar last_error }
+    "wl.connector_links" { uuid id PK
+        uuid organization_id
+        varchar provider
+        varchar entity
+        uuid local_id
+        varchar remote_id
+        varchar key_hash }
+    "wl.connector_syncs" { uuid id PK
+        uuid organization_id
+        varchar provider
+        varchar kind
+        varchar outcome
+        jsonb counts
+        varchar error }
+```
+
 ### consent
 
 Opt-in, opt-out and the consent history, built in Phase 2.2 (migration `consent/0001_create_consent`).
