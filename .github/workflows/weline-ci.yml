@@ -135,3 +135,5 @@ jobs:
           WL_E2E_CAPTCHA: "1"
           # Opens self-serve sign-up so the onboarding journey can sign up.
           WELINE_SIGNUP: open
+          # Turns plans on (no Stripe keys) so the billing journey sees the trial.
+          WELINE_BILLING: "on"
