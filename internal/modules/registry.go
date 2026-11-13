@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/shridarpatil/whatomate/internal/config"
 	"github.com/shridarpatil/whatomate/internal/handlers"
@@ -26,6 +27,7 @@ import (
 	"github.com/shridarpatil/whatomate/internal/modules/example"
 	"github.com/shridarpatil/whatomate/internal/modules/hooks"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
+	"github.com/shridarpatil/whatomate/internal/modules/onboarding"
 	"github.com/shridarpatil/whatomate/internal/modules/practice"
 	"github.com/shridarpatil/whatomate/internal/modules/reminders"
 	"github.com/zerodha/fastglue"
@@ -56,6 +58,7 @@ var factories = []Factory{
 	connectors.New, // wraps Booking as the built-in provider; its resolver is wired into Booking
 	reminders.New,  // before ai: a reminder reply is claimed before the agent sees it
 	ai.New,         // books through Connectors' resolver; answers from its own knowledge
+	onboarding.New, // reads practice, connectors and upstream tables for its checklist
 }
 
 // Register mounts every module's routes, then the Weline webhook receiver
@@ -74,6 +77,7 @@ func Register(g *fastglue.Fastglue, app *handlers.App, cfg *config.Config) {
 		mods = append(mods, f(app, cfg))
 	}
 	wireProviders(mods)
+	wireGrants(app, mods)
 	var eventHandlers []kit.EventHandler
 	for _, m := range mods {
 		m.Register(g)
@@ -87,6 +91,39 @@ func Register(g *fastglue.Fastglue, app *handlers.App, cfg *config.Config) {
 // wireProviders hands the resolver of the module that provides one
 // (Connectors) to every module that books through it (Booking's chatbot), so
 // they never import each other. Without a source, consumers keep their own.
+// grantEvery is how often module permissions are granted to organizations
+// created since the last run (upstream's "create organization" has no hook).
+const grantEvery = 5 * time.Minute
+
+// wireGrants grants module permissions to new organizations: now, every
+// grantEvery, and whenever a kit.GrantUser (onboarding) creates one.
+func wireGrants(app *handlers.App, mods []kit.Module) {
+	if app == nil || app.DB == nil {
+		return
+	}
+	var perms []kit.Permission
+	for _, m := range mods {
+		perms = append(perms, m.Permissions()...)
+	}
+	grant := func() error {
+		_, err := kit.GrantMissing(app.DB, perms, app.InvalidateOrgPermissionsCache)
+		return err
+	}
+	for _, m := range mods {
+		if g, ok := m.(kit.GrantUser); ok {
+			g.UseGrants(grant)
+		}
+	}
+	go func() {
+		for {
+			if err := grant(); err != nil {
+				app.Log.Error("Weline: granting module permissions failed", "error", err)
+			}
+			time.Sleep(grantEvery)
+		}
+	}()
+}
+
 func wireProviders(mods []kit.Module) {
 	var src provider.Source
 	for _, m := range mods {
@@ -128,6 +165,9 @@ func migrate(db *gorm.DB, list []Factory) error {
 	if err := kit.EnsureSchema(db); err != nil {
 		return err
 	}
+	if err := kit.RunMigrations(db, "kit", kit.Migrations()); err != nil {
+		return err
+	}
 	for _, m := range mods {
 		if err := kit.RunMigrations(db, m.Name(), m.Migrations()); err != nil {
 			return err
@@ -139,6 +179,9 @@ func migrate(db *gorm.DB, list []Factory) error {
 	}
 	if err := kit.SeedPermissions(db, perms); err != nil {
 		return fmt.Errorf("seed module permissions: %w", err)
+	}
+	if _, err := kit.GrantMissing(db, perms, nil); err != nil {
+		return fmt.Errorf("grant module permissions: %w", err)
 	}
 	return nil
 }
