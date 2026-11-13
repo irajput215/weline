@@ -27,6 +27,7 @@ import (
 	"github.com/shridarpatil/whatomate/internal/modules/hooks"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/shridarpatil/whatomate/internal/modules/practice"
+	"github.com/shridarpatil/whatomate/internal/modules/reminders"
 	"github.com/zerodha/fastglue"
 	"github.com/zerodha/logf"
 	"gorm.io/gorm"
@@ -53,6 +54,7 @@ var factories = []Factory{
 	audiences.New,  // reads consent tables, so migrates after it
 	ads.New,        // reads consent and booking tables in its reports
 	connectors.New, // wraps Booking as the built-in provider; its resolver is wired into Booking
+	reminders.New,  // before ai: a reminder reply is claimed before the agent sees it
 	ai.New,         // books through Connectors' resolver; answers from its own knowledge
 }
 

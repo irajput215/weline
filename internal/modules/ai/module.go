@@ -121,6 +121,9 @@ func (s *Service) HandleIncoming(ctx context.Context, e kit.Event) error {
 	if (d.Direction != "" && d.Direction != models.DirectionIncoming) || d.MessageType != "text" {
 		return nil
 	}
+	if kit.ClaimedBy(ctx) != "" {
+		return nil // another module (Consent's STOP, a reminder reply) already answered it
+	}
 	contactID, err := uuid.Parse(d.ContactID)
 	if err != nil {
 		return nil

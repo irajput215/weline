@@ -73,6 +73,7 @@ func (s *Service) HandleIncoming(ctx context.Context, e kit.Event) error {
 	if action == "" {
 		return nil
 	}
+	kit.Claim(ctx, Name) // STOP/START is fully handled here; the AI agent mustn't answer it too
 	contactID, err := uuid.Parse(d.ContactID)
 	if err != nil {
 		return nil

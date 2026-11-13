@@ -1,12 +1,14 @@
 package ai
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
+	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -230,10 +232,21 @@ func TestHandleIncomingAndPurge(t *testing.T) {
 	assert.Len(t, f.sender.sent, 1, "replied once")
 	require.NoError(t, f.svc.HandleIncoming(ctx, event(f.org, f.contact, "photo", "image")))
 	assert.Len(t, f.sender.sent, 1, "non-text ignored")
+	claimed := kit.NewDispatcher(claimer{}, &Module{service: f.svc})
+	require.NoError(t, claimed.Dispatch(ctx, event(f.org, f.contact, "hi, what are your hours?", "text")))
+	assert.Len(t, f.sender.sent, 1, "a message another module claimed (STOP, a reminder reply) is left alone")
 
 	require.NoError(t, f.db.Exec(`UPDATE wl.ai_runs SET created_at = now() - interval '91 days' WHERE organization_id = ?`, f.org).Error)
 	f.svc.now = time.Now
 	n, err := f.svc.PurgeRuns(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), n)
+}
+
+type claimer struct{}
+
+func (claimer) Events() []string { return []string{"message.incoming"} }
+func (claimer) HandleEvent(ctx context.Context, _ kit.Event) error {
+	kit.Claim(ctx, "reminders")
+	return nil
 }

@@ -179,6 +179,26 @@ func (p *Provider) FindOrCreateCustomer(ctx context.Context, in provider.Custome
 	return c, true, nil
 }
 
+// GetCustomer implements provider.Provider: the patient's name and mobile
+// (the first number marked Mobile, else the first number).
+func (p *Provider) GetCustomer(ctx context.Context, id string) (*provider.Customer, error) {
+	pt, err := p.patient(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	mobile := ""
+	for _, n := range pt.Phones {
+		if strings.EqualFold(n.Type, "mobile") {
+			mobile = Normalise(n.Number)
+			break
+		}
+	}
+	if mobile == "" && len(pt.Phones) > 0 {
+		mobile = Normalise(pt.Phones[0].Number)
+	}
+	return &provider.Customer{ID: pt.ID, Name: pt.name(), Mobile: mobile}, nil
+}
+
 // SyncResult is what a phone index run did.
 type SyncResult struct {
 	Patients int
