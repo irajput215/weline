@@ -301,6 +301,20 @@ The trail of module changes, built in step 3.3 (migration `audit/0001_create_aud
 | --- | --- | --- |
 | `wl.audit_events` | Who (`actor_user_id`) changed what (`module`, `action`, `entity`, `entity_id`) and when (`at`), with details that never hold personal data or secrets | Append-only; index `(organization_id, at DESC)`; admins read it |
 
+### ai
+
+The AI agent, built in Phase 4 (migration `ai/0001_create_ai`). Full design: [`modules/ai/design.md`](modules/ai/design.md).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.ai_settings` | On/off, hand-over team, tone, instructions, confidence threshold, emergency words | One row per organization; no row = off |
+| `wl.ai_knowledge` | FAQ entries and document chunks with a generated `tsvector` for full-text search | GIN index; deleted by `source_id` |
+| `wl.ai_runs` | Per message: intent, confidence, outcome, knowledge sources, prompt version, latency, tokens; no text | `UNIQUE (organization_id, message_id)`; purged after 90 days |
+
+**Reads:** `chatbot_settings` (`ai_provider`, `ai_model`, `ai_api_key` decrypted on the server, `ai_max_tokens`),
+`contacts` (name and number for the connector), `organizations.name`. **Writes through upstream:** agent transfers (via
+the `HandOver` accessor) and messages (via `kit.Sender`).
+
 ### audiences
 
 Segments and the campaigns created from them, built in Phase 2.1 (migration `audiences/0001_create_audiences`).
