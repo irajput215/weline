@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/shridarpatil/whatomate/internal/models"
+	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/shridarpatil/whatomate/internal/modules/practice"
 	"gorm.io/gorm"
@@ -22,10 +23,11 @@ import (
 // Service holds the booking rules (requirements R1–R23). Every method takes
 // the organization first and filters every query by it.
 type Service struct {
-	db       *gorm.DB
-	practice *practice.Service
-	offers   offerStore
-	now      func() time.Time
+	db        *gorm.DB
+	practice  *practice.Service
+	offers    offerStore
+	providers provider.Resolver // the chatbot's diary; nil = built-in (connectors R10)
+	now       func() time.Time
 }
 
 // NewService returns the booking service. It reads the clinic through the

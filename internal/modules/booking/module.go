@@ -5,6 +5,7 @@ import (
 
 	"github.com/shridarpatil/whatomate/internal/config"
 	"github.com/shridarpatil/whatomate/internal/handlers"
+	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/zerodha/fastglue"
 )
@@ -17,9 +18,14 @@ const (
 
 // Module is the booking module.
 type Module struct {
-	app *handlers.App
-	cfg *config.Config
+	app       *handlers.App
+	cfg       *config.Config
+	providers provider.Resolver // from Connectors, through the registry
 }
+
+// UseProviders implements provider.Consumer: the chatbot books through the
+// organization's active provider.
+func (m *Module) UseProviders(r provider.Resolver) { m.providers = r }
 
 // New only stores its arguments: the registry calls it with a nil app to read
 // migrations and permissions.
@@ -49,6 +55,9 @@ func (m *Module) Permissions() []kit.Permission {
 // public page and API outside /api (no login).
 func (m *Module) Register(g *fastglue.Fastglue) {
 	svc := NewService(m.app.DB).WithRedis(m.app.Redis)
+	if m.providers != nil {
+		svc.UseProviders(m.providers)
+	}
 	captcha := TurnstileFromEnv()
 	var lim limiter = &memoryLimiter{}
 	if m.app.Redis != nil {

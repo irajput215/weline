@@ -122,6 +122,19 @@ func staff(c kit.Caller) Actor {
 func (h *handler) slots(r *fastglue.Request, c kit.Caller) error {
 	ctx, cancel := kit.Context()
 	defer cancel()
+	from, err := queryDate(r, "from")
+	if err != nil {
+		return kit.SendError(r, err)
+	}
+	if query(r, "view") == "chatbot" {
+		// Ids here are the active provider's, not always UUIDs (connectors R10).
+		menu, err := h.svc.ChatbotSlots(ctx, c.OrgID, ChatbotSlotQuery{OfferID: query(r, "offer_id"), ServiceID: query(r, "service_id"),
+			ServiceLabel: query(r, "service_label"), LocationID: query(r, "location_id"), LocationLabel: query(r, "location_label"), From: from})
+		if err != nil {
+			return kit.SendError(r, err)
+		}
+		return ok(r, menu)
+	}
 	svcID, err := queryID(r, "service_id")
 	if err != nil {
 		return kit.SendError(r, err)
@@ -129,18 +142,6 @@ func (h *handler) slots(r *fastglue.Request, c kit.Caller) error {
 	locID, err := queryID(r, "location_id")
 	if err != nil {
 		return kit.SendError(r, err)
-	}
-	from, err := queryDate(r, "from")
-	if err != nil {
-		return kit.SendError(r, err)
-	}
-	if query(r, "view") == "chatbot" {
-		menu, err := h.svc.ChatbotSlots(ctx, c.OrgID, ChatbotSlotQuery{OfferID: query(r, "offer_id"), ServiceID: svcID,
-			ServiceLabel: query(r, "service_label"), LocationID: locID, LocationLabel: query(r, "location_label"), From: from})
-		if err != nil {
-			return kit.SendError(r, err)
-		}
-		return ok(r, menu)
 	}
 	prID, err := queryID(r, "practitioner_id")
 	if err != nil {
@@ -174,12 +175,12 @@ func (h *handler) chatbotSlots(r *fastglue.Request, c kit.Caller) error {
 	ctx, cancel := kit.Context()
 	defer cancel()
 	var in struct {
-		OfferID       string     `json:"offer_id"`
-		ServiceID     *uuid.UUID `json:"service_id"`
-		ServiceLabel  string     `json:"service_label"`
-		LocationID    *uuid.UUID `json:"location_id"`
-		LocationLabel string     `json:"location_label"`
-		From          string     `json:"from"`
+		OfferID       string `json:"offer_id"`
+		ServiceID     string `json:"service_id"`
+		ServiceLabel  string `json:"service_label"`
+		LocationID    string `json:"location_id"`
+		LocationLabel string `json:"location_label"`
+		From          string `json:"from"`
 	}
 	if err := decode(r, &in); err != nil {
 		return kit.SendError(r, err)
