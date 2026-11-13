@@ -45,7 +45,9 @@ type Resolver interface {
 type ResolverFunc func(ctx context.Context, orgID uuid.UUID) (Provider, error)
 
 // For implements Resolver.
-func (f ResolverFunc) For(ctx context.Context, orgID uuid.UUID) (Provider, error) { return f(ctx, orgID) }
+func (f ResolverFunc) For(ctx context.Context, orgID uuid.UUID) (Provider, error) {
+	return f(ctx, orgID)
+}
 
 // Source is a module that provides the resolver (Connectors).
 type Source interface {

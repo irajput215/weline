@@ -17,6 +17,8 @@ import (
 	"github.com/shridarpatil/whatomate/internal/modules/ads"
 	"github.com/shridarpatil/whatomate/internal/modules/audiences"
 	"github.com/shridarpatil/whatomate/internal/modules/booking"
+	"github.com/shridarpatil/whatomate/internal/modules/connectors"
+	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
 	"github.com/shridarpatil/whatomate/internal/modules/consent"
 	"github.com/shridarpatil/whatomate/internal/modules/example"
 	"github.com/shridarpatil/whatomate/internal/modules/hooks"
@@ -41,23 +43,48 @@ var factories = []Factory{
 	practice.New,
 	booking.New, // reads practice tables, so migrates after it
 	consent.New,
-	audiences.New, // reads consent tables, so migrates after it
-	ads.New,       // reads consent and booking tables in its reports
+	audiences.New,  // reads consent tables, so migrates after it
+	ads.New,        // reads consent and booking tables in its reports
+	connectors.New, // wraps Booking as the built-in provider; its resolver is wired into Booking
 }
 
 // Register mounts every module's routes, then the Weline webhook receiver
 // with every module that implements kit.EventHandler. Called from
 // setupRoutes, before the frontend catch-all route.
 func Register(g *fastglue.Fastglue, app *handlers.App, cfg *config.Config) {
-	var eventHandlers []kit.EventHandler
+	mods := make([]kit.Module, 0, len(factories))
 	for _, f := range factories {
-		m := f(app, cfg)
+		mods = append(mods, f(app, cfg))
+	}
+	wireProviders(mods)
+	var eventHandlers []kit.EventHandler
+	for _, m := range mods {
 		m.Register(g)
 		if h, ok := m.(kit.EventHandler); ok {
 			eventHandlers = append(eventHandlers, h)
 		}
 	}
 	hooks.Mount(g, app, eventHandlers)
+}
+
+// wireProviders hands the resolver of the module that provides one
+// (Connectors) to every module that books through it (Booking's chatbot), so
+// they never import each other. Without a source, consumers keep their own.
+func wireProviders(mods []kit.Module) {
+	var src provider.Source
+	for _, m := range mods {
+		if s, ok := m.(provider.Source); ok {
+			src = s
+		}
+	}
+	if src == nil {
+		return
+	}
+	for _, m := range mods {
+		if c, ok := m.(provider.Consumer); ok {
+			c.UseProviders(src.Providers())
+		}
+	}
 }
 
 // Migrate creates the wl schema and wl.schema_migrations, runs every module's
