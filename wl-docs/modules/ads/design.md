@@ -76,11 +76,12 @@ On `message.incoming` with `message_type` text and at most 1,000 characters:
    seconds and dropped on any change to entry points on that instance.
 2. Split the text into tokens on anything that isn't a letter or digit, upper-case them, and take the first token that
    is an active code. None → return.
-3. In one transaction, holding `pg_advisory_xact_lock` on (organization, contact) so two messages from the same
-   contact can't both pass the 24-hour check:
+3. In one transaction, locking the contact's row (`SELECT … FOR UPDATE`, organization-scoped) so two messages from
+   the same contact can't both pass the 24-hour check:
    - skip if an arrival exists for this message id, or for this contact and entry point in the last 24 hours;
-   - `is_new` = the contact's earliest incoming message in `messages` (organization-scoped) is at most 10 minutes
-     before this one;
+   - the arrival time is the message's `created_at` (now if the message isn't stored);
+   - `is_new` = the contact has no earlier incoming message in `messages` (organization-scoped), or the earliest is at
+     most 10 minutes before this one;
    - insert the arrival;
    - add the tag (and campaign tag) to `contacts.tags`, case-insensitive and de-duplicated, through
      `models.Contact` filtered by organization.
@@ -94,8 +95,9 @@ For a period `[from, to)` on `arrived_at`, one grouped query per page:
 
 - `conversations` = arrivals in the period; `new_contacts` = those with `is_new`.
 - `opted_in` = contacts with a Consent `opt_in` event whose `given_at` is within 30 days after an arrival in the
-  period, where that arrival is the contact's **latest** arrival before the opt-in (a `LATERAL` lookup on the
-  contact index).
+  period, where that arrival is the contact's **latest** arrival before the opt-in. Each arrival's next arrival
+  (`next_at`, any entry point) is worked out once with `lead()` over the organization's arrivals from the period's
+  start, and an event counts if it falls after the arrival, within 30 days and no later than `next_at`.
 - `booked` = the same rule over `wl.booking_appointments.created_at` (any status; source `staff`, `web` or
   `whatsapp`, not `cliniko`).
 - Campaign totals add up their entry points. Archived entry points appear only with `include_archived`.

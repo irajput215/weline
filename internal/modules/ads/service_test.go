@@ -475,3 +475,21 @@ func TestArrivals(t *testing.T) {
 	_, err = f.svc.Arrivals(ctx, other.ID, flu.ID, nil)
 	assert.True(t, isKind(err, kit.ErrNotFound))
 }
+
+func TestArrivals_NoneYet(t *testing.T) {
+	f := newFixture(t)
+	ep := f.entry(t, "FLU24")
+	rows, err := f.svc.Arrivals(ctx, f.org, ep.ID, nil)
+	require.NoError(t, err)
+	assert.Empty(t, rows)
+	got, err := f.svc.Get(ctx, f.org, ep.ID, Period{From: f.now.Add(-29 * 24 * time.Hour), To: f.now})
+	require.NoError(t, err)
+	assert.Zero(t, got.Stats.Conversations)
+
+	// A contact with no stored messages (the hook can arrive before, or without, one) is new.
+	c := f.contact(t, f.org)
+	r, err := f.svc.Record(ctx, f.org, Incoming{ContactID: c.ID, Text: "FLU24"})
+	require.NoError(t, err)
+	assert.True(t, r.Arrived)
+	assert.True(t, r.IsNew)
+}

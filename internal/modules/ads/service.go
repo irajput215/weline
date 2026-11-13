@@ -530,13 +530,13 @@ func maskPhone(p string) string {
 
 // firstArrival is when anyone first arrived through an entry point (or now).
 func (s *Service) firstArrival(ctx context.Context, orgID, id uuid.UUID) (time.Time, error) {
-	var t []*time.Time
-	if err := s.db.WithContext(ctx).Raw(`SELECT min(arrived_at) FROM wl.ads_arrivals WHERE organization_id = ? AND entrypoint_id = ?`,
-		orgID, id).Scan(&t).Error; err != nil {
+	var row struct{ First *time.Time }
+	if err := s.db.WithContext(ctx).Raw(`SELECT min(arrived_at) AS first FROM wl.ads_arrivals WHERE organization_id = ? AND entrypoint_id = ?`,
+		orgID, id).Scan(&row).Error; err != nil {
 		return time.Time{}, fmt.Errorf("first arrival: %w", err)
 	}
-	if len(t) == 1 && t[0] != nil {
-		return *t[0], nil
+	if row.First != nil {
+		return *row.First, nil
 	}
 	return s.now(), nil
 }
@@ -725,12 +725,12 @@ func (s *Service) Record(ctx context.Context, orgID uuid.UUID, in Incoming) (*Re
 		if recent > 0 {
 			return errSkip
 		}
-		var first []*time.Time
-		if err := tx.Raw(`SELECT min(created_at) FROM messages WHERE organization_id = ? AND contact_id = ? AND direction = ?`,
+		var first struct{ At *time.Time }
+		if err := tx.Raw(`SELECT min(created_at) AS at FROM messages WHERE organization_id = ? AND contact_id = ? AND direction = ?`,
 			orgID, in.ContactID, models.DirectionIncoming).Scan(&first).Error; err != nil {
 			return fmt.Errorf("first message: %w", err)
 		}
-		isNew := len(first) == 0 || first[0] == nil || !first[0].Before(at.Add(-newWindow))
+		isNew := first.At == nil || !first.At.Before(at.Add(-newWindow))
 		row := arrivalRow{OrganizationID: orgID, EntrypointID: ep.ID, ContactID: in.ContactID, MessageID: in.MessageID,
 			Code: code, ArrivedAt: at, IsNew: isNew}
 		if err := tx.Create(&row).Error; err != nil {
