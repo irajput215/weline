@@ -37,6 +37,9 @@ func setupDB(t *testing.T) *gorm.DB {
 		connectors.New(nil, nil), reminders.New(nil, nil), ai.New(nil, nil), onboarding.New(nil, nil), billing.New(nil, nil)} {
 		require.NoError(t, kit.RunMigrations(db, m.Name(), m.Migrations()))
 	}
+	// Booking depends on practice; leave the shared database as other packages expect.
+	bk := booking.New(nil, nil)
+	t.Cleanup(func() { _ = kit.RollbackLast(db, bk.Name(), bk.Migrations()) })
 	return db
 }
 
@@ -70,7 +73,7 @@ func newFixture(t *testing.T) *fixture {
 	require.NoError(t, db.Exec(`INSERT INTO wl.audiences_sends (organization_id, kind, campaign_id, recipient_count) VALUES (?, 'segment', ?, 42)`, f.clinic, uuid.New()).Error)
 	require.NoError(t, db.Exec(`INSERT INTO wl.ai_runs (organization_id, contact_id, message_id, outcome) VALUES (?, ?, ?, 'error'), (?, ?, ?, 'answered')`,
 		f.clinic, contact.ID, uuid.New(), f.clinic, contact.ID, uuid.New()).Error)
-	require.NoError(t, db.Exec(`INSERT INTO wl.connector_accounts (organization_id, provider, status, last_error) VALUES (?, 'cliniko', 'error', 'cliniko: 401 unauthorized')`, f.clinic).Error)
+	require.NoError(t, db.Exec(`INSERT INTO wl.connector_accounts (organization_id, provider, status, last_error) VALUES (?, 'testsys', 'error', 'testsys: 401 unauthorized')`, f.clinic).Error)
 	return f
 }
 
@@ -89,7 +92,7 @@ func TestTenantsAndDetail(t *testing.T) {
 	assert.Equal(t, 1, got.Members)
 	assert.Equal(t, 1, got.Contacts)
 	assert.Equal(t, 1, got.Numbers)
-	assert.Equal(t, "cliniko", got.Connector)
+	assert.Equal(t, "testsys", got.Connector, "a test-only provider, so connector jobs never pick it up")
 	assert.Equal(t, "error", got.ConnectorStatus)
 	assert.NotNil(t, got.LastMessageAt)
 
@@ -105,7 +108,7 @@ func TestTenantsAndDetail(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, d.Health.FailedMessages)
 	assert.Equal(t, 1, d.Health.AIErrors)
-	assert.Equal(t, "cliniko: 401 unauthorized", d.Health.ConnectorError)
+	assert.Equal(t, "testsys: 401 unauthorized", d.Health.ConnectorError)
 	assert.Equal(t, 42, d.Usage.BroadcastRecipients)
 	assert.Equal(t, 2, d.Usage.AIRuns, "error runs called the model too; only ignored, emergency and limit runs are left out")
 	assert.Equal(t, 3, d.SetupDone, "business, WhatsApp, first message")

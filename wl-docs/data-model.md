@@ -349,6 +349,13 @@ Sign-up and the setup checklist, built in step 6.1 (migration `onboarding/0001_c
 | --- | --- | --- |
 | `wl.kit_permission_grants` | Which module permission each organization's system roles have been given (`organization_id`, `resource`, `action`) | PK on all three; written by `kit.GrantMissing`; FK to `organizations` with cascade |
 
+### operator
+
+The operator console (step 6.3) has **no tables**: it reads `organizations`, `wl.onboarding_state`,
+`wl.billing_subscriptions`, `wl.connector_accounts`, `wl.audiences_sends`, `wl.ai_runs`, `wl.reminder_sends`,
+`wl.practice_profiles`, `contacts`, `messages`, `whatsapp_accounts`, `user_organizations` (counts and states only) and
+writes `wl.audit_events`. See [`modules/operator/design.md`](modules/operator/design.md).
+
 ### billing
 
 Plans, limits and Stripe subscriptions, built in step 6.2 (migration `billing/0001_create_billing`). Full design:
