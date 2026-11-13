@@ -315,6 +315,16 @@ func TestReplies(t *testing.T) {
 	require.NoError(t, d.Dispatch(ctx, event(f.org, contactOf("c1"), "what time is it?")))
 	assert.Len(t, f.d.confirmed, 1)
 
+	// Another organization: sees none of these sends, and an event in its name
+	// for this contact changes nothing.
+	other := testutil.CreateTestOrganization(t, f.db).ID
+	theirs, err := f.svc.Sends(ctx, other, nil)
+	require.NoError(t, err)
+	assert.Empty(t, theirs, "another organization sees none of the sends")
+	f.d.appts["a4"] = &provider.Appointment{ID: "a4", Status: provider.StatusBooked, Start: monday10.Add(8 * time.Hour), CustomerID: "c1"}
+	require.NoError(t, d.Dispatch(ctx, event(other, contactOf("c1"), "Cancel")))
+	assert.Equal(t, []string{"a2"}, f.d.cancelled, "another organization's event can't act on this contact's reminder")
+
 	sends, err := f.svc.Sends(ctx, f.org, nil)
 	require.NoError(t, err)
 	replies := map[string]bool{}

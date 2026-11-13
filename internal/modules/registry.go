@@ -29,6 +29,7 @@ import (
 	"github.com/shridarpatil/whatomate/internal/modules/hooks"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/shridarpatil/whatomate/internal/modules/onboarding"
+	"github.com/shridarpatil/whatomate/internal/modules/operator"
 	"github.com/shridarpatil/whatomate/internal/modules/practice"
 	"github.com/shridarpatil/whatomate/internal/modules/reminders"
 	"github.com/zerodha/fastglue"
@@ -61,6 +62,7 @@ var factories = []Factory{
 	ai.New,         // books through Connectors' resolver; answers from its own knowledge
 	onboarding.New, // reads practice, connectors and upstream tables for its checklist
 	billing.New,    // counts audiences sends and AI runs; its limits are wired into those modules
+	operator.New,   // reads every module's tables across organizations, for Weline staff
 }
 
 // Register mounts every module's routes, then the Weline webhook receiver
