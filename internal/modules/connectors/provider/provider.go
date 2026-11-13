@@ -29,6 +29,7 @@ type Provider interface {
 	ListServices(ctx context.Context) ([]Service, error)
 	FindFreeTimes(ctx context.Context, q FreeTimeQuery) (*FreeTimes, error)
 	FindOrCreateCustomer(ctx context.Context, in CustomerInput) (*Customer, bool, error) // created?
+	GetCustomer(ctx context.Context, id string) (*Customer, error)                       // with the mobile, for reminders
 	Book(ctx context.Context, in BookInput) (*Appointment, error)
 	Reschedule(ctx context.Context, id string, in RescheduleInput) (*Appointment, error)
 	Cancel(ctx context.Context, id string, reason string) error
@@ -58,6 +59,12 @@ type Source interface {
 // registry hands it the Source's resolver before routes are registered.
 type Consumer interface {
 	UseProviders(Resolver)
+}
+
+// Confirmer is an optional ability: marking an appointment as confirmed by the
+// patient (Weline's built-in diary has it; Cliniko doesn't).
+type Confirmer interface {
+	Confirm(ctx context.Context, id string) error
 }
 
 // Location is a site the business books at.
@@ -119,8 +126,9 @@ type CustomerInput struct {
 
 // Customer is the person in the provider's records.
 type Customer struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Mobile string `json:"-"` // digits with country code; only from GetCustomer, never returned by the API
 }
 
 // Sources of a booking.

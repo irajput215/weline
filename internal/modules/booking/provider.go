@@ -199,6 +199,19 @@ func (b *BuiltIn) FindOrCreateCustomer(ctx context.Context, in provider.Customer
 	return &provider.Customer{ID: p.ID.String(), Name: p.Name}, !existing, nil
 }
 
+// GetCustomer implements provider.Provider: the Weline contact.
+func (b *BuiltIn) GetCustomer(ctx context.Context, id string) (*provider.Customer, error) {
+	cid, err := parseID(id)
+	if err != nil {
+		return nil, err
+	}
+	p, err := b.svc.patient(ctx, b.orgID, cid)
+	if err != nil {
+		return nil, err
+	}
+	return &provider.Customer{ID: p.ID.String(), Name: p.Name, Mobile: phoneDigits(p.Phone)}, nil
+}
+
 // Book implements provider.Provider.
 func (b *BuiltIn) Book(ctx context.Context, in provider.BookInput) (*provider.Appointment, error) {
 	ids := make([]uuid.UUID, 4)
@@ -259,6 +272,16 @@ func (b *BuiltIn) Cancel(ctx context.Context, id string, reason string) error {
 		return err
 	}
 	_, err = b.svc.SetStatus(ctx, b.orgID, Actor{Source: SourceWhatsApp}, aid, StatusCancelled, reason)
+	return err
+}
+
+// Confirm implements provider.Confirmer: BOOKED becomes CONFIRMED.
+func (b *BuiltIn) Confirm(ctx context.Context, id string) error {
+	aid, err := parseID(id)
+	if err != nil {
+		return err
+	}
+	_, err = b.svc.SetStatus(ctx, b.orgID, Actor{Source: SourceWhatsApp}, aid, StatusConfirmed, "")
 	return err
 }
 

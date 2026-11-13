@@ -75,6 +75,7 @@ func (d *Dispatcher) Wants(name string) bool {
 // Dispatch calls every subscribed handler, even after one fails, and returns
 // their errors joined.
 func (d *Dispatcher) Dispatch(ctx context.Context, e Event) error {
+	ctx = context.WithValue(ctx, claimKey{}, &claim{})
 	var errs []error
 	for _, h := range d.handlers {
 		if !subscribed(h, e.Name) {
@@ -97,4 +98,29 @@ func subscribed(h EventHandler, name string) bool {
 		}
 	}
 	return false
+}
+
+// Claims: handlers run one after another in registry order with the same
+// context. A module that has handled a message completely (Consent's STOP,
+// a reminder's Confirm button) claims it, so later modules such as the AI
+// agent leave it alone.
+type claimKey struct{}
+
+type claim struct {
+	by string
+}
+
+// Claim marks the event being dispatched as handled by module.
+func Claim(ctx context.Context, module string) {
+	if c, ok := ctx.Value(claimKey{}).(*claim); ok && c.by == "" {
+		c.by = module
+	}
+}
+
+// ClaimedBy returns the module that claimed the event, or "".
+func ClaimedBy(ctx context.Context) string {
+	if c, ok := ctx.Value(claimKey{}).(*claim); ok {
+		return c.by
+	}
+	return ""
 }

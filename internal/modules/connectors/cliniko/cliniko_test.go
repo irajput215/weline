@@ -291,3 +291,14 @@ func TestNormalise(t *testing.T) {
 		assert.Equal(t, want, Normalise(in), in)
 	}
 }
+
+func TestGetCustomer(t *testing.T) {
+	f := newFake(t)
+	p, _ := newProvider(t, f, "")
+	c, err := p.GetCustomer(ctx, "201")
+	require.NoError(t, err)
+	assert.Equal(t, "201", c.ID)
+	assert.Equal(t, "61412345678", c.Mobile, "the mobile, normalised, for reminders")
+	_, err = p.GetCustomer(ctx, "999")
+	assert.Error(t, err)
+}

@@ -95,6 +95,11 @@ func TestBuiltIn_CustomersAndAppointments(t *testing.T) {
 	assert.Equal(t, n.ID, again.ID)
 	_, _, err = p.FindOrCreateCustomer(ctx, provider.CustomerInput{ContactID: uuid.New()})
 	assert.True(t, errors.Is(err, kit.ErrNotFound))
+	got1, err := p.GetCustomer(ctx, n.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "61400111222", got1.Mobile)
+	_, err = p.GetCustomer(ctx, uuid.NewString())
+	assert.True(t, errors.Is(err, kit.ErrNotFound))
 
 	start := syd(2027, 3, 8, 9, 0)
 	in := provider.BookInput{ServiceID: f.consult.String(), LocationID: f.bondi.String(), PractitionerID: f.ada.String(),
@@ -177,6 +182,9 @@ func (s *stubProvider) FindFreeTimes(_ context.Context, q provider.FreeTimeQuery
 }
 func (s *stubProvider) FindOrCreateCustomer(_ context.Context, in provider.CustomerInput) (*provider.Customer, bool, error) {
 	return &provider.Customer{ID: "41", Name: in.Name}, false, nil
+}
+func (s *stubProvider) GetCustomer(context.Context, string) (*provider.Customer, error) {
+	return nil, provider.ErrNotFound
 }
 func (s *stubProvider) Book(_ context.Context, in provider.BookInput) (*provider.Appointment, error) {
 	if s.taken {

@@ -117,6 +117,9 @@ func (d *stubDiary) FindFreeTimes(_ context.Context, q provider.FreeTimeQuery) (
 func (d *stubDiary) FindOrCreateCustomer(_ context.Context, in provider.CustomerInput) (*provider.Customer, bool, error) {
 	return &provider.Customer{ID: "cust-" + in.ContactID.String()[:8], Name: in.Name}, false, nil
 }
+func (d *stubDiary) GetCustomer(_ context.Context, id string) (*provider.Customer, error) {
+	return &provider.Customer{ID: id, Name: "Pat Kim", Mobile: "61412345678"}, nil
+}
 func (d *stubDiary) Book(_ context.Context, in provider.BookInput) (*provider.Appointment, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
