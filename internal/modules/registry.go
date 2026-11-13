@@ -14,6 +14,7 @@ import (
 
 	"github.com/shridarpatil/whatomate/internal/config"
 	"github.com/shridarpatil/whatomate/internal/handlers"
+	"github.com/shridarpatil/whatomate/internal/modules/ads"
 	"github.com/shridarpatil/whatomate/internal/modules/audiences"
 	"github.com/shridarpatil/whatomate/internal/modules/booking"
 	"github.com/shridarpatil/whatomate/internal/modules/consent"
@@ -41,6 +42,7 @@ var factories = []Factory{
 	booking.New, // reads practice tables, so migrates after it
 	consent.New,
 	audiences.New, // reads consent tables, so migrates after it
+	ads.New,       // reads consent and booking tables in its reports
 }
 
 // Register mounts every module's routes, then the Weline webhook receiver

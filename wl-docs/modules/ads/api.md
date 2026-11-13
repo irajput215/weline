@@ -12,20 +12,22 @@ An **entry point** in responses:
 ```json
 { "id": "…", "name": "Flu shot ad, Instagram", "code": "FLU24", "channel": "meta_ad", "campaign": "Flu season 2026",
   "wa_number": "61400000000", "prefill_text": "Hi! I'd like to know more [FLU24]",
-  "link": "https://wa.me/61400000000?text=Hi!%20I'd%20like%20to%20know%20more%20%5BFLU24%5D",
-  "tag": "from-flu24", "tag_campaign": true, "archived_at": null,
+  "link": "https://wa.me/61400000000?text=Hi%21%20I%27d%20like%20to%20know%20more%20%5BFLU24%5D",
+  "tag": "from-flu24", "tag_campaign": true, "campaign_tag": "campaign-flu-season-2026", "archived_at": null,
   "stats": { "conversations": 0, "new_contacts": 0, "opted_in": 0, "booked": 0 },
   "created_at": "…", "updated_at": "…" }
 ```
 
 `channel`: `meta_ad` · `google_ad` · `website` · `print` (QR code or flyer) · `email` · `other`.
-`stats` cover the period asked for (`from`/`to`, default the last 30 days).
+`stats` cover the period asked for (`from`/`to`, default the last 30 days). `link` is URL-encoded with spaces as
+`%20`. `campaign_tag` is the tag added for the campaign (`""` when `tag_campaign` is off or there's no campaign).
 
 ## Entry points
 
 ### GET /api/x/ads/entrypoints?from=&to=&include_archived=
 Permission: wl_ads_entrypoints:read
-`from`, `to`: `YYYY-MM-DD` (`to` inclusive), at most 366 days apart.
+`from`, `to`: `YYYY-MM-DD` (`to` inclusive), at most 366 days apart. Only `from` → 30 days from it; only `to` → the 30
+days before it; neither → the last 30 days. `include_archived=true` adds archived entry points (listed last).
 Response 200: `{ entrypoints: [ … ], campaigns: [ { campaign, conversations, new_contacts, opted_in, booked } ], period: { from, to } }`
 Errors: 400 bad date or period
 
