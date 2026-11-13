@@ -1,0 +1,41 @@
+{
+  "id": "beauty",
+  "version": 1,
+  "name": "Beauty and wellness",
+  "description": "Salons, spas and studios: appointment reminders, rebooking nudges and offers to opted-in clients.",
+  "verticals": ["beauty"],
+  "connectors": ["builtin"],
+  "templates": [
+    {
+      "name": "wl_beauty_appointment_reminder",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}, see you for your {{2}} on {{3}} at {{4}}. Please confirm, cancel or ask to reschedule below.",
+      "buttons": ["Confirm", "Cancel", "Reschedule"],
+      "samples": ["Mia", "Cut and colour", "Fri 12 Mar at 2:00pm", "King St"]
+    },
+    {
+      "name": "wl_beauty_rebook",
+      "language": "en",
+      "category": "MARKETING",
+      "body": "Hi {{1}}, it's about time for your next {{2}}. Reply here and we'll book you in.",
+      "footer": "Reply STOP to stop these messages",
+      "buttons": ["Book now", "Not now"],
+      "samples": ["Mia", "cut and colour"]
+    }
+  ],
+  "ai": {
+    "tone": "friendly",
+    "instructions": "You work for a beauty and wellness business. Don't give medical or skin-condition advice; offer to pass the question to a therapist. Keep answers short and warm.",
+    "emergency_words": ["allergic reaction", "can't breathe", "swelling"]
+  },
+  "segments": [
+    { "name": "Opted in to offers", "description": "Clients who opted in to marketing messages", "rules": { "match": "all", "conditions": [{ "field": "consent", "op": "opted_in" }] } },
+    { "name": "Not seen in 8 weeks", "description": "Clients who haven't messaged in 56 days", "rules": { "match": "all", "conditions": [{ "field": "last_inbound", "op": "not_within_days", "value": 56 }] } }
+  ],
+  "reminders": [
+    { "kind": "reminder", "name": "Day before", "offset_minutes": 1440, "template": "wl_beauty_appointment_reminder", "variables": ["name", "service", "when", "location"] },
+    { "kind": "recall", "name": "Rebook after 6 weeks", "recall_days": 42, "template": "wl_beauty_rebook", "variables": ["name", "service"] }
+  ],
+  "flows": [{ "name": "Book an appointment", "guide": "wl-docs/modules/booking/chatbot-flow.md" }]
+}

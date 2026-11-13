@@ -1,0 +1,70 @@
+{
+  "id": "clinic",
+  "version": 1,
+  "name": "Clinics",
+  "description": "Allied health, dental and medical practices: appointment reminders with Confirm, Cancel and Reschedule, recalls, booking confirmations, and an AI agent that never gives health advice.",
+  "verticals": ["allied_health", "dental", "medical"],
+  "connectors": ["cliniko", "builtin"],
+  "templates": [
+    {
+      "name": "wl_clinic_appointment_reminder",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}, this is a reminder of your {{2}} appointment on {{3}} at {{4}}. Please confirm, cancel or ask to reschedule below.",
+      "buttons": ["Confirm", "Cancel", "Reschedule"],
+      "samples": ["Sam", "Initial physio", "Tue 9 Mar at 9:00am", "Harbour St"]
+    },
+    {
+      "name": "wl_clinic_booking_confirmed",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}, your {{2}} appointment is booked for {{3}} at {{4}}. Reply here if you need to change it.",
+      "samples": ["Sam", "Initial physio", "Tue 9 Mar at 9:00am", "Harbour St"]
+    },
+    {
+      "name": "wl_clinic_recall",
+      "language": "en",
+      "category": "MARKETING",
+      "body": "Hi {{1}}, it's been a while since your last {{2}}. Would you like to book a check-up? Reply here and we'll find a time.",
+      "footer": "Reply STOP to stop these messages",
+      "buttons": ["Book a check-up", "Not now"],
+      "samples": ["Sam", "check-up"]
+    }
+  ],
+  "ai": {
+    "tone": "friendly",
+    "instructions": "You work for a health clinic. Never give medical, dental or health advice, diagnoses, or opinions on symptoms or treatment, even if asked directly; offer to pass the question to the clinical team. Never discuss other patients. Keep answers short and in plain Australian English.",
+    "emergency_words": ["chest pain", "can't breathe", "cannot breathe", "suicide", "overdose", "unconscious", "severe bleeding", "stroke"]
+  },
+  "segments": [
+    {
+      "name": "Opted in to news",
+      "description": "Patients who opted in to marketing messages",
+      "rules": { "match": "all", "conditions": [{ "field": "consent", "op": "opted_in" }] }
+    },
+    {
+      "name": "Quiet for 6 months",
+      "description": "Patients who haven't messaged in 180 days",
+      "rules": { "match": "all", "conditions": [{ "field": "last_inbound", "op": "not_within_days", "value": 180 }] }
+    }
+  ],
+  "reminders": [
+    {
+      "kind": "reminder",
+      "name": "Day before",
+      "offset_minutes": 1440,
+      "template": "wl_clinic_appointment_reminder",
+      "variables": ["name", "service", "when", "location"]
+    },
+    {
+      "kind": "recall",
+      "name": "Six-month check-up",
+      "recall_days": 180,
+      "template": "wl_clinic_recall",
+      "variables": ["name", "service"]
+    }
+  ],
+  "flows": [
+    { "name": "Book an appointment", "guide": "wl-docs/modules/booking/chatbot-flow.md" }
+  ]
+}

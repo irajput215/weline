@@ -1,0 +1,41 @@
+{
+  "id": "fitness",
+  "version": 1,
+  "name": "Fitness and studios",
+  "description": "Gyms, yoga and pilates studios, personal trainers: class reminders and win-back messages.",
+  "verticals": ["fitness"],
+  "connectors": ["builtin"],
+  "templates": [
+    {
+      "name": "wl_fitness_class_reminder",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}, a reminder of your {{2}} on {{3}} at {{4}}. Please confirm, cancel or ask to reschedule below.",
+      "buttons": ["Confirm", "Cancel", "Reschedule"],
+      "samples": ["Alex", "Reformer pilates", "Sat 13 Mar at 8:00am", "Bondi studio"]
+    },
+    {
+      "name": "wl_fitness_win_back",
+      "language": "en",
+      "category": "MARKETING",
+      "body": "Hi {{1}}, we've missed you! Fancy getting back into {{2}}? Reply here and we'll save you a spot.",
+      "footer": "Reply STOP to stop these messages",
+      "buttons": ["Book a session", "Not now"],
+      "samples": ["Alex", "reformer pilates"]
+    }
+  ],
+  "ai": {
+    "tone": "friendly",
+    "instructions": "You work for a fitness business. Don't give medical, injury or nutrition advice; offer to pass the question to a trainer. Keep answers short and encouraging.",
+    "emergency_words": ["chest pain", "can't breathe", "fainted", "collapsed"]
+  },
+  "segments": [
+    { "name": "Opted in to offers", "description": "Members who opted in to marketing messages", "rules": { "match": "all", "conditions": [{ "field": "consent", "op": "opted_in" }] } },
+    { "name": "Quiet for 30 days", "description": "Members who haven't messaged in 30 days", "rules": { "match": "all", "conditions": [{ "field": "last_inbound", "op": "not_within_days", "value": 30 }] } }
+  ],
+  "reminders": [
+    { "kind": "reminder", "name": "Two hours before", "offset_minutes": 120, "template": "wl_fitness_class_reminder", "variables": ["name", "service", "when", "location"] },
+    { "kind": "recall", "name": "Win back after 30 days", "recall_days": 30, "template": "wl_fitness_win_back", "variables": ["name", "service"] }
+  ],
+  "flows": []
+}
