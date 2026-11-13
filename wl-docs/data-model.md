@@ -241,6 +241,56 @@ erDiagram
         uuid changed_by_id }
 ```
 
+### ads
+
+Entry points and arrivals, built in Phase 2.3 (migration `ads/0001_create_ads`).
+Full design: [`modules/ads/design.md`](modules/ads/design.md#data-model).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.ads_entrypoints` | An ad, flyer, QR code or website button: name, `code` (upper case), `channel`, `campaign` label, `wa_number` (digits), `prefill_text`, `tag`, `tag_campaign`, `archived_at`, who created and last changed it | `UNIQUE (organization_id, code)`: codes are never reused while the row exists; code check (3–12 letters and digits with at least one of each) and number check in the database; `UNIQUE (organization_id, id)` for the composite key |
+| `wl.ads_arrivals` | One row per arrival: entry point, contact, the message it came from, the matched `code`, `arrived_at` (the message's time), `is_new` | Append-only; composite FK `(organization_id, entrypoint_id)` with `ON DELETE RESTRICT` (an entry point with arrivals can only be archived); `UNIQUE (organization_id, message_id)` |
+
+**Upstream rows it writes:** `contacts.tags` (adds the entry point's tag and campaign tag, never removes) through
+`models.Contact`, and rows in `tags` (the organization's tag list, colour purple) through `models.Tag`, both
+organization-scoped.
+
+**Reads:** `contacts` (`tags`, `profile_name`, `phone_number`, `deleted_at`), `messages` (`created_at` of the arrival's
+message and the contact's first incoming message), `wl.consent_events` (opt-ins after an arrival) and
+`wl.booking_appointments` (`created_at`, `source` other than `cliniko`) for the counts.
+
+**Patient data:** an arrival ties a contact to an ad they answered, which can hint at a health interest. The matched
+code is stored, never the message text. Numbers reach the browser masked.
+
+```mermaid
+erDiagram
+    organizations ||--o{ "wl.ads_entrypoints" : "organization_id"
+    "wl.ads_entrypoints" ||--o{ "wl.ads_arrivals" : "entrypoint_id (composite FK, restrict)"
+    contacts ||--o{ "wl.ads_arrivals" : "contact_id (no FK)"
+    messages ||--o| "wl.ads_arrivals" : "message_id (no FK)"
+    users ||--o{ "wl.ads_entrypoints" : "created_by_id (no FK)"
+
+    "wl.ads_entrypoints" { uuid id PK
+        uuid organization_id
+        varchar name
+        varchar code
+        varchar channel
+        varchar campaign
+        varchar wa_number
+        varchar prefill_text
+        varchar tag
+        bool tag_campaign
+        timestamptz archived_at }
+    "wl.ads_arrivals" { uuid id PK
+        uuid organization_id
+        uuid entrypoint_id
+        uuid contact_id
+        uuid message_id
+        varchar code
+        timestamptz arrived_at
+        bool is_new }
+```
+
 ### audiences
 
 Segments and the campaigns created from them, built in Phase 2.1 (migration `audiences/0001_create_audiences`).
