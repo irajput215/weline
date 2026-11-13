@@ -6,7 +6,7 @@ which ones bring patients. Build guide step 2.3
 route chosen in the [spike](spike.md#decision-2026-11-13): **ad codes in the pre-filled message**, no upstream change.
 Follows [Consent](../consent/requirements.md) and [Audiences](../audiences/requirements.md).
 
-Status: **draft for review.** Lines marked **(assumption)** are defaults chosen without customer input; each one is
+Status: **built (step 2.3 B) on the defaults below; open questions still to confirm.** Lines marked **(assumption)** are defaults chosen without customer input; each one is
 listed under [Open questions](#open-questions).
 
 Clinics pay for Facebook and Instagram ads, Google ads, flyers and a "Message us on WhatsApp" button on their website,

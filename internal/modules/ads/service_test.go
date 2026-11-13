@@ -493,3 +493,25 @@ func TestArrivals_NoneYet(t *testing.T) {
 	assert.True(t, r.Arrived)
 	assert.True(t, r.IsNew)
 }
+
+func TestTagsAddedToTheList(t *testing.T) {
+	f := newFixture(t)
+	require.NoError(t, f.db.Create(&models.Tag{OrganizationID: f.org, Name: "FROM-SKI26", Color: "red"}).Error)
+	ep := f.entry(t, "FLU24")
+	names := func() []string {
+		var n []string
+		require.NoError(t, f.db.Model(&models.Tag{}).Where("organization_id = ?", f.org).Order("name").Pluck("name", &n).Error)
+		return n
+	}
+	assert.Equal(t, []string{"FROM-SKI26", "campaign-flu-season-2026", "from-flu24"}, names())
+
+	f.entry(t, "SKI26") // its tag exists in another case: not added again
+	assert.Len(t, names(), 3)
+
+	in := input("FLU24")
+	in.Tag, in.Campaign = "flu-patients", "Winter"
+	_, err := f.svc.Update(ctx, f.org, f.user, ep.ID, in)
+	require.NoError(t, err)
+	assert.Contains(t, names(), "flu-patients")
+	assert.Contains(t, names(), "campaign-winter")
+}

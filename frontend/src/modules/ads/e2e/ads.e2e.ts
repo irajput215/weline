@@ -88,6 +88,8 @@ test.describe.serial('ads', () => {
     await expect(page.getByTestId('ads-detail-text')).toContainText(`[${code}]`)
     await expect(page.getByTestId('ads-detail-tag')).toHaveText(`from-${code.toLowerCase()}`)
     await expect(page.getByTestId('ads-arrivals-empty')).toBeVisible()
+    // Its tags join Weline's tag list, so Audiences can pick them.
+    expect(sql(`SELECT count(*) FROM tags WHERE organization_id = '${orgId}' AND name IN ('from-${code.toLowerCase()}', 'campaign-flu-season-${run}')`)).toBe('2')
 
     // The same code again is refused on the code field.
     await page.goto('/x/ads')

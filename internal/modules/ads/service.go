@@ -291,7 +291,34 @@ func (s *Service) Create(ctx context.Context, orgID, userID uuid.UUID, in Input)
 	}
 	s.codes.drop(orgID)
 	v := row.view(Stats{})
+	if err := s.ensureTags(ctx, orgID, v.Tag, v.CampaignTag); err != nil {
+		return nil, err
+	}
 	return &v, nil
+}
+
+// ensureTags adds the entry point's tags to Weline's tag list, so they can be
+// picked in Audiences and the contact filters (requirements, user stories).
+// A tag already there in any letter case is left alone.
+func (s *Service) ensureTags(ctx context.Context, orgID uuid.UUID, tags ...string) error {
+	for _, t := range tags {
+		if t == "" {
+			continue
+		}
+		var n int64
+		if err := s.db.WithContext(ctx).Model(&models.Tag{}).Where("organization_id = ? AND lower(name) = lower(?)", orgID, t).
+			Count(&n).Error; err != nil {
+			return fmt.Errorf("check tag: %w", err)
+		}
+		if n > 0 {
+			continue
+		}
+		if err := s.db.WithContext(ctx).Clauses(clause.OnConflict{DoNothing: true}).
+			Create(&models.Tag{OrganizationID: orgID, Name: t, Color: "purple"}).Error; err != nil {
+			return fmt.Errorf("add tag: %w", err)
+		}
+	}
+	return nil
 }
 
 func (s *Service) load(ctx context.Context, db *gorm.DB, orgID, id uuid.UUID, lock bool) (*entryRow, error) {
@@ -331,7 +358,14 @@ func (s *Service) Update(ctx context.Context, orgID, userID, id uuid.UUID, in In
 		return nil, kit.Conflict("this entry point is archived and can't be edited")
 	}
 	s.codes.drop(orgID)
-	return s.Get(ctx, orgID, id, Period{})
+	ep, err := s.Get(ctx, orgID, id, Period{})
+	if err != nil {
+		return nil, err
+	}
+	if err := s.ensureTags(ctx, orgID, ep.Tag, ep.CampaignTag); err != nil {
+		return nil, err
+	}
+	return ep, nil
 }
 
 // Archive stops an entry point's code matching (R3). Archiving twice is a no-op.
