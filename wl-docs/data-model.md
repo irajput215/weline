@@ -330,6 +330,25 @@ Reminders and recalls, built in Phase 5 (migration `reminders/0001_create_remind
 default WhatsApp account), messages (via `kit.Sender`) and agent transfers (via `HandOver`). **Writes through the
 connector:** confirm and cancel.
 
+### onboarding
+
+Sign-up and the setup checklist, built in step 6.1 (migration `onboarding/0001_create_onboarding`). Full design:
+[`modules/onboarding/design.md`](modules/onboarding/design.md).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.onboarding_state` | How the organization started (`signup` or `existing`), who signed up, the type of business, when the checklist was hidden | One row per organization; FK to `organizations` with cascade; the checklist itself is worked out, not stored |
+
+**Writes to upstream tables (sign-up only, for the new organization):** `organizations`, its system `custom_roles` and
+`role_permissions` (upstream's own seeding function), `chatbot_settings`, `users` (email, bcrypt hash, name),
+`user_organizations`. **Reads:** `whatsapp_accounts`, `user_organizations`, `messages` (existence only).
+
+### kit
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.kit_permission_grants` | Which module permission each organization's system roles have been given (`organization_id`, `resource`, `action`) | PK on all three; written by `kit.GrantMissing`; FK to `organizations` with cascade |
+
 ### audiences
 
 Segments and the campaigns created from them, built in Phase 2.1 (migration `audiences/0001_create_audiences`).

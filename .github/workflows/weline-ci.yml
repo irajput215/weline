@@ -133,3 +133,5 @@ jobs:
           WELINE_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
           WELINE_TURNSTILE_SECRET: 1x0000000000000000000000000000000AA
           WL_E2E_CAPTCHA: "1"
+          # Opens self-serve sign-up so the onboarding journey can sign up.
+          WELINE_SIGNUP: open

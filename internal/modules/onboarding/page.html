@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Sign up · Weline</title>
+<style>
+  :root { --fg:#111827; --muted:#6b7280; --line:#e5e7eb; --bg:#f9fafb; --card:#fff; --accent:#0f766e; --accent-fg:#fff; --err:#b91c1c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#f3f4f6; --muted:#9ca3af; --line:#374151; --bg:#0b0f14; --card:#111827; --accent:#2dd4bf; --accent-fg:#042f2e; --err:#f87171; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:var(--fg); background:var(--bg); }
+  main { max-width:480px; margin:0 auto; padding:32px 16px 48px; }
+  h1 { font-size:1.5rem; margin:0 0 4px; }
+  .muted { color:var(--muted); font-size:.9rem; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-top:16px; }
+  label { display:block; font-weight:600; font-size:.9rem; margin:12px 0 4px; }
+  select, input[type=text], input[type=email], input[type=password] { width:100%; padding:10px 12px; font:inherit; color:inherit; background:var(--bg); border:1px solid var(--line); border-radius:8px; }
+  .check { display:flex; gap:8px; align-items:flex-start; font-weight:400; }
+  .check input { margin-top:4px; }
+  .primary { margin-top:16px; width:100%; padding:12px; font:inherit; font-weight:600; color:var(--accent-fg); background:var(--accent); border:0; border-radius:8px; cursor:pointer; text-align:center; text-decoration:none; display:block; }
+  .primary:disabled { opacity:.5; cursor:not-allowed; }
+  .error { color:var(--err); margin-top:12px; }
+  a { color:var(--accent); }
+  footer { margin-top:24px; font-size:.8rem; color:var(--muted); }
+  [hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main data-testid="signup-page">
+  <h1>Start with Weline</h1>
+  <p class="muted">WhatsApp for your business, connected to the system you already use. 14-day free trial, no card needed.</p>
+
+  <section id="form-section">
+    <form id="form" novalidate>
+      <label for="business">Business name</label>
+      <input id="business" name="business_name" type="text" maxlength="120" autocomplete="organization" required data-testid="signup-business">
+      <label for="name">Your name</label>
+      <input id="name" name="full_name" type="text" maxlength="120" autocomplete="name" required data-testid="signup-name">
+      <label for="email">Work email</label>
+      <input id="email" name="email" type="email" maxlength="255" autocomplete="email" required data-testid="signup-email">
+      <label for="password">Password (at least 12 characters)</label>
+      <input id="password" name="password" type="password" minlength="12" maxlength="72" autocomplete="new-password" required data-testid="signup-password">
+      <label for="tz">Time zone</label>
+      <select id="tz" name="time_zone" data-testid="signup-tz">{{range .TimeZones}}<option value="{{.}}"{{if eq . $.DefaultTZ}} selected{{end}}>{{.}}</option>{{end}}</select>
+      <label class="check"><input id="terms" type="checkbox" data-testid="signup-terms">
+        <span>I agree to the <a href="{{.TermsURL}}" target="_blank" rel="noopener">terms of service</a> and <a href="{{.PrivacyURL}}" target="_blank" rel="noopener">privacy policy</a>.</span></label>
+      {{if .SiteKey}}<div class="cf-turnstile" data-sitekey="{{.SiteKey}}" style="margin-top:12px"></div>{{end}}
+      <button class="primary" type="submit" id="submit" data-testid="signup-submit">Create my account</button>
+      <p class="error" id="error" role="alert" hidden data-testid="signup-error"></p>
+    </form>
+  </section>
+
+  <section id="done" hidden data-testid="signup-done">
+    <h2>You're in</h2>
+    <p>Your account for <strong id="done-business"></strong> is ready. Sign in with <strong id="done-email"></strong> to connect your WhatsApp number and your system.</p>
+    <a class="primary" href="{{.LoginURL}}" data-testid="signup-login">Sign in</a>
+  </section>
+
+  <p class="muted" style="margin-top:16px">Already have an account? <a href="{{.LoginURL}}">Sign in</a></p>
+  <footer>Weline is free software under the GNU AGPL-3.0. <a href="{{.SourceURL}}" data-testid="signup-source">Get the source code</a> of the version running here.</footer>
+</main>
+{{if .SiteKey}}<script nonce="{{.Nonce}}" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{{end}}
+<script nonce="{{.Nonce}}">
+(function () {
+  var api = {{.API}};
+  var form = document.getElementById('form');
+  var err = document.getElementById('error');
+  var btn = document.getElementById('submit');
+  function show(msg) { err.textContent = msg; err.hidden = !msg; }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    show('');
+    var tokenEl = document.querySelector('[name="cf-turnstile-response"]');
+    var body = {
+      business_name: form.business_name.value, full_name: form.full_name.value, email: form.email.value,
+      password: form.password.value, time_zone: form.time_zone.value,
+      accept_terms: document.getElementById('terms').checked, captcha_token: tokenEl ? tokenEl.value : ''
+    };
+    btn.disabled = true;
+    fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (!res.ok) { show(res.j.message || 'Something went wrong. Please try again.'); if (window.turnstile) window.turnstile.reset(); return; }
+        document.getElementById('done-business').textContent = body.business_name;
+        document.getElementById('done-email').textContent = res.j.data.email;
+        document.getElementById('form-section').hidden = true;
+        document.getElementById('done').hidden = false;
+      })
+      .catch(function () { show('Could not reach Weline. Check your connection and try again.'); })
+      .finally(function () { btn.disabled = false; });
+  });
+})();
+</script>
+</body>
+</html>
