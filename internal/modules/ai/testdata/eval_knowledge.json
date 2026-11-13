@@ -1,0 +1,10 @@
+[
+  {"q": "What are your opening hours?", "a": "We're open Monday to Friday 8am to 6pm and Saturday 8am to 12pm. We're closed on Sundays and public holidays."},
+  {"q": "Where are you and is there parking?", "a": "We're at 12 Harbour Street. Free parking is behind the building on Bay Lane, with two accessible spaces at the front."},
+  {"q": "How much does a consultation cost?", "a": "An initial consultation is $95 and a follow-up is $75. Private health rebates can be claimed on the spot with HICAPS."},
+  {"q": "Do I need a referral?", "a": "You don't need a referral to see a physiotherapist. A GP referral is needed for Medicare rebates under a care plan."},
+  {"q": "What should I bring to my first appointment?", "a": "Please bring your private health card, any scans or letters from your doctor, and wear comfortable clothes."},
+  {"q": "What is your cancellation policy?", "a": "Please give us 24 hours notice to cancel or move an appointment, otherwise a $40 fee may apply."},
+  {"q": "Do you treat children?", "a": "Yes, we see children from age 5 with a parent or guardian present."},
+  {"q": "Is the clinic wheelchair accessible?", "a": "Yes, there is step-free access from the front entrance and an accessible toilet."}
+]
