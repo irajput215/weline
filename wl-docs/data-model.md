@@ -361,6 +361,14 @@ not tables. Full design: [`modules/packs/design.md`](modules/packs/design.md).
 **Writes through other modules:** `templates` (drafts), `wl.ai_settings`, `wl.audiences_segments`,
 `wl.reminder_rules` (off).
 
+### timeline
+
+The contact timeline (step 7.5) has **no tables**: it reads, for one contact and organization, `messages` (type,
+status, time), `bulk_message_recipients` through `bulk_message_campaigns`, `wl.reminder_sends` with
+`wl.reminder_rules`, `wl.consent_events` (action, source, time), `wl.ads_arrivals` with `wl.ads_entrypoints`,
+`wl.ai_runs`, `agent_transfers` (status, source, time; never notes), and appointments through the connected system.
+See [`modules/timeline/design.md`](modules/timeline/design.md).
+
 ### operator
 
 The operator console (step 6.3) has **no tables**: it reads `organizations`, `wl.onboarding_state`,

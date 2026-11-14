@@ -1,0 +1,31 @@
+{
+  "section": "Contacts",
+  "nav": { "timeline": "Contact timeline" },
+  "title": "Contact timeline",
+  "subtitle": "Everything that happened with one contact: messages, broadcasts, bookings, reminders and consent",
+  "search": "Search by name or number",
+  "searchEmpty": "No contacts match.",
+  "pick": "Find a contact to see their timeline.",
+  "forbiddenTitle": "No access",
+  "forbiddenDescription": "You don't have permission to see contact timelines.",
+  "notFound": "That contact wasn't found.",
+  "empty": "Nothing has happened with this contact yet.",
+  "appointmentsUnavailable": "Appointments couldn't be read from your connected system just now; the rest is shown.",
+  "privacy": "Administrative history only: message contents are in Chat.",
+  "since": "Contact since {date}",
+  "openChat": "Open chat",
+  "more": "Show older",
+  "kinds": {
+    "message_in": "Message received",
+    "message_out": "Message sent",
+    "broadcast": "Broadcast",
+    "appointment": "Appointment",
+    "reminder": "Reminder",
+    "consent": "Consent",
+    "ad_arrival": "Came from an ad or link",
+    "ai": "AI agent",
+    "handover": "Passed to the team"
+  },
+  "consent": { "opt_in": "Opted in", "opt_out": "Opted out" },
+  "reply": { "confirmed": "replied Confirm", "cancelled": "replied Cancel", "reschedule": "asked to reschedule" }
+}
