@@ -10,6 +10,7 @@ Go (`internal/modules/packs/packs_test.go`, real Postgres):
 | Your own AI instructions and tone kept; emergency words merged without duplicates | `TestInstall_KeepsYourOwnAISetup` |
 | Recommended first for the onboarding vertical; another organization sees no installs | `TestList_RecommendedAndIsolated` |
 | Routes refuse without permission; browse vs install; 404 | `TestHandlers` |
+| Real estate pack installs with nothing failing (segments valid), AI guardrails, recommended for real estate, inspection reminder uses property and time | `TestInstall_RealEstatePack` |
 
 Frontend: `stores/packs.spec.ts`. Journey (`e2e/packs.e2e.ts`): preview and install the clinic pack, install again
 changes nothing; reception has no page.

@@ -2,7 +2,7 @@
 import { api } from '@/services/api'
 
 export type StepKey = 'business' | 'whatsapp' | 'system' | 'vertical' | 'team' | 'first_message'
-export const verticals = ['allied_health', 'dental', 'medical', 'beauty', 'fitness', 'other'] as const
+export const verticals = ['allied_health', 'dental', 'medical', 'beauty', 'fitness', 'real_estate', 'other'] as const
 export type Vertical = (typeof verticals)[number]
 
 export interface Step {

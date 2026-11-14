@@ -23,7 +23,7 @@ import (
 )
 
 // Verticals a business can choose (R5). Phase 7 adds each pack's content.
-var Verticals = []string{"allied_health", "dental", "medical", "beauty", "fitness", "other"}
+var Verticals = []string{"allied_health", "dental", "medical", "beauty", "fitness", "real_estate", "other"}
 
 const minPassword = 12 // upstream's rule for sign-up and login
 

@@ -1,5 +1,12 @@
 # Industry packs: release notes
 
+## Step 7.4: Real estate
+
+- New **Real estate** pack and onboarding type: inspection reminders (two hours before) and follow-ups, new-listing
+  broadcasts to opted-in buyers, maintenance acknowledgements for rentals, and AI instructions that never go beyond the
+  advertised price guide (underquoting) or give legal or financial advice. How to set up inspections:
+  [real-estate.md](real-estate.md).
+
 ## Step 7.1: industry packs (first release)
 
 - **Get started → Industry packs:** Clinics, Beauty and wellness, Fitness and studios, and Small business. The one for

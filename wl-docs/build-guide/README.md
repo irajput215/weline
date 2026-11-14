@@ -77,4 +77,4 @@ Tips that save a lot of pain:
 * [ ] [Phase 4 AI agent](phase-4-ai-agent.md) (built 2026-11-13; real-model evals and the Cliniko staging check wait on keys)
 * [ ] [Phase 5 Reminders and recalls](phase-5-reminders-recalls.md) (built 2026-11-13; the gate waits on the Cliniko trial, staging and approved templates)
 * [ ] [Phase 6 Multi-business SaaS](phase-6-saas.md) (6.0 ADR-005 proposed and 6.1 onboarding, 6.2 billing and 6.3 operator console built 2026-11-13; the gate waits on Stripe, Turnstile, Meta Embedded Signup and staging; built on the ADR's recommendation)
-* [ ] [Phase 7 More connectors and vertical packs](phase-7-connectors-verticals.md) (7.1 packs built 2026-11-13; 7.2 calendar connectors built 2026-11-14: Google Calendar, Microsoft 365, Calendly (by link); live checks wait on accounts)
+* [ ] [Phase 7 More connectors and vertical packs](phase-7-connectors-verticals.md) (7.1 packs built 2026-11-13; 7.2 calendar connectors built 2026-11-14: Google Calendar, Microsoft 365, Calendly (by link); live checks wait on accounts; 7.4 real estate spike, onboarding type and pack built 2026-11-14, a CRM connector waits on a pilot agency)
