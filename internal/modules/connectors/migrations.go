@@ -71,4 +71,22 @@ DROP TABLE wl.connector_accounts;
 `).Error
 		},
 	},
+	{
+		// A resource in a shared system (a Google calendar shared with Weline's
+		// service account) belongs to one organization (google-calendar.md).
+		ID: "0002_create_connector_claims",
+		Up: func(tx *gorm.DB) error {
+			return tx.Exec(`
+CREATE TABLE wl.connector_claims (
+    provider        varchar(20) NOT NULL,
+    key_hash        varchar(64) NOT NULL CHECK (key_hash ~ '^[0-9a-f]{64}$'),
+    organization_id uuid        NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY (provider, key_hash)
+);
+CREATE INDEX idx_connector_claims_org ON wl.connector_claims (organization_id);
+`).Error
+		},
+		Down: func(tx *gorm.DB) error { return tx.Exec(`DROP TABLE IF EXISTS wl.connector_claims`).Error },
+	},
 }

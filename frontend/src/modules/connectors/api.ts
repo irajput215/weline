@@ -17,6 +17,7 @@ export interface ProviderInfo {
   name: string
   available: boolean
   fields: { name: string; secret: boolean }[]
+  share_with?: string // Google Calendar: the address to share the calendar with
 }
 
 export interface Sync {
