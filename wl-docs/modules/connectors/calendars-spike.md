@@ -43,11 +43,11 @@ calendar for **busy times and bookings**.
 
 ## Decision
 
-1. **Build Google Calendar now** with the service-account model (no Google app review, works for most small businesses).
+1. **Build Google Calendar now** (built 2026-11-14, [`google-calendar.md`](google-calendar.md)) with the service-account model (no Google app review, works for most small businesses).
    Weline's catalog and opening hours give candidate times; the calendar's busy times are removed; bookings are events
    tagged with the Weline contact; reminders and recalls read those events.
-2. **Microsoft 365 next**, once an Entra app registration exists (M5). Same shape: catalog in Weline, `getSchedule`
-   for busy times, events for bookings.
+2. **Microsoft 365 next** (built 2026-11-14, [`microsoft-365.md`](microsoft-365.md)): same shape, plus Weline's admin
+   consent link so a tenant belongs to the organization that approved it. Going live needs the Entra app (M5).
 3. **Calendly after confirming C3.** With the Scheduling API, a full provider; without it, a read-only provider for
    reminders plus "send the booking link" in the chatbot.
 

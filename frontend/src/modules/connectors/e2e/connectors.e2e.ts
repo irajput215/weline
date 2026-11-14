@@ -25,6 +25,9 @@ test.describe.serial('connectors', () => {
     // Google Calendar needs Weline's service account, which CI doesn't have.
     await expect(page.getByTestId('connectors-provider-google_calendar')).toContainText('Google Calendar')
     await expect(page.getByTestId('connectors-choose-google_calendar')).toHaveCount(0)
+    // Microsoft 365 likewise needs Weline's Entra app.
+    await expect(page.getByTestId('connectors-provider-microsoft_365')).toContainText('Microsoft 365')
+    await expect(page.getByTestId('connectors-choose-microsoft_365')).toHaveCount(0)
 
     // Cliniko can be chosen; the key is checked before anything is saved. CI has
     // no encryption key, contact email or Cliniko, so it's refused and says why.
@@ -41,6 +44,17 @@ test.describe.serial('connectors', () => {
     expect(res.account.provider).toBe('builtin')
     expect(JSON.stringify(res)).not.toContain('credentials":"')
     await api.dispose()
+  })
+
+  test('coming back from Microsoft with a refused or taken approval says why', async ({ page }) => {
+    await login(page, owner)
+    await page.goto('/x/connectors?microsoft=taken')
+    await expect(page.getByTestId('connectors-consent-result')).toContainText('already connected to another Weline account')
+    // The return route itself refuses a forged or missing state.
+    const res = await page.request.get('/x/connectors/microsoft/consent?admin_consent=True&tenant=11111111-2222-3333-4444-555555555555&state=forged',
+      { maxRedirects: 0 })
+    expect(res.status()).toBe(302)
+    expect(res.headers().location).toContain('microsoft=expired')
   })
 
   test('reception has no Connected system page', async ({ page }) => {

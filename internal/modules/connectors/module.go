@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/shridarpatil/whatomate/internal/config"
 	"github.com/shridarpatil/whatomate/internal/handlers"
 	"github.com/shridarpatil/whatomate/internal/modules/booking"
 	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
+	"github.com/shridarpatil/whatomate/internal/modules/hooks"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/zerodha/fastglue"
 )
@@ -46,6 +48,7 @@ func (m *Module) svc() *Service {
 		m.service = NewService(m.app.DB, key, m.app.Log, BuiltInFactory(bk))
 		m.service.factories[provider.Cliniko] = m.service.ClinikoFactory(ClinikoOptionsFromEnv())
 		m.service.factories[provider.GoogleCalendar] = GoogleCalendarFactory(bk, GoogleOptionsFromEnv())
+		m.service.factories[provider.Microsoft365] = m.service.MicrosoftFactory(bk, MicrosoftOptionsFromEnv(os.Getenv(hooks.PublicURLEnv)))
 	}
 	return m.service
 }
@@ -85,6 +88,11 @@ func (m *Module) Register(g *fastglue.Fastglue) {
 			g.PUT(rt.path, rt.handler)
 		}
 	}
+	basePath := ""
+	if m.cfg != nil {
+		basePath = strings.TrimSuffix(m.cfg.Server.BasePath, "/")
+	}
+	g.GET(consentPath, consentReturn(m.svc(), basePath))
 	if os.Getenv(ClinikoContactEmailEnv) == "" {
 		m.app.Log.Warn("connectors: " + ClinikoContactEmailEnv + " not set; Cliniko can't be connected")
 	}

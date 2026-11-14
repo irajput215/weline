@@ -13,12 +13,14 @@
   "providers": {
     "builtin": "Weline's built-in booking",
     "cliniko": "Cliniko",
-    "google_calendar": "Google Calendar"
+    "google_calendar": "Google Calendar",
+    "microsoft_365": "Microsoft 365 (Outlook)"
   },
   "providerDescriptions": {
     "builtin": "Appointments are kept in Weline. Set up your clinic in Clinic and Bookings.",
     "cliniko": "Bookings go straight into your Cliniko diary.",
-    "google_calendar": "For businesses without a booking system: your services, staff and hours are set up in Weline, busy times come from your Google Calendar, and bookings are added to it."
+    "google_calendar": "For businesses without a booking system: your services, staff and hours are set up in Weline, busy times come from your Google Calendar, and bookings are added to it.",
+    "microsoft_365": "The same with an Outlook calendar in Microsoft 365 (work or school accounts): busy times come from the mailbox's calendar and bookings are added to it."
   },
   "statuses": {
     "connected": "Connected",
@@ -30,7 +32,18 @@
   "choose": "Use this",
   "fields": {
     "api_key": "API key",
-    "calendar_id": "Calendar ID (Google Calendar → Settings → Integrate calendar)"
+    "calendar_id": "Calendar ID (Google Calendar → Settings → Integrate calendar)",
+    "tenant_id": "Microsoft 365 tenant ID (filled in after approving)",
+    "mailbox": "Mailbox whose calendar Weline books into (e.g. bookings@yourbusiness.com.au)"
+  },
+  "consent": {
+    "help": "Your Microsoft 365 admin approves Weline once. You'll come back here with your tenant filled in.",
+    "button": "Approve Weline in Microsoft 365",
+    "approved": "Approved. Now enter the mailbox and test.",
+    "refused": "Weline wasn't approved in Microsoft 365. Ask your Microsoft 365 admin to approve it.",
+    "expired": "That approval link expired or wasn't valid. Start again with Approve Weline in Microsoft 365.",
+    "taken": "This Microsoft 365 tenant is already connected to another Weline account. Contact Weline support.",
+    "failed": "Couldn't start the Microsoft 365 approval."
   },
   "shareWith": "First share your calendar with Weline, with \"Make changes to events\":",
   "secretSet": "Saved. Leave empty to keep it.",

@@ -7,6 +7,9 @@
   times come from your calendar (including things you add yourself), and WhatsApp bookings are added to it as events.
   Moving, cancelling, reminders and recalls work as with the other systems.
 - Needs Weline's Google service account to be set up on the server; until then it shows as coming soon.
+- **Microsoft 365 (Outlook)** works the same way for businesses on Microsoft 365: your admin clicks **Approve Weline in
+  Microsoft 365** once, you come back with your tenant filled in, enter the mailbox whose calendar to use, and test.
+  Needs Weline's Microsoft app on the server; until then it shows as coming soon.
 
 ## 3.2: Cliniko
 
