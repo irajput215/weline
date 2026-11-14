@@ -10,6 +10,10 @@
 - **Microsoft 365 (Outlook)** works the same way for businesses on Microsoft 365: your admin clicks **Approve Weline in
   Microsoft 365** once, you come back with your tenant filled in, enter the mailbox whose calendar to use, and test.
   Needs Weline's Microsoft app on the server; until then it shows as coming soon.
+- **Calendly**: paste a personal access token. Patients who ask to book or move on WhatsApp get a Calendly link; Weline
+  reads your Calendly bookings for reminders and recalls (turn on Calendly's text reminders so patients give their
+  mobile) and can cancel them.
+- Fixed: reminders for calendar appointments with long ids (Google, Microsoft) couldn't be saved.
 
 ## 3.2: Cliniko
 

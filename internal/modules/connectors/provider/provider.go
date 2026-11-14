@@ -21,6 +21,8 @@ const (
 	GoogleCalendar = "google_calendar"
 	// Microsoft365 is Outlook calendars in Microsoft 365 with Weline's catalog (step 7.2).
 	Microsoft365 = "microsoft_365"
+	// Calendly books on Calendly's own page; Weline sends links (step 7.2).
+	Calendly = "calendly"
 )
 
 // Provider is a diary bound to one organization: the resolver builds it with
@@ -69,6 +71,14 @@ type Consumer interface {
 // patient (Weline's built-in diary has it; Cliniko doesn't).
 type Confirmer interface {
 	Confirm(ctx context.Context, id string) error
+}
+
+// LinkBooker is an optional ability: bookings and reschedules happen on the
+// provider's own page (Calendly), so Weline sends a link instead of offering
+// times. Book and Reschedule return ErrNotSupported for such providers.
+type LinkBooker interface {
+	BookingLink(ctx context.Context, serviceID string) (string, error)
+	RescheduleLink(ctx context.Context, appointmentID string) (string, error)
 }
 
 // Location is a site the business books at.

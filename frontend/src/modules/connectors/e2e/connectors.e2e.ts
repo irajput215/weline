@@ -28,6 +28,10 @@ test.describe.serial('connectors', () => {
     // Microsoft 365 likewise needs Weline's Entra app.
     await expect(page.getByTestId('connectors-provider-microsoft_365')).toContainText('Microsoft 365')
     await expect(page.getByTestId('connectors-choose-microsoft_365')).toHaveCount(0)
+    // Calendly needs only the business's token: it can be chosen, and a bad token is refused.
+    await page.getByTestId('connectors-choose-calendly').click()
+    await expect(page.getByTestId('connectors-field-api_token')).toBeVisible()
+    await page.reload()
 
     // Cliniko can be chosen; the key is checked before anything is saved. CI has
     // no encryption key, contact email or Cliniko, so it's refused and says why.

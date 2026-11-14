@@ -48,6 +48,7 @@ func (m *Module) svc() *Service {
 		m.service = NewService(m.app.DB, key, m.app.Log, BuiltInFactory(bk))
 		m.service.factories[provider.Cliniko] = m.service.ClinikoFactory(ClinikoOptionsFromEnv())
 		m.service.factories[provider.GoogleCalendar] = GoogleCalendarFactory(bk, GoogleOptionsFromEnv())
+		m.service.factories[provider.Calendly] = CalendlyFactory(CalendlyOptions{})
 		m.service.factories[provider.Microsoft365] = m.service.MicrosoftFactory(bk, MicrosoftOptionsFromEnv(os.Getenv(hooks.PublicURLEnv)))
 	}
 	return m.service

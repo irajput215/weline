@@ -58,4 +58,15 @@ CREATE INDEX idx_reminder_sends_org_contact ON wl.reminder_sends (organization_i
 			return tx.Exec(`DROP TABLE wl.reminder_sends; DROP TABLE wl.reminder_rules;`).Error
 		},
 	},
+	{
+		// Calendar providers' appointment ids ("event@calendar", "mailbox~id")
+		// can be longer than 64 characters.
+		ID: "0002_widen_target_id",
+		Up: func(tx *gorm.DB) error {
+			return tx.Exec(`ALTER TABLE wl.reminder_sends ALTER COLUMN target_id TYPE varchar(512)`).Error
+		},
+		Down: func(tx *gorm.DB) error {
+			return tx.Exec(`ALTER TABLE wl.reminder_sends ALTER COLUMN target_id TYPE varchar(64) USING left(target_id, 64)`).Error
+		},
+	},
 }

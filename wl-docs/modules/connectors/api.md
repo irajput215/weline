@@ -21,7 +21,8 @@ No row yet → `provider: "builtin"`, `status: "connected"`.
 
 ### PUT /api/x/connectors/account
 Permission: wl_connectors_settings:update
-Request: `{ "provider": "builtin" | "cliniko" | "google_calendar" | "microsoft_365", "credentials": { … }?, "settings": { … }? }`
+Request: `{ "provider": "builtin" | "cliniko" | "google_calendar" | "microsoft_365" | "calendly", "credentials": { … }?, "settings": { … }? }`
+- `calendly`: credentials `{ "api_token": "…" }` (a personal access token); no settings.
 - `google_calendar` settings: `{ "practitioner_calendars": { "<practitioner id>": "<calendar id>" } }` (optional).
 - `microsoft_365`: the tenant must have been approved through this organization's consent link first; settings
   `{ "practitioner_mailboxes": { "<practitioner id>": "<mailbox>" } }` (optional).
