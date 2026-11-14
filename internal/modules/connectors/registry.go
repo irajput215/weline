@@ -22,6 +22,7 @@ type Factory struct {
 	Name      string
 	Available bool    // false: shown as coming soon
 	Fields    []Field // credentials asked for on the settings screen
+	ShareWith string  // shown on the settings screen: who to share the calendar with
 	// Build returns the provider for an organization.
 	Build func(orgID uuid.UUID, credentials map[string]string, settings json.RawMessage) (provider.Provider, error)
 	// Test checks credentials (a cheap call) and returns a message to show.

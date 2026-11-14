@@ -17,6 +17,8 @@ import (
 const (
 	BuiltIn = "builtin"
 	Cliniko = "cliniko"
+	// GoogleCalendar is Google Calendar with Weline's own catalog (step 7.2).
+	GoogleCalendar = "google_calendar"
 )
 
 // Provider is a diary bound to one organization: the resolver builds it with

@@ -130,6 +130,7 @@ type ProviderInfo struct {
 	Name      string  `json:"name"`
 	Available bool    `json:"available"`
 	Fields    []Field `json:"fields"`
+	ShareWith string  `json:"share_with,omitempty"` // an address the business shares its calendar with (Google)
 }
 
 // Sync is one log entry.
@@ -186,7 +187,7 @@ func (s *Service) Providers() []ProviderInfo {
 		if fields == nil {
 			fields = []Field{}
 		}
-		out = append(out, ProviderInfo{Name: f.Name, Available: f.Available, Fields: fields})
+		out = append(out, ProviderInfo{Name: f.Name, Available: f.Available, Fields: fields, ShareWith: f.ShareWith})
 	}
 	for _, f := range comingSoon {
 		if _, ok := s.factories[f.Name]; !ok {

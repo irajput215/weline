@@ -45,6 +45,7 @@ func (m *Module) svc() *Service {
 		bk := booking.NewService(m.app.DB).WithRedis(m.app.Redis)
 		m.service = NewService(m.app.DB, key, m.app.Log, BuiltInFactory(bk))
 		m.service.factories[provider.Cliniko] = m.service.ClinikoFactory(ClinikoOptionsFromEnv())
+		m.service.factories[provider.GoogleCalendar] = GoogleCalendarFactory(bk, GoogleOptionsFromEnv())
 	}
 	return m.service
 }
