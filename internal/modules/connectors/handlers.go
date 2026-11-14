@@ -1,8 +1,13 @@
 package connectors
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
+	"net/url"
+	"strings"
 
+	"github.com/shridarpatil/whatomate/internal/modules/audit"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"github.com/zerodha/fastglue"
 )
@@ -25,6 +30,7 @@ func routes(auth kit.Auth, svc *Service) []route {
 		{"PUT", base + "/account", g(kit.ActionUpdate, h.save)},
 		{"POST", base + "/account/test", g(kit.ActionUpdate, h.test)},
 		{"GET", base + "/syncs", g(kit.ActionRead, h.syncs)},
+		{"GET", base + "/microsoft/consent-url", g(kit.ActionUpdate, h.consentURL)},
 	}
 }
 
@@ -77,4 +83,45 @@ func (h *handler) syncs(r *fastglue.Request, c kit.Caller) error {
 		return kit.SendError(r, err)
 	}
 	return r.SendEnvelope(map[string]any{"syncs": out})
+}
+
+func (h *handler) consentURL(r *fastglue.Request, c kit.Caller) error {
+	u, err := h.svc.ConsentURL(c.OrgID)
+	if err != nil {
+		return kit.SendError(r, err)
+	}
+	audit.Log(context.Background(), h.svc.db, h.svc.log, c.OrgID, audit.Entry{Actor: &c.UserID, Module: Name,
+		Action: "microsoft_consent_started", Entity: "connection"})
+	return r.SendEnvelope(map[string]string{"url": u})
+}
+
+// consentReturn is where Microsoft sends the admin after approving (or not):
+// no Weline login is needed, the signed state names the organization.
+func consentReturn(svc *Service, basePath string) fastglue.FastRequestHandler {
+	return func(r *fastglue.Request) error {
+		q := r.RequestCtx.QueryArgs()
+		back := basePath + "/x/connectors?microsoft="
+		result := "approved"
+		if string(q.Peek("error")) != "" || !strings.EqualFold(string(q.Peek("admin_consent")), "true") {
+			result = "refused"
+		} else {
+			ctx, cancel := kit.Context()
+			defer cancel()
+			tenant := string(q.Peek("tenant"))
+			orgID, err := svc.CompleteConsent(ctx, string(q.Peek("state")), tenant)
+			switch {
+			case errors.Is(err, kit.ErrConflict):
+				result = "taken"
+			case err != nil:
+				result = "expired"
+			default:
+				audit.Log(ctx, svc.db, svc.log, orgID, audit.Entry{Module: Name, Action: "microsoft_tenant_approved", Entity: "connection"})
+				back += result + "&tenant=" + url.QueryEscape(tenant)
+				r.RequestCtx.Redirect(back, 302)
+				return nil
+			}
+		}
+		r.RequestCtx.Redirect(back+result, 302)
+		return nil
+	}
 }

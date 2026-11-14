@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/shridarpatil/whatomate/internal/crypto"
 	"github.com/shridarpatil/whatomate/internal/modules/audit"
+	"github.com/shridarpatil/whatomate/internal/modules/connectors/msgraph"
 	"github.com/shridarpatil/whatomate/internal/modules/connectors/provider"
 	"github.com/shridarpatil/whatomate/internal/modules/kit"
 	"gorm.io/gorm"
@@ -44,11 +45,13 @@ func (nopLogger) Error(string, ...any) {}
 // Service holds the connector rules. Every method takes the organization first
 // and filters every query by it.
 type Service struct {
-	db        *gorm.DB
-	key       string // Weline's encryption_key; credentials aren't stored without it
-	factories factories
-	log       Logger
-	now       func() time.Time
+	db         *gorm.DB
+	key        string          // Weline's encryption_key; credentials aren't stored without it
+	ms         *msgraph.Client // Weline's Microsoft app, when configured
+	msRedirect string          // where Microsoft returns after admin consent
+	factories  factories
+	log        Logger
+	now        func() time.Time
 }
 
 // NewService returns the connectors service with the given providers.
@@ -131,6 +134,7 @@ type ProviderInfo struct {
 	Available bool    `json:"available"`
 	Fields    []Field `json:"fields"`
 	ShareWith string  `json:"share_with,omitempty"` // an address the business shares its calendar with (Google)
+	Consent   bool    `json:"consent,omitempty"`    // offers "Approve Weline" (Microsoft 365)
 }
 
 // Sync is one log entry.
@@ -187,7 +191,7 @@ func (s *Service) Providers() []ProviderInfo {
 		if fields == nil {
 			fields = []Field{}
 		}
-		out = append(out, ProviderInfo{Name: f.Name, Available: f.Available, Fields: fields, ShareWith: f.ShareWith})
+		out = append(out, ProviderInfo{Name: f.Name, Available: f.Available, Fields: fields, ShareWith: f.ShareWith, Consent: f.Consent})
 	}
 	for _, f := range comingSoon {
 		if _, ok := s.factories[f.Name]; !ok {
@@ -262,6 +266,11 @@ func (s *Service) Save(ctx context.Context, orgID, userID uuid.UUID, in SaveInpu
 		}
 		if s.key == "" {
 			return nil, kit.NotReady("credentials can't be stored safely: Weline's encryption key isn't set (WHATOMATE_APP__ENCRYPTION_KEY)")
+		}
+		if f.precheck != nil {
+			if err := f.precheck(ctx, orgID, creds); err != nil {
+				return nil, err
+			}
 		}
 		msg, err := s.test(ctx, orgID, f, creds, settings)
 		if err != nil {

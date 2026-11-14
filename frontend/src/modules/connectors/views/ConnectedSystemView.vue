@@ -14,7 +14,8 @@ import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import type { ProviderInfo } from '../api'
+import { useRoute } from 'vue-router'
+import { connectorsApi, type ProviderInfo } from '../api'
 import { useConnectorsStore } from '../stores/connectors'
 
 const { t, te } = useI18n()
@@ -55,7 +56,31 @@ async function submit(p: ProviderInfo) {
     toast.success(t('wl.connectors.saved'))
   }
 }
-onMounted(store.load)
+const route = useRoute()
+const consentResult = ref<string>('')
+const approving = ref(false)
+async function approve() {
+  approving.value = true
+  try {
+    window.location.assign((await connectorsApi.consentUrl()).url)
+  } catch (err) {
+    consentResult.value = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || t('wl.connectors.consent.failed')
+  } finally {
+    approving.value = false
+  }
+}
+onMounted(() => {
+  void store.load()
+  // Back from Microsoft's approval page.
+  const r = route.query.microsoft as string | undefined
+  if (r === 'approved') {
+    chosen.value = 'microsoft_365'
+    creds.tenant_id = String(route.query.tenant ?? '')
+    toast.success(t('wl.connectors.consent.approved'))
+  } else if (r) {
+    consentResult.value = t(`wl.connectors.consent.${['refused', 'expired', 'taken'].includes(r) ? r : 'failed'}`)
+  }
+})
 </script>
 
 <template>
@@ -132,6 +157,11 @@ onMounted(store.load)
                     {{ t('wl.connectors.choose') }}
                   </Button>
                   <form v-if="canEdit && chosen === p.name && p.fields.length" class="space-y-3" @submit.prevent="submit(p)">
+                    <div v-if="p.consent" class="text-sm rounded-md border border-border p-2 space-y-2" data-testid="connectors-consent">
+                      <p>{{ t('wl.connectors.consent.help') }}</p>
+                      <Button type="button" variant="outline" size="sm" :disabled="approving" data-testid="connectors-approve" @click="approve">
+                        {{ t('wl.connectors.consent.button') }}</Button>
+                    </div>
                     <p v-if="p.share_with" class="text-sm rounded-md border border-border p-2" data-testid="connectors-share-with">
                       {{ t('wl.connectors.shareWith') }} <code class="select-all">{{ p.share_with }}</code></p>
                     <div v-for="fl in p.fields" :key="fl.name" class="space-y-1">
@@ -150,6 +180,7 @@ onMounted(store.load)
               </Card>
             </div>
             <p v-if="errorText" class="text-sm text-destructive" role="alert" data-testid="connectors-error">{{ errorText }}</p>
+            <p v-if="consentResult" class="text-sm text-destructive" role="alert" data-testid="connectors-consent-result">{{ consentResult }}</p>
             <p v-if="store.testMessage" :class="store.testMessage.ok ? 'text-sm' : 'text-sm text-destructive'" data-testid="connectors-test-result">
               {{ store.testMessage.message }}
             </p>

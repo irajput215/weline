@@ -19,6 +19,8 @@ const (
 	Cliniko = "cliniko"
 	// GoogleCalendar is Google Calendar with Weline's own catalog (step 7.2).
 	GoogleCalendar = "google_calendar"
+	// Microsoft365 is Outlook calendars in Microsoft 365 with Weline's catalog (step 7.2).
+	Microsoft365 = "microsoft_365"
 )
 
 // Provider is a diary bound to one organization: the resolver builds it with

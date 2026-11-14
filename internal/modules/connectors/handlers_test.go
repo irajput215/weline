@@ -83,7 +83,7 @@ func TestHandlers_EveryRouteChecksPermission(t *testing.T) {
 		r = run(t, admin, f.svc, rt.method, rt.path, nil, uuid.Nil, uuid.Nil)
 		assert.Equal(t, http.StatusUnauthorized, r.code, "%s %s without a user", rt.method, rt.path)
 	}
-	assert.Len(t, routes(nobody, f.svc), 4, "api.md lists 4 routes")
+	assert.Len(t, routes(nobody, f.svc), 5, "api.md lists 5 routes")
 }
 
 func TestHandlers_Flow(t *testing.T) {

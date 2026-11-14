@@ -18,6 +18,7 @@ export interface ProviderInfo {
   available: boolean
   fields: { name: string; secret: boolean }[]
   share_with?: string // Google Calendar: the address to share the calendar with
+  consent?: boolean // Microsoft 365: offer "Approve Weline in Microsoft 365"
 }
 
 export interface Sync {
@@ -39,5 +40,6 @@ export const connectorsApi = {
   save: (body: { provider: string; credentials?: Record<string, string> }) =>
     data<{ account: Account }>(api.put(`${base}/account`, body)),
   test: () => data<{ ok: boolean; message: string; account: Account }>(api.post(`${base}/account/test`)),
-  syncs: () => data<{ syncs: Sync[] }>(api.get(`${base}/syncs`))
+  syncs: () => data<{ syncs: Sync[] }>(api.get(`${base}/syncs`)),
+  consentUrl: () => data<{ url: string }>(api.get(`${base}/microsoft/consent-url`))
 }
