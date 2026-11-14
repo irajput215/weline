@@ -31,6 +31,7 @@ const (
 	OutcomeIgnored     = "ignored"
 	OutcomeError       = "error"
 	OutcomeLimit       = "limit_reached" // the plan's monthly AI runs are used up
+	OutcomeLink        = "sent_link"     // the system books on its own page (Calendly): a link was sent
 
 	pendingTTL = 30 * time.Minute
 	maxOffer   = 5
@@ -426,6 +427,9 @@ func (s *Service) chooseLocation(ctx context.Context, orgID, contactID uuid.UUID
 
 func (s *Service) offerTimes(ctx context.Context, orgID, contactID uuid.UUID, st Settings, p provider.Provider, serviceID string,
 	loc provider.Location, appointmentID string, r *Result) (*Result, error) {
+	if lb, ok := p.(provider.LinkBooker); ok {
+		return s.sendLink(ctx, orgID, contactID, st, lb, serviceID, appointmentID, r)
+	}
 	free, err := p.FindFreeTimes(ctx, provider.FreeTimeQuery{ServiceID: serviceID, LocationID: loc.ID, Patient: true, Limit: maxOffer})
 	if err != nil || len(free.Times) == 0 {
 		r.Reply = noTimesReply
@@ -446,6 +450,29 @@ func (s *Service) offerTimes(ctx context.Context, orgID, contactID uuid.UUID, st
 	}
 	r.Reply, r.Outcome = numbered(intro, items), OutcomeOffered
 	return r, s.savePending(ctx, orgID, contactID, &pending{Kind: kind, ServiceID: serviceID, LocationID: loc.ID, AppointmentID: appointmentID, Items: items})
+}
+
+// sendLink answers with the system's own booking or reschedule link.
+func (s *Service) sendLink(ctx context.Context, orgID, contactID uuid.UUID, st Settings, lb provider.LinkBooker, serviceID,
+	appointmentID string, r *Result) (*Result, error) {
+	var link string
+	var err error
+	if appointmentID == "" {
+		link, err = lb.BookingLink(ctx, serviceID)
+	} else {
+		link, err = lb.RescheduleLink(ctx, appointmentID)
+	}
+	if err != nil || !strings.HasPrefix(link, "https://") {
+		r.Reply = handoverReply
+		return r, s.handOver(ctx, orgID, contactID, st, r, "AI: couldn't get a booking link")
+	}
+	if appointmentID == "" {
+		r.Reply = "You can choose a time and book here: " + link
+	} else {
+		r.Reply = "You can pick a new time here: " + link
+	}
+	r.Outcome = OutcomeLink
+	return r, nil
 }
 
 // startChange finds the contact's next appointment to move or cancel.

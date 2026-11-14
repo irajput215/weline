@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -439,4 +440,15 @@ func TestHandlers(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, code, "a reminder rule isn't a recall")
 	code, _ = call(all, "GET", base+"/sends", "", nil, f.org)
 	assert.Equal(t, 200, code)
+}
+
+func TestSweep_LongAppointmentIDs(t *testing.T) {
+	f := newFixture(t)
+	f.rule(t, reminder24h())
+	// Calendar providers' ids ("event@calendar", "mailbox~id") can be long.
+	long := strings.Repeat("A", 140) + "~bookings@harbourphysio.com.au"
+	f.appt(long, "c1", monday10.Add(2*time.Hour))
+	n, err := f.svc.SweepOrg(ctx, f.org)
+	require.NoError(t, err)
+	assert.Equal(t, 1, n)
 }

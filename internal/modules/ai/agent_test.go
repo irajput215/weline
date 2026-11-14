@@ -271,3 +271,38 @@ type noRuns struct{}
 func (noRuns) Allow(context.Context, uuid.UUID, string, int) error {
 	return kit.LimitReached("no AI runs left")
 }
+
+// linkDiary books on its own page (Calendly): BookingLink instead of times.
+type linkDiary struct {
+	*stubDiary
+	link string
+}
+
+func (d *linkDiary) BookingLink(_ context.Context, serviceID string) (string, error) {
+	if d.link == "" {
+		return "", provider.ErrUnavailable
+	}
+	return d.link + "?service=" + serviceID, nil
+}
+func (d *linkDiary) RescheduleLink(context.Context, string) (string, error) {
+	return d.link + "/reschedule", nil
+}
+
+func TestPipeline_LinkBookingSystemsGetALink(t *testing.T) {
+	f := newFixture(t)
+	f.enable(t)
+	ld := &linkDiary{stubDiary: f.diary, link: "https://calendly.com/d/abc"}
+	f.svc.providers = provider.ResolverFunc(func(context.Context, uuid.UUID) (provider.Provider, error) { return ld, nil })
+	f.llm.intents["book me in for a follow-up"] = `{"intent":"book","confidence":0.9,"service":"Follow-up"}`
+	r, err := f.svc.Run(ctx, f.org, f.contact, nil, "book me in for a follow-up")
+	require.NoError(t, err)
+	assert.Equal(t, OutcomeLink, r.Outcome)
+	assert.Contains(t, r.Reply, "https://calendly.com/d/abc?service=s2")
+	assert.Empty(t, f.diary.booked, "nothing booked by Weline: the patient books on the link")
+
+	ld.link = "" // the system couldn't make a link: a person takes over
+	f.llm.intents["book me in for a follow-up please"] = `{"intent":"book","confidence":0.9,"service":"Follow-up"}`
+	r, err = f.svc.Run(ctx, f.org, f.contact, nil, "book me in for a follow-up please")
+	require.NoError(t, err)
+	assert.True(t, r.HandedOver)
+}

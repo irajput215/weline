@@ -14,13 +14,15 @@
     "builtin": "Weline's built-in booking",
     "cliniko": "Cliniko",
     "google_calendar": "Google Calendar",
-    "microsoft_365": "Microsoft 365 (Outlook)"
+    "microsoft_365": "Microsoft 365 (Outlook)",
+    "calendly": "Calendly"
   },
   "providerDescriptions": {
     "builtin": "Appointments are kept in Weline. Set up your clinic in Clinic and Bookings.",
     "cliniko": "Bookings go straight into your Cliniko diary.",
     "google_calendar": "For businesses without a booking system: your services, staff and hours are set up in Weline, busy times come from your Google Calendar, and bookings are added to it.",
-    "microsoft_365": "The same with an Outlook calendar in Microsoft 365 (work or school accounts): busy times come from the mailbox's calendar and bookings are added to it."
+    "microsoft_365": "The same with an Outlook calendar in Microsoft 365 (work or school accounts): busy times come from the mailbox's calendar and bookings are added to it.",
+    "calendly": "If you take bookings with Calendly: patients get a Calendly link to book or move, and Weline reads your Calendly bookings for reminders (ask for the mobile number as Calendly's text reminder) and can cancel them."
   },
   "statuses": {
     "connected": "Connected",
@@ -34,7 +36,8 @@
     "api_key": "API key",
     "calendar_id": "Calendar ID (Google Calendar → Settings → Integrate calendar)",
     "tenant_id": "Microsoft 365 tenant ID (filled in after approving)",
-    "mailbox": "Mailbox whose calendar Weline books into (e.g. bookings@yourbusiness.com.au)"
+    "mailbox": "Mailbox whose calendar Weline books into (e.g. bookings@yourbusiness.com.au)",
+    "api_token": "Personal access token (Calendly → Integrations → API and webhooks)"
   },
   "consent": {
     "help": "Your Microsoft 365 admin approves Weline once. You'll come back here with your tenant filled in.",

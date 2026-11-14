@@ -45,7 +45,9 @@ Status: **built on the defaults below; open questions still to confirm.**
 - R7 **Only inside the 24-hour window:** the agent only replies to a message the patient just sent, so it's always
   inside the window; it never starts conversations or sends templates. Replies are service messages, not marketing.
 - R8 **Runs** (`wl.ai_runs`): every handled message with intent, confidence, outcome (`answered`, `offered_times`,
-  `booked`, `rescheduled`, `cancelled`, `handed_over`, `emergency`, `ignored`, `error`), sources, prompt version,
+  `booked`, `rescheduled`, `cancelled`, `handed_over`, `emergency`, `ignored`, `error`, `limit_reached` (6.2),
+  `sent_link` (7.2: systems that book on their own page, such as Calendly, get a booking or reschedule link instead of
+  offered times)), sources, prompt version,
   latency and tokens; no message text. Purged after 90 days.
 - R9 **`POST /api/x/ai/reply`** runs the same pipeline for a contact and text and returns the reply (for a chatbot
   `api_call` node); `send: true` also sends it.
