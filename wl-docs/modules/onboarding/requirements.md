@@ -31,7 +31,7 @@ Status: **built on the defaults below; open questions still to confirm.**
 - R4 **Checklist**, worked out from what exists, never stored: business details (practice profile), WhatsApp number
   (a WhatsApp account), system (a connected connector), type of business (chosen), team (a second member), first
   message (an outgoing message). Each step links to the existing screen.
-- R5 **Type of business:** allied health, dental, medical, beauty, fitness, other. Stored now; Phase 7's vertical packs
+- R5 **Type of business:** allied health, dental, medical, beauty, fitness, real estate (7.4, migration `0002`), other. Stored now; Phase 7's vertical packs
   use it.
 - R6 **Hide / show** the checklist.
 - R7 **Permissions:** `wl_onboarding_setup` read and update for admin and manager; reception doesn't see it.

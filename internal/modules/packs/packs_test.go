@@ -42,7 +42,8 @@ func TestPackFilesAreValid(t *testing.T) {
 	for _, p := range all {
 		ids = append(ids, p.ID)
 	}
-	assert.Equal(t, []string{"beauty", "clinic", "fitness", "general"}, ids)
+	assert.Equal(t, []string{"beauty", "clinic", "fitness", "general", "real_estate"}, ids)
+	assert.Equal(t, "real_estate", ForVertical("real_estate"))
 	assert.Equal(t, "clinic", ForVertical("dental"))
 	assert.Equal(t, "clinic", ForVertical("allied_health"))
 	assert.Equal(t, "general", ForVertical("other"))
@@ -204,7 +205,7 @@ func TestList_RecommendedAndIsolated(t *testing.T) {
 	require.NoError(t, err)
 	list, err := f.svc.List(ctx, f.org)
 	require.NoError(t, err)
-	require.Len(t, list, 4)
+	require.Len(t, list, 5)
 	assert.Equal(t, "clinic", list[0].ID, "the pack for the business's vertical comes first")
 	assert.True(t, list[0].Recommended)
 	require.NotNil(t, list[0].Installed)
@@ -259,7 +260,7 @@ func TestHandlers(t *testing.T) {
 	reader := fakeAuth{allowed: map[string]bool{PermInstall + ":read": true}}
 	code, data := call(reader, "GET", base, "")
 	require.Equal(t, 200, code)
-	assert.Len(t, data["packs"], 4)
+	assert.Len(t, data["packs"], 5)
 	code, data = call(reader, "GET", base+"/{id}", "clinic")
 	require.Equal(t, 200, code)
 	assert.Equal(t, "Clinics", data["pack"].(map[string]any)["name"])
@@ -271,4 +272,40 @@ func TestHandlers(t *testing.T) {
 	code, data = call(installer, "POST", base+"/{id}/install", "general")
 	require.Equal(t, 200, code, data)
 	assert.Equal(t, "general", data["result"].(map[string]any)["pack_id"])
+}
+
+func TestInstall_RealEstatePack(t *testing.T) {
+	f := newFixture(t)
+	require.NoError(t, onboarding.NewService(f.db, nil).SetVertical(ctx, f.org, "real_estate"))
+	testutil.CreateTestWhatsAppAccount(t, f.db, f.org)
+	r, err := f.svc.Install(ctx, f.org, f.user, "real_estate")
+	require.NoError(t, err)
+	for _, it := range r.Items {
+		assert.NotEqual(t, StatusFailed, it.Status, "%s %s: %s", it.Kind, it.Name, it.Message)
+	}
+	st := statuses(r)
+	assert.Equal(t, StatusCreated, st["template:wl_real_estate_inspection_reminder"])
+	assert.Equal(t, StatusCreated, st["segment:Enquired in the last 30 days"])
+	assert.Equal(t, StatusWaiting, st["reminder:Two hours before an inspection"])
+	aiSettings, err := ai.NewService(f.db, nil, nil, nil, nil, nil, nil).GetSettings(ctx, f.org)
+	require.NoError(t, err)
+	assert.Contains(t, aiSettings.Instructions, "underquoting")
+	assert.Contains(t, aiSettings.EmergencyWords, "gas leak")
+	list, err := f.svc.List(ctx, f.org)
+	require.NoError(t, err)
+	assert.Equal(t, "real_estate", list[0].ID, "recommended for a real estate business")
+
+	// Once approved, the inspection reminder uses the property (location) and time.
+	require.NoError(t, f.db.Model(&models.Template{}).Where("organization_id = ? AND name LIKE 'wl_real_estate_%'", f.org).Update("status", "APPROVED").Error)
+	_, err = f.svc.Install(ctx, f.org, f.user, "real_estate")
+	require.NoError(t, err)
+	rules, err := reminders.NewService(f.db, nil, nil, nil, nil, nil).ListRules(ctx, f.org)
+	require.NoError(t, err)
+	require.Len(t, rules, 2)
+	for _, rl := range rules {
+		if rl.Kind == reminders.KindReminder {
+			assert.Equal(t, 120, rl.OffsetMinutes)
+			assert.Equal(t, []string{"name", "location", "when"}, rl.Variables)
+		}
+	}
 }
