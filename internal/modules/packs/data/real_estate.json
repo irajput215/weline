@@ -1,0 +1,84 @@
+{
+  "id": "real_estate",
+  "version": 1,
+  "name": "Real estate",
+  "description": "Sales agencies and property managers: inspection bookings and reminders, follow-ups after inspections, new-listing broadcasts to opted-in buyers, and an AI agent that never quotes beyond the advertised price guide.",
+  "verticals": ["real_estate"],
+  "connectors": ["builtin", "google_calendar", "microsoft_365", "calendly"],
+  "templates": [
+    {
+      "name": "wl_real_estate_inspection_reminder",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}, a reminder of your inspection at {{2}} on {{3}}. Please confirm, cancel or ask to reschedule below.",
+      "buttons": ["Confirm", "Cancel", "Reschedule"],
+      "samples": ["Alex", "12 Harbour St, Manly", "Sat 13 Mar at 10:15am"]
+    },
+    {
+      "name": "wl_real_estate_inspection_followup",
+      "language": "en",
+      "category": "MARKETING",
+      "body": "Hi {{1}}, thanks for coming to your {{2}}. Would you like the contract, the price guide or another viewing? Reply here and we'll help.",
+      "footer": "Reply STOP to stop these messages",
+      "buttons": ["Send the contract", "Book another viewing", "Not for me"],
+      "samples": ["Alex", "private inspection"]
+    },
+    {
+      "name": "wl_real_estate_new_listing",
+      "language": "en",
+      "category": "MARKETING",
+      "body": "Hi {{1}}, a new property that may suit you has just listed: {{2}}. Reply here to book an inspection.",
+      "footer": "Reply STOP to stop these messages",
+      "buttons": ["Book an inspection", "Not interested"],
+      "samples": ["Alex", "3 bed house, 12 Harbour St, Manly"]
+    },
+    {
+      "name": "wl_real_estate_maintenance_received",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}, we've received your maintenance request for {{2}}. We'll be in touch about access and timing.",
+      "samples": ["Jordan", "Unit 4, 8 Beach Rd, Bondi"]
+    }
+  ],
+  "ai": {
+    "tone": "friendly",
+    "instructions": "You work for a real estate agency. Only give the advertised price guide for a property; never estimate, hint at or negotiate a price, and never suggest a property will sell for more or less (underquoting laws apply). Don't give legal, financial, conveyancing or tax advice; offer to pass it to an agent. Never share anything about vendors, landlords or other buyers and tenants. For rental repairs, collect the address and the problem and pass it to the property manager. Keep answers short and in plain Australian English.",
+    "emergency_words": ["gas leak", "smell gas", "fire", "flooding", "burst pipe", "sparks", "break-in", "no power"]
+  },
+  "segments": [
+    {
+      "name": "Opted in to new listings",
+      "description": "Buyers who opted in to marketing messages",
+      "rules": { "match": "all", "conditions": [{ "field": "consent", "op": "opted_in" }] }
+    },
+    {
+      "name": "Enquired in the last 30 days",
+      "description": "Contacts who messaged in the last 30 days",
+      "rules": { "match": "all", "conditions": [{ "field": "last_inbound", "op": "within_days", "value": 30 }] }
+    },
+    {
+      "name": "Quiet buyers (90 days)",
+      "description": "Contacts who haven't messaged in 90 days",
+      "rules": { "match": "all", "conditions": [{ "field": "last_inbound", "op": "not_within_days", "value": 90 }] }
+    }
+  ],
+  "reminders": [
+    {
+      "kind": "reminder",
+      "name": "Two hours before an inspection",
+      "offset_minutes": 120,
+      "template": "wl_real_estate_inspection_reminder",
+      "variables": ["name", "location", "when"]
+    },
+    {
+      "kind": "recall",
+      "name": "Follow up a week after an inspection",
+      "recall_days": 7,
+      "template": "wl_real_estate_inspection_followup",
+      "variables": ["name", "service"]
+    }
+  ],
+  "flows": [
+    { "name": "Book an inspection", "guide": "wl-docs/modules/packs/real-estate.md" }
+  ]
+}

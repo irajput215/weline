@@ -31,8 +31,9 @@ Status: **built; pack wording to be reviewed by you and a clinic.**
   - each install recorded with what it did, and audited.
 - R4 **Recommendation:** the pack for the vertical chosen in onboarding is listed first and marked; onboarding's
   type-of-business step links to the packs page.
-- R5 **Packs:** Clinics (allied health, dental, medical), Beauty and wellness, Fitness and studios, Small business
-  (other). Every onboarding vertical has one (tested).
+- R5 **Packs:** Clinics (allied health, dental, medical), Beauty and wellness, Fitness and studios, Real estate (7.4:
+  inspections, follow-ups, new listings, maintenance; [set-up guide](real-estate.md)), Small business (other). Every
+  onboarding vertical has one (tested).
 - R6 **Permissions:** `wl_packs_install` read and create for admin and manager.
 
 ## Not in this step
