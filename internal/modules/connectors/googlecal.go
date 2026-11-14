@@ -47,6 +47,13 @@ func GoogleCalendarFactory(b *booking.Service, opt GoogleOptions) Factory {
 		Build: func(orgID uuid.UUID, creds map[string]string, raw json.RawMessage) (provider.Provider, error) {
 			return build(orgID, creds, raw)
 		},
+		claims: func(creds map[string]string, raw json.RawMessage) ([]string, error) {
+			set, err := gcal.ParseSettings(creds["calendar_id"], raw)
+			if err != nil {
+				return nil, err
+			}
+			return set.Calendars(), nil
+		},
 		Test: func(ctx context.Context, creds map[string]string, raw json.RawMessage) (string, error) {
 			p, err := build(uuid.Nil, creds, raw)
 			if err != nil {

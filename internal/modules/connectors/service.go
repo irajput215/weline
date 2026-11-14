@@ -267,12 +267,17 @@ func (s *Service) Save(ctx context.Context, orgID, userID uuid.UUID, in SaveInpu
 		if err != nil {
 			return nil, kit.Invalid("connection test failed: %s", msg)
 		}
+		if err := s.claim(ctx, orgID, f, creds, settings); err != nil {
+			return nil, err
+		}
 		enc, err := s.encrypt(creds)
 		if err != nil {
 			return nil, err
 		}
 		row.Credentials = enc
 		row.LastTestAt = &now
+	} else if err := s.claim(ctx, orgID, f, nil, settings); err != nil { // releases any calendars held
+		return nil, err
 	}
 	if err := s.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "organization_id"}},
@@ -567,3 +572,54 @@ func (l *Links) ByPhone(ctx context.Context, phone string) ([]string, error) {
 	}
 	return ids, nil
 }
+
+var errClaimed = kit.Conflict("this calendar is already connected to another Weline account; if it's yours, contact Weline support")
+
+func claimHash(prov, key string) string {
+	h := sha256.Sum256([]byte(prov + ":" + strings.ToLower(strings.TrimSpace(key))))
+	return hex.EncodeToString(h[:])
+}
+
+// claim records the provider's shared resources as this organization's,
+// refusing any another organization holds, and releases ones it no longer uses.
+func (s *Service) claim(ctx context.Context, orgID uuid.UUID, f Factory, creds map[string]string, settings json.RawMessage) error {
+	var keys []string
+	if f.claims != nil {
+		var err error
+		if keys, err = f.claims(creds, settings); err != nil {
+			return err
+		}
+	}
+	hashes := make([]string, 0, len(keys))
+	for _, k := range keys {
+		hashes = append(hashes, claimHash(f.Name, k))
+	}
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, h := range hashes {
+			if err := tx.Exec(`INSERT INTO wl.connector_claims (provider, key_hash, organization_id) VALUES (?, ?, ?)
+				ON CONFLICT (provider, key_hash) DO NOTHING`, f.Name, h, orgID).Error; err != nil {
+				return err
+			}
+			var owner struct{ OrganizationID uuid.UUID }
+			if err := tx.Raw(`SELECT organization_id FROM wl.connector_claims WHERE provider = ? AND key_hash = ?`, f.Name, h).Scan(&owner).Error; err != nil {
+				return err
+			}
+			if owner.OrganizationID != orgID {
+				return errClaimed
+			}
+		}
+		q := tx.Where("organization_id = ?", orgID)
+		if len(hashes) > 0 {
+			q = q.Where("NOT (provider = ? AND key_hash IN ?)", f.Name, hashes)
+		}
+		return q.Delete(&claimRow{}).Error
+	})
+}
+
+type claimRow struct {
+	Provider       string    `gorm:"primaryKey"`
+	KeyHash        string    `gorm:"primaryKey"`
+	OrganizationID uuid.UUID `gorm:"type:uuid"`
+}
+
+func (claimRow) TableName() string { return "wl.connector_claims" }

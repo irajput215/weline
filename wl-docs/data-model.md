@@ -445,9 +445,10 @@ Full design: [`modules/connectors/design.md`](modules/connectors/design.md#data-
 
 | Table | What it holds | Key rules |
 | --- | --- | --- |
-| `wl.connector_accounts` | The organization's provider (`builtin`, `cliniko`), its credentials encrypted with Weline's `encryption_key`, status, settings (no secrets), last test, last sync, last error, who changed it | One row per organization (PK); no row = built-in; credentials never returned by the API |
+| `wl.connector_accounts` | The organization's provider (`builtin`, `cliniko`, `google_calendar`), its credentials encrypted with Weline's `encryption_key`, status, settings (no secrets), last test, last sync, last error, who changed it | One row per organization (PK); no row = built-in; credentials never returned by the API |
 | `wl.connector_links` | Weline record ↔ provider record: `entity` (`contact`, `appointment`, `phone`), `local_id`, `remote_id`, and for `phone` a SHA-256 of the organization id and the mobile's digits | One link per Weline record and per remote id; `phone` rows have no `local_id` and always a hash; numbers are never stored |
 | `wl.connector_syncs` | Connection tests and sync runs: kind, start, finish, outcome, counts, a safe error message | Append-only; the last 100 per organization kept |
+| `wl.connector_claims` | Resources in a shared system that belong to one organization: a SHA-256 of `provider:id` (Google calendars), migration `0002` | PK `(provider, key_hash)` so a calendar has one owner; FK to `organizations` with cascade; released when the organization switches |
 
 **Upstream rows it writes:** none. **Reads:** none directly; the built-in provider is Booking.
 

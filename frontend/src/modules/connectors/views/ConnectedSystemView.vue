@@ -132,6 +132,8 @@ onMounted(store.load)
                     {{ t('wl.connectors.choose') }}
                   </Button>
                   <form v-if="canEdit && chosen === p.name && p.fields.length" class="space-y-3" @submit.prevent="submit(p)">
+                    <p v-if="p.share_with" class="text-sm rounded-md border border-border p-2" data-testid="connectors-share-with">
+                      {{ t('wl.connectors.shareWith') }} <code class="select-all">{{ p.share_with }}</code></p>
                     <div v-for="fl in p.fields" :key="fl.name" class="space-y-1">
                       <Label :for="`wl-conn-${fl.name}`">{{ label(`wl.connectors.fields.${fl.name}`, fl.name) }}</Label>
                       <Input

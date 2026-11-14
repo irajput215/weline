@@ -22,6 +22,9 @@ test.describe.serial('connectors', () => {
     await expect(builtin).toContainText("Weline's built-in booking")
     await expect(builtin.getByTestId('connectors-status')).toHaveText('Connected')
     await expect(page.getByTestId('connectors-log-empty')).toBeVisible()
+    // Google Calendar needs Weline's service account, which CI doesn't have.
+    await expect(page.getByTestId('connectors-provider-google_calendar')).toContainText('Google Calendar')
+    await expect(page.getByTestId('connectors-choose-google_calendar')).toHaveCount(0)
 
     // Cliniko can be chosen; the key is checked before anything is saved. CI has
     // no encryption key, contact email or Cliniko, so it's refused and says why.

@@ -1,5 +1,13 @@
 # Connectors: release notes
 
+## 7.2: Google Calendar
+
+- **Settings → Connected system → Google Calendar**, for businesses without a booking system: share your calendar with
+  the address shown, enter its calendar ID, and Weline tests it. Your services, staff and hours stay in Weline; busy
+  times come from your calendar (including things you add yourself), and WhatsApp bookings are added to it as events.
+  Moving, cancelling, reminders and recalls work as with the other systems.
+- Needs Weline's Google service account to be set up on the server; until then it shows as coming soon.
+
 ## 3.2: Cliniko
 
 Spec: [`cliniko.md`](cliniko.md). Findings: [`cliniko-spike.md`](cliniko-spike.md).

@@ -31,8 +31,9 @@ func setupDB(t *testing.T) *gorm.DB {
 
 func TestMigrations_AreReversible(t *testing.T) {
 	db := setupDB(t)
-	require.NoError(t, kit.RollbackLast(db, Name, migrations))
-	for _, table := range []string{"wl.connector_accounts", "wl.connector_links", "wl.connector_syncs"} {
+	require.NoError(t, kit.RollbackLast(db, Name, migrations)) // 0002 claims
+	require.NoError(t, kit.RollbackLast(db, Name, migrations)) // 0001
+	for _, table := range []string{"wl.connector_accounts", "wl.connector_links", "wl.connector_syncs", "wl.connector_claims"} {
 		var name *string
 		require.NoError(t, db.Raw("SELECT to_regclass(?)::text", table).Scan(&name).Error)
 		assert.Nil(t, name, table+" dropped")

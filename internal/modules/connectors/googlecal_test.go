@@ -26,10 +26,10 @@ func miniGoogle(t *testing.T) (*httptest.Server, string) {
 	require.NoError(t, err)
 	der, _ := x509.MarshalPKCS8PrivateKey(key)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.URL.Path == "/token":
+		switch r.URL.Path {
+		case "/token":
 			_, _ = fmt.Fprint(w, `{"access_token":"tok","expires_in":3600}`)
-		case r.URL.Path == "/calendar/v3/calendars/clinic@group.calendar.google.com":
+		case "/calendar/v3/calendars/clinic@group.calendar.google.com":
 			_, _ = fmt.Fprint(w, `{"id":"clinic@group.calendar.google.com","summary":"Harbour Physio"}`)
 		default:
 			w.WriteHeader(404)
@@ -79,4 +79,18 @@ func TestGoogleCalendar_OfferedConnectedAndResolved(t *testing.T) {
 	svcs, err := p.ListServices(ctx)
 	require.NoError(t, err)
 	assert.NotNil(t, svcs, "the catalog comes from Weline's own setup")
+
+	// Another organization can't connect the same calendar, even knowing its id.
+	other := newFixture(t)
+	other.svc.factories[provider.GoogleCalendar] = f.svc.factories[provider.GoogleCalendar]
+	_, err = other.svc.Save(ctx, other.org, other.user, SaveInput{Provider: provider.GoogleCalendar,
+		Credentials: map[string]string{"calendar_id": "clinic@group.calendar.google.com"}})
+	assert.True(t, isKind(err, kit.ErrConflict), "another organization's calendar: %v", err)
+
+	// Switching back to the built-in diary releases the calendar.
+	_, err = f.svc.Save(ctx, f.org, f.user, SaveInput{Provider: provider.BuiltIn})
+	require.NoError(t, err)
+	_, err = other.svc.Save(ctx, other.org, other.user, SaveInput{Provider: provider.GoogleCalendar,
+		Credentials: map[string]string{"calendar_id": "clinic@group.calendar.google.com"}})
+	assert.NoError(t, err, "released calendars can be connected elsewhere")
 }

@@ -12,11 +12,13 @@
   "readOnly": "You can see the connected system but not change it.",
   "providers": {
     "builtin": "Weline's built-in booking",
-    "cliniko": "Cliniko"
+    "cliniko": "Cliniko",
+    "google_calendar": "Google Calendar"
   },
   "providerDescriptions": {
     "builtin": "Appointments are kept in Weline. Set up your clinic in Clinic and Bookings.",
-    "cliniko": "Bookings go straight into your Cliniko diary."
+    "cliniko": "Bookings go straight into your Cliniko diary.",
+    "google_calendar": "For businesses without a booking system: your services, staff and hours are set up in Weline, busy times come from your Google Calendar, and bookings are added to it."
   },
   "statuses": {
     "connected": "Connected",
@@ -27,8 +29,10 @@
   "comingSoon": "Coming soon",
   "choose": "Use this",
   "fields": {
-    "api_key": "API key"
+    "api_key": "API key",
+    "calendar_id": "Calendar ID (Google Calendar → Settings → Integrate calendar)"
   },
+  "shareWith": "First share your calendar with Weline, with \"Make changes to events\":",
   "secretSet": "Saved. Leave empty to keep it.",
   "saveAndTest": "Test and save",
   "test": "Test connection",

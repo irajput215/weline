@@ -27,6 +27,9 @@ type Factory struct {
 	Build func(orgID uuid.UUID, credentials map[string]string, settings json.RawMessage) (provider.Provider, error)
 	// Test checks credentials (a cheap call) and returns a message to show.
 	Test func(ctx context.Context, credentials map[string]string, settings json.RawMessage) (string, error)
+	// claims lists resources that must belong to one organization only (the
+	// Google calendars Weline's shared service account can see); nil for none.
+	claims func(credentials map[string]string, settings json.RawMessage) ([]string, error)
 	// sync runs a background sync for one organization (Cliniko's phone
 	// index); nil for providers with nothing to sync.
 	sync func(ctx context.Context, orgID uuid.UUID, credentials map[string]string, settings json.RawMessage, since *time.Time) (map[string]int, error)

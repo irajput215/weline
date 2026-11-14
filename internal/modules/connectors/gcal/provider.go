@@ -51,6 +51,9 @@ func (s Settings) calendarFor(practitionerID string) string {
 	return s.CalendarID
 }
 
+// Calendars are every calendar the settings use.
+func (s Settings) Calendars() []string { return s.calendars() }
+
 func (s Settings) calendars() []string {
 	seen := map[string]bool{s.CalendarID: true}
 	out := []string{s.CalendarID}
@@ -309,7 +312,7 @@ func (p *Provider) Reschedule(ctx context.Context, id string, in provider.Resche
 	}
 	var others []Interval
 	for _, b := range busy[cal] {
-		if !(b.Start.Equal(start) && b.End.Equal(end)) { // the event itself
+		if !b.Start.Equal(start) || !b.End.Equal(end) { // not the event itself
 			others = append(others, b)
 		}
 	}
