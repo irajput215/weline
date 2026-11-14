@@ -349,6 +349,18 @@ Sign-up and the setup checklist, built in step 6.1 (migration `onboarding/0001_c
 | --- | --- | --- |
 | `wl.kit_permission_grants` | Which module permission each organization's system roles have been given (`organization_id`, `resource`, `action`) | PK on all three; written by `kit.GrantMissing`; FK to `organizations` with cascade |
 
+### packs
+
+Industry packs, built in step 7.1 (migration `packs/0001_create_packs`). Packs themselves are files in the binary,
+not tables. Full design: [`modules/packs/design.md`](modules/packs/design.md).
+
+| Table | What it holds | Key rules |
+| --- | --- | --- |
+| `wl.packs_installs` | Each install: pack, version, what it did (item names and statuses), who, when | FK to `organizations` with cascade; no personal data |
+
+**Writes through other modules:** `templates` (drafts), `wl.ai_settings`, `wl.audiences_segments`,
+`wl.reminder_rules` (off).
+
 ### operator
 
 The operator console (step 6.3) has **no tables**: it reads `organizations`, `wl.onboarding_state`,

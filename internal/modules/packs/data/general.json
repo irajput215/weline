@@ -1,0 +1,30 @@
+{
+  "id": "general",
+  "version": 1,
+  "name": "Small business",
+  "description": "Any appointment-based small business: reminders, confirmations and offers to opted-in customers.",
+  "verticals": ["other"],
+  "connectors": ["builtin"],
+  "templates": [
+    {
+      "name": "wl_general_appointment_reminder",
+      "language": "en",
+      "category": "UTILITY",
+      "body": "Hi {{1}}, a reminder of your {{2}} on {{3}}. Please confirm, cancel or ask to reschedule below.",
+      "buttons": ["Confirm", "Cancel", "Reschedule"],
+      "samples": ["Jo", "consultation", "Mon 15 Mar at 10:00am"]
+    }
+  ],
+  "ai": {
+    "tone": "friendly",
+    "instructions": "Keep answers short and friendly. If you aren't sure, offer to pass the question to the team.",
+    "emergency_words": []
+  },
+  "segments": [
+    { "name": "Opted in to offers", "description": "Customers who opted in to marketing messages", "rules": { "match": "all", "conditions": [{ "field": "consent", "op": "opted_in" }] } }
+  ],
+  "reminders": [
+    { "kind": "reminder", "name": "Day before", "offset_minutes": 1440, "template": "wl_general_appointment_reminder", "variables": ["name", "service", "when"] }
+  ],
+  "flows": []
+}
