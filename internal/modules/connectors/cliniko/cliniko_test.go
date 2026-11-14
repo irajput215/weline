@@ -302,3 +302,15 @@ func TestGetCustomer(t *testing.T) {
 	_, err = p.GetCustomer(ctx, "999")
 	assert.Error(t, err)
 }
+
+func TestFindCustomer_NeverCreates(t *testing.T) {
+	f := newFake(t)
+	p, _ := newProvider(t, f, "")
+	c, err := p.FindCustomer(ctx, provider.CustomerInput{Name: "Ava Ng", Mobile: "61412345678"})
+	require.NoError(t, err)
+	assert.Equal(t, "201", c.ID)
+	before := f.count("POST", "/v1/patients")
+	_, err = p.FindCustomer(ctx, provider.CustomerInput{Name: "Nobody Here", Mobile: "61499999999"})
+	assert.ErrorIs(t, err, provider.ErrNotFound)
+	assert.Equal(t, before, f.count("POST", "/v1/patients"), "looking up never adds a patient")
+}

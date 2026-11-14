@@ -73,6 +73,13 @@ type Confirmer interface {
 	Confirm(ctx context.Context, id string) error
 }
 
+// Finder is an optional ability: finding an existing customer without ever
+// creating one (Cliniko creates patients in FindOrCreateCustomer). Providers
+// without it don't create customers in another system when given a contact.
+type Finder interface {
+	FindCustomer(ctx context.Context, in CustomerInput) (*Customer, error)
+}
+
 // LinkBooker is an optional ability: bookings and reschedules happen on the
 // provider's own page (Calendly), so Weline sends a link instead of offering
 // times. Book and Reschedule return ErrNotSupported for such providers.
