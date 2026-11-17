@@ -33,6 +33,7 @@ import (
 	"github.com/shridarpatil/whatomate/internal/modules/packs"
 	"github.com/shridarpatil/whatomate/internal/modules/practice"
 	"github.com/shridarpatil/whatomate/internal/modules/reminders"
+	"github.com/shridarpatil/whatomate/internal/modules/timeline"
 	"github.com/zerodha/fastglue"
 	"github.com/zerodha/logf"
 	"gorm.io/gorm"
@@ -65,6 +66,7 @@ var factories = []Factory{
 	billing.New,    // counts audiences sends and AI runs; its limits are wired into those modules
 	operator.New,   // reads every module's tables across organizations, for Weline staff
 	packs.New,      // installs through ai, audiences and reminders
+	timeline.New,   // reads every module's per-contact data and the connected system
 }
 
 // Register mounts every module's routes, then the Weline webhook receiver

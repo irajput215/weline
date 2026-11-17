@@ -84,7 +84,8 @@ func splitName(name string) (string, string) {
 // FindOrCreateCustomer implements provider.Provider without a phone search
 // (C4): the contact's link, then the phone index, then a name search checked
 // against the mobile, and only then a new patient.
-func (p *Provider) FindOrCreateCustomer(ctx context.Context, in provider.CustomerInput) (*provider.Customer, bool, error) {
+// lookup finds an existing patient (steps 1–3), linking it; nil when none.
+func (p *Provider) lookup(ctx context.Context, in provider.CustomerInput) (*provider.Customer, bool, error) {
 	digits := Normalise(in.Mobile)
 	link := func(pt *patient) (*provider.Customer, bool, error) {
 		if in.ContactID != uuid.Nil {
@@ -159,6 +160,49 @@ func (p *Provider) FindOrCreateCustomer(ctx context.Context, in provider.Custome
 			return link(match)
 		}
 	}
+	return nil, false, nil
+}
+
+// FindCustomer implements provider.Finder: the linked patient, the phone
+// index or a name search checked against the mobile; never creates one (so
+// looking a contact up, as the timeline does, doesn't add patients).
+func (p *Provider) FindCustomer(ctx context.Context, in provider.CustomerInput) (*provider.Customer, error) {
+	c, err := p.findExisting(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	if c == nil {
+		return nil, provider.ErrNotFound
+	}
+	return c, nil
+}
+
+// findExisting returns the customer or nil when none matches.
+func (p *Provider) findExisting(ctx context.Context, in provider.CustomerInput) (*provider.Customer, error) {
+	c, _, err := p.lookup(ctx, in)
+	return c, err
+}
+
+func (p *Provider) FindOrCreateCustomer(ctx context.Context, in provider.CustomerInput) (*provider.Customer, bool, error) {
+	c, _, err := p.lookup(ctx, in)
+	if err != nil || c != nil {
+		return c, false, err
+	}
+	digits := Normalise(in.Mobile)
+	first, last := splitName(in.Name)
+	link := func(pt *patient) (*provider.Customer, bool, error) {
+		if in.ContactID != uuid.Nil {
+			if err := p.links.Set(ctx, "contact", in.ContactID, pt.ID); err != nil {
+				return nil, false, err
+			}
+		}
+		if digits != "" {
+			if err := p.links.SetPhone(ctx, digits, pt.ID); err != nil {
+				return nil, false, err
+			}
+		}
+		return &provider.Customer{ID: pt.ID, Name: pt.name()}, false, nil
+	}
 	// 4. A new patient.
 	if !*p.settings.CreatePatients {
 		return nil, false, fmt.Errorf("no Cliniko patient with this mobile, and creating patients is off: %w", provider.ErrNotFound)
@@ -172,7 +216,7 @@ func (p *Provider) FindOrCreateCustomer(ctx context.Context, in provider.Custome
 	if err := p.c.do(ctx, http.MethodPost, "/patients", nil, body, &pt); err != nil {
 		return nil, false, err
 	}
-	c, _, err := link(&pt)
+	c, _, err = link(&pt)
 	if err != nil {
 		return nil, false, err
 	}
