@@ -36,6 +36,14 @@ capture from ads, inspection booking, follow-ups, property broadcasts).
 If customers ask: one view of each contact across messages, broadcasts, bookings and reminders, reading appointments
 from the connector. Administrative data only; no clinical notes.
 
+## 7.6 Receipts on WhatsApp
+
+Research first ([`../research/whatsapp-patient-pages.md`](../research/whatsapp-patient-pages.md), done 2026-11-18), then
+prompts A, B, C: staff send a patient their invoice from the connected system (Cliniko first) as a WhatsApp template
+with a "View receipt" button; the button opens a page Weline serves behind an unguessable, expiring link
+([ADR-006](../adr/ADR-006-secure-patient-links.md)), read live from the connected system, with "Pay now" going to the
+system's own payment page. Weline keeps no copy of the invoice. Medical documents are not part of this step.
+
 ## Phase 7 gate
 
 - [ ] At least one non-clinic business runs on Weline through a connector and its pack

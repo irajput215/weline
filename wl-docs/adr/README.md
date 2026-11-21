@@ -14,6 +14,7 @@ whenever a design choice would be expensive to undo (SDLC phase 2, "Design").
 | [ADR-003](ADR-003-scrub-patient-identifiers-from-logs.md) | Scrub patient identifiers from the process output | proposed (built, on by default) |
 | [ADR-004](ADR-004-australian-hosting.md) | Host staging and production in Australia | proposed |
 | [ADR-005](ADR-005-saas-model.md) | One shared Weline for all businesses; AGPL source link; Stripe; Meta bills businesses directly | proposed |
+| [ADR-006](ADR-006-secure-patient-links.md) | Patient pages behind unguessable, expiring, hashed links served by the module, read live | proposed |
 
 ## Template
 
