@@ -36,7 +36,9 @@ capture from ads, inspection booking, follow-ups, property broadcasts).
 If customers ask: one view of each contact across messages, broadcasts, bookings and reminders, reading appointments
 from the connector. Administrative data only; no clinical notes.
 
-## 7.6 Receipts on WhatsApp
+## 7.6 Receipts on WhatsApp (parked)
+
+**Parked 2026-11-21:** comes back as an automatic step once a connector with payment events exists ([phase 8](phase-8-appointment-smbs.md)).
 
 Research first ([`../research/whatsapp-patient-pages.md`](../research/whatsapp-patient-pages.md), done 2026-11-18), then
 prompts A, B, C: staff send a patient their invoice from the connected system (Cliniko first) as a WhatsApp template

@@ -45,6 +45,7 @@ Tips that save a lot of pain:
 | [phase-5-reminders-recalls.md](phase-5-reminders-recalls.md) | Reminders and recalls driven by the connected system |
 | [phase-6-saas.md](phase-6-saas.md) | Multi-business SaaS: model ADR, sign-up and onboarding, plans and billing, operator console |
 | [phase-7-connectors-verticals.md](phase-7-connectors-verticals.md) | Vertical packs, calendar connectors, more practice systems, real estate |
+| [phase-8-appointment-smbs.md](phase-8-appointment-smbs.md) | Appointment-based small businesses: booking systems research, wording by business type, Square Appointments connector, packs |
 | [recurring.md](recurring.md) | Upstream sync, release and bug fix prompts |
 
 ## Progress tracker
@@ -77,4 +78,9 @@ Tips that save a lot of pain:
 * [ ] [Phase 4 AI agent](phase-4-ai-agent.md) (built 2026-11-13; real-model evals and the Cliniko staging check wait on keys)
 * [ ] [Phase 5 Reminders and recalls](phase-5-reminders-recalls.md) (built 2026-11-13; the gate waits on the Cliniko trial, staging and approved templates)
 * [ ] [Phase 6 Multi-business SaaS](phase-6-saas.md) (6.0 ADR-005 proposed and 6.1 onboarding, 6.2 billing and 6.3 operator console built 2026-11-13; the gate waits on Stripe, Turnstile, Meta Embedded Signup and staging; built on the ADR's recommendation)
-* [ ] [Phase 7 More connectors and vertical packs](phase-7-connectors-verticals.md) (7.1 packs built 2026-11-13; 7.2 calendar connectors built 2026-11-14: Google Calendar, Microsoft 365, Calendly (by link); live checks wait on accounts; 7.4 real estate spike, onboarding type and pack built 2026-11-14, a CRM connector waits on a pilot agency; 7.5 contact timeline built 2026-11-14; 7.6 receipts researched 2026-11-18, docs written 2026-11-21; 7.3 waits on practice systems' API access)
+* [ ] [Phase 7 More connectors and vertical packs](phase-7-connectors-verticals.md) (7.1 packs built 2026-11-13; 7.2 calendar connectors built 2026-11-14: Google Calendar, Microsoft 365, Calendly (by link); live checks wait on accounts; 7.4 real estate spike, onboarding type and pack built 2026-11-14, a CRM connector waits on a pilot agency; 7.5 contact timeline built 2026-11-14; 7.6 receipts researched and docs written, parked 2026-11-21; 7.3 waits on practice systems' API access)
+* [x] [8.0 Booking systems research](phase-8-appointment-smbs.md#80-booking-systems-research) (desk research 2026-11-21)
+* [ ] [8.1 Wording follows the business type](phase-8-appointment-smbs.md#81-wording-follows-the-business-type)
+* [ ] [8.2 Square Appointments connector](phase-8-appointment-smbs.md#82-square-appointments-connector)
+* [ ] [8.3 Packs offer the right connectors](phase-8-appointment-smbs.md#83-packs-offer-the-right-connectors)
+* [ ] [Phase 8 gate](phase-8-appointment-smbs.md#phase-8-gate)

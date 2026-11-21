@@ -4,7 +4,7 @@
 still open. Build guide step 7.6 ([`../../build-guide/phase-7-connectors-verticals.md`](../../build-guide/phase-7-connectors-verticals.md)).
 Background: [research note](../../research/whatsapp-patient-pages.md), [ADR-006](../../adr/ADR-006-secure-patient-links.md).
 
-Status: **docs (prompt A), not built.**
+Status: **docs (prompt A), not built.** **Parked (2026-11-21):** a manual receipt is something owners can already send themselves; receipts return as an automatic step (sent when payment clears) once a connector with payment events exists, e.g. Square ([phase 8](../../build-guide/phase-8-appointment-smbs.md)). These docs are the starting point then; reshape R2 around an automatic trigger first.
 
 ## User stories
 

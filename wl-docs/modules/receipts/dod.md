@@ -1,6 +1,6 @@
 # Receipts: definition of done
 
-Status: docs written (prompt A, 2026-11-21); not built.
+Status: docs written (prompt A, 2026-11-21); not built; **parked**, see [`requirements.md`](requirements.md).
 
 - [ ] Every requirement R1–R10 in [`requirements.md`](requirements.md) implemented or moved out of scope
 - [ ] [`api.md`](api.md) matches the routes registered
